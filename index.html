@@ -10,9 +10,6 @@
   <meta name="description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
   <link rel="canonical" href="https://www.gabrieleberto.it/">
 
-  <link rel="preload" as="image" href="hero-poster-desktop.png" media="(min-width: 901px)" fetchpriority="high">
-  <link rel="preload" as="image" href="hero-poster-mobile.png" media="(max-width: 900px)" fetchpriority="high">
-
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -86,7 +83,7 @@
       history.scrollRestoration = "manual";
     }
   </script>
-  <link rel="stylesheet" href="style.css?v=0225">
+  <link rel="stylesheet" href="style.css?v=0224">
 </head>
 
 <body>
@@ -105,11 +102,6 @@
           ? "hero-video-mobile.mp4"
           : "hero-video-desktop.mp4";
         source.type = "video/mp4";
-
-        video.addEventListener("loadeddata", () => {
-          video.classList.add("is-ready");
-        }, { once: true });
-
         video.appendChild(source);
       })();
     </script>
