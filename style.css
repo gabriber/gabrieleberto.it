@@ -2868,3 +2868,23 @@ main {
    - icone ridotte deterministicamente a 256x256 PNG.
    Nessun'altra modifica grafica o funzionale.
    ================================================================ */
+
+/* ================================================================
+   VERSIONE MOBILE 0228
+   Correzione chirurgica del lampo di "Formazione" nel passaggio
+   Home -> Scopri di più -> panoramica Contenuti.
+   Durante i soli fotogrammi di preparazione della schermata vengono
+   neutralizzate le transizioni del riquadro inizialmente attivo.
+   Le normali animazioni tornano immediatamente dopo il primo layout.
+   ================================================================ */
+@media (max-width: 900px) {
+  html.mobile-content-entering
+  .editorial-shell .glass-card.editorial-section,
+  html.mobile-content-entering .section-content,
+  html.mobile-content-entering .section-chevron::before,
+  html.mobile-content-entering
+  .editorial-section .section-richtext > p:not(:last-child) {
+    transition: none !important;
+  }
+}
+

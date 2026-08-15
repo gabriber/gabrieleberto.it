@@ -19,8 +19,8 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="it_IT">
   <meta property="og:site_name" content="Gabriele Berto">
-  <meta property="og:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
-  <meta property="og:description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <meta property="og:title" content="Incidenti stradali e infortuni sul lavoro">
+  <meta property="og:description" content="Consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
   <meta property="og:url" content="https://www.gabrieleberto.it/">
   <meta property="og:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
   <meta property="og:image:width" content="1200">
@@ -28,8 +28,8 @@
   <meta property="og:image:type" content="image/png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
-  <meta name="twitter:description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <meta name="twitter:title" content="Incidenti stradali e infortuni sul lavoro">
+  <meta name="twitter:description" content="Consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
   <meta name="twitter:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
 
   <script type="application/ld+json">
@@ -99,7 +99,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0227">
+  <link rel="stylesheet" href="style.css?v=0228">
 </head>
 
 <body>
@@ -1003,6 +1003,16 @@
         const targetCard = validSectionIds.has(targetId)
           ? document.getElementById(targetId)
           : null;
+        const enteringOverviewFromHome =
+          !targetCard && document.body.classList.contains("mobile-home");
+
+        /* 0228: durante il passaggio Home -> panoramica Contenuti il primo
+           riquadro nasce nell'HTML come aperto/attivo. Neutralizziamo per
+           pochi fotogrammi le transizioni visive mentre lo stato viene
+           azzerato, così "Formazione" compare già chiuso e neutro. */
+        if (enteringOverviewFromHome) {
+          document.documentElement.classList.add("mobile-content-entering");
+        }
 
         closeMobileMenu();
         document.documentElement.classList.remove(
@@ -1019,6 +1029,10 @@
           closeAllCards({ animate: false });
         }
 
+        if (enteringOverviewFromHome) {
+          refreshMobileHeights();
+        }
+
         window.scrollTo(0, 0);
 
         syncMenuWithOpenCards();
@@ -1033,9 +1047,15 @@
             if (targetCard && targetCard.id !== "profilo") {
               scrollCardBelowHeader(targetCard, "auto");
             }
+            if (enteringOverviewFromHome) {
+              document.documentElement.classList.remove("mobile-content-entering");
+            }
           });
         });
-        window.setTimeout(refreshMobileHeights, 120);
+        window.setTimeout(() => {
+          refreshMobileHeights();
+          document.documentElement.classList.remove("mobile-content-entering");
+        }, 120);
       }
 
       function refreshMobileHeights() {
