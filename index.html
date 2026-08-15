@@ -1,0 +1,3130 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000" media="(max-width: 900px)">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="msapplication-navbutton-color" content="#000000">
+  <title>Gabriele Berto | Incidenti stradali e infortuni sul lavoro</title>
+  <meta name="description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <link rel="canonical" href="https://www.gabrieleberto.it/">
+
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="it_IT">
+  <meta property="og:site_name" content="Gabriele Berto">
+  <meta property="og:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
+  <meta property="og:description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <meta property="og:url" content="https://www.gabrieleberto.it/">
+  <meta property="og:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
+  <meta name="twitter:description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <meta name="twitter:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://www.gabrieleberto.it/#gabriele-berto",
+    "name": "Gabriele Berto",
+    "url": "https://www.gabrieleberto.it/",
+    "image": "https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png",
+    "jobTitle": "Abogado",
+    "description": "Consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.",
+    "knowsAbout": [
+      "Incidenti stradali",
+      "Infortuni sul lavoro",
+      "Ricostruzione del sinistro",
+      "Consulenza tecnico-giuridica",
+      "Analisi di incidenti stradali",
+      "Analisi di infortuni sul lavoro"
+    ]
+  }
+  </script>
+  <script>
+    const initialHash = window.location.hash;
+    if (!initialHash || initialHash === "#intro") {
+      document.documentElement.classList.add("intro-scroll-locked");
+    }
+
+    const initialNavigationEntry = performance.getEntriesByType("navigation")[0];
+    const initialPageWasReloaded = initialNavigationEntry
+      ? initialNavigationEntry.type === "reload"
+      : performance.navigation?.type === 1;
+    const initialMobileContentHash = initialHash === "#contenuti"
+      || ["#profilo", "#ambito", "#seconda-valutazione", "#rapporto-diretto", "#consigli", "#contatti"].includes(initialHash);
+
+    const initialContentScreen = initialMobileContentHash;
+    if (window.matchMedia("(min-width: 901px)").matches) {
+      document.documentElement.classList.add("desktop-screen-preinit");
+      if (initialContentScreen) {
+        document.documentElement.classList.add("initial-content-screen");
+      }
+    }
+
+    if (window.matchMedia("(max-width: 900px)").matches
+      && initialPageWasReloaded
+      && initialMobileContentHash) {
+      document.documentElement.classList.add("mobile-reset-pending");
+    }
+
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+  </script>
+  <link rel="stylesheet" href="style.css?v=0224">
+</head>
+
+<body>
+  <div class="video-layer" aria-hidden="true">
+    <video id="bgVideo" class="bg-video" autoplay muted loop playsinline preload="auto"></video>
+    <script>
+      (() => {
+        const video = document.getElementById("bgVideo");
+        const useMobileHero = window.matchMedia("(max-width: 900px)").matches;
+        const source = document.createElement("source");
+
+        video.poster = useMobileHero
+          ? "hero-poster-mobile.png"
+          : "hero-poster-desktop.png";
+        source.src = useMobileHero
+          ? "hero-video-mobile.mp4"
+          : "hero-video-desktop.mp4";
+        source.type = "video/mp4";
+        video.appendChild(source);
+      })();
+    </script>
+  </div>
+
+  <button id="playVideo" class="play-video" type="button">Avvia video</button>
+
+  <header class="site-header" id="siteHeader">
+    <a class="header-brand" href="#intro" aria-label="Torna alla home">
+      <span class="header-logo logo-mask" aria-hidden="true"></span>
+      <span class="header-brand-text">
+        <span class="header-name">Gabriele Berto</span>
+      </span>
+    </a>
+
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Apri menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <nav class="glass-menu" id="glassMenu" aria-label="Navigazione principale">
+    <a href="#intro">Home page</a>
+    <a href="#profilo">Formazione</a>
+    <a href="#ambito">Ambito di intervento</a>
+    <a href="#seconda-valutazione">Seconda valutazione</a>
+    <a href="#rapporto-diretto">Rapporto diretto</a>
+    <a href="#consigli">Consigli utili</a>
+    <a href="#contatti">Contatti</a>
+  </nav>
+
+  <main>
+    <section class="intro" id="intro" aria-label="Introduzione video">
+      <div class="intro-content">
+        <div class="intro-identity">
+          <span class="intro-logo logo-mask" aria-hidden="true"></span>
+          <div>
+            <p class="intro-name">Gabriele Berto</p>
+            <p class="intro-role">Abogado e Dottore Magistrale in Ingegneria Meccanica</p>
+          </div>
+        </div>
+
+        <h1 class="intro-title">
+          <span class="white-line">competenze</span>
+          <span class="white-line">tecniche e giuridiche</span>
+          <span class="gold-line">incidenti stradali e</span>
+          <span class="gold-line">infortuni sul lavoro</span>
+        </h1>
+
+        <button class="discover" id="discoverBtn" type="button" aria-label="Scopri di più">
+          <span>Scopri di più</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+
+    
+    <section class="content content-editorial" id="contenuti" aria-label="Contenuti principali">
+      <div class="editorial-shell" id="editorialShell">
+        <article class="glass-card editorial-section is-open is-section-active" id="profilo">
+          <button class="section-trigger" type="button" aria-expanded="true">
+            <span class="card-icon" aria-hidden="true"><img src="icona-formazione.png" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Formazione</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Sono laureato in ingegneria meccanica e in giurisprudenza, ovvero in due discipline normalmente distinte che, applicate in modo sinergico ai settori degli incidenti stradali e degli infortuni sul lavoro, consentono di esaminare ogni caso in una prospettiva tecnica e giuridica unitaria.</p>
+                <p>La scelta di affiancare la formazione giuridica a quella ingegneristica nasce dalla convinzione che, nelle materie ad alto contenuto specialistico, l’esame coordinato degli aspetti tecnici e giuridici possa offrire una comprensione più completa del caso. Una corretta comprensione e ricostruzione dei fatti costituisce infatti un elemento importante per il loro successivo inquadramento giuridico.</p>
+                <p>Dal 2001 al 2025, quale ingegnere meccanico iscritto alla Sezione A dell’Albo dell’Ordine degli Ingegneri di Rovigo, con il numero 835, mi sono occupato della ricostruzione di incidenti stradali e di infortuni sul lavoro.</p>
+                <p>Dal 2026 esercito con il titolo professionale di abogado, iscritto alla sezione speciale dell’Ordine degli Avvocati di Vicenza.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass-card editorial-section" id="ambito">
+          <button class="section-trigger" type="button" aria-expanded="false">
+            <span class="card-icon" aria-hidden="true"><img src="icona-ambito.png" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Ambito di intervento</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Mi occupo di incidenti stradali e infortuni sul lavoro caratterizzati da lesioni rilevanti, esiti permanenti, decessi, responsabilità contestate o questioni risarcitorie di particolare rilievo.</p>
+                <p>Negli incidenti stradali e negli infortuni sul lavoro, l’inquadramento giuridico dipende generalmente dalla corretta comprensione degli aspetti tecnici. Dinamica, velocità, visibilità, comportamento dei veicoli, funzionamento di macchine e impianti, procedure operative e misure di sicurezza non costituiscono elementi accessori, ma il fondamento sul quale ricostruire le condotte, il nesso causale e le responsabilità.</p>
+                <p>Per questo affronto ogni caso attraverso un’analisi tecnico-giuridica unitaria, nella quale la ricostruzione tecnica precede e sostiene l’inquadramento delle responsabilità.</p>
+                <p>La mia attività è rivolta alle persone danneggiate, ai familiari di vittime di incidenti stradali o infortuni sul lavoro, agli studi legali e alle società di infortunistica.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass-card editorial-section" id="seconda-valutazione">
+          <button class="section-trigger" type="button" aria-expanded="false">
+            <span class="card-icon" aria-hidden="true"><img src="icona-seconda-valutazione.png" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Seconda valutazione</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Nei casi apparentemente compromessi è spesso utile una seconda valutazione. Quando una pratica è stata respinta, sottovalutata o definita in modo non soddisfacente, procedo a una nuova analisi tecnico-giuridica della documentazione, verificando se vi siano elementi non adeguatamente considerati in ordine alla condotta, all’evento, al nesso causale, alla responsabilità o alla quantificazione del danno.</p>
+                <p>Questa attività rappresenta uno degli ambiti nei quali la doppia formazione tecnica e giuridica può esprimere maggiore utilità, poiché consente di esaminare il caso contemporaneamente da prospettive diverse e di mettere in relazione aspetti tecnici e giuridici che possono assumere rilievo decisivo nella valutazione complessiva della vicenda.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass-card editorial-section" id="rapporto-diretto">
+          <button class="section-trigger" type="button" aria-expanded="false">
+            <span class="card-icon" aria-hidden="true"><img src="icona-rapporto-diretto.png" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Rapporto diretto</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Gli incidenti stradali e gli infortuni sul lavoro, soprattutto nei casi più gravi, richiedono un rapporto diretto e costante con il professionista che segue la pratica, così da assicurare continuità nella valutazione degli aspetti tecnici e giuridici e nella gestione delle diverse fasi.</p>
+                <p>Per questo motivo, seguo personalmente gli incarichi dei quali decido di occuparmi, mantenendo un rapporto diretto con il cliente e il controllo complessivo della pratica. Quando le esigenze del caso lo richiedono, posso avvalermi della collaborazione di altri professionisti, ferma restando la mia diretta supervisione.</p>
+                <p>Ho scelto di seguire un numero limitato di incarichi, così da poter dedicare a ciascuno l’attenzione necessaria fin dalla prima analisi documentale.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass-card editorial-section" id="consigli">
+          <button class="section-trigger" type="button" aria-expanded="false">
+            <span class="card-icon" aria-hidden="true"><img src="icona-consigli.png?v=0215" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Consigli utili</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Negli incidenti stradali e negli infortuni sul lavoro, quando ciò sia possibile senza compromettere la sicurezza delle persone coinvolte, è utile documentare quanto prima lo stato dei luoghi, dei mezzi, delle attrezzature, delle tracce e di ogni elemento visibile sulla scena dell’evento.</p>
+                <div class="tips" id="tipsText">
+                  <p>Fotografie e video realizzati tempestivamente possono assumere notevole importanza, poiché alcune tracce rischiano di scomparire, essere rimosse o non essere adeguatamente valorizzate nelle fasi iniziali, che spesso condizionano l’intera ricostruzione dell’evento.</p>
+                  <p>La scena dell’incidente o dell’infortunio conserva spesso, infatti, elementi decisivi per la successiva ricostruzione e dovrebbe quindi essere documentata con particolare attenzione fin dalle prime fasi.</p>
+                  <p><strong>In concreto, è utile:</strong></p>
+                  <ul>
+                    <li>raccogliere da subito il maggior numero possibile di fotografie e video della scena, anche autonomamente o tramite persone presenti sul posto, evitando sempre di esporsi a rischi, di alterare lo stato dei luoghi o di interferire con le attività di soccorso, nonché con i rilievi e gli accertamenti svolti dalle forze dell’ordine intervenute;</li>
+                    <li>realizzare fotografie e video sia d’insieme, per comprendere la collocazione dei mezzi, delle attrezzature, delle tracce e degli elementi rilevanti all’interno della scena dell’evento, sia di dettaglio, evitando tuttavia di documentare la scena soltanto con riprese troppo ravvicinate, che non consentano di collocare correttamente il particolare fotografato;</li>
+                    <li>documentare non solo gli elementi che appaiono immediatamente rilevanti, ma anche l’intera scena dell’evento, comprese le zone che, in un primo momento, possono sembrare di minore importanza, poiché proprio tali aree potrebbero assumere successivamente un rilievo decisivo nella ricostruzione del caso;</li>
+                    <li>se l’evento si verifica in orario notturno, documentare nuovamente i luoghi anche il giorno successivo, in condizioni di luce naturale, poiché alcuni elementi non visibili o difficilmente percepibili al buio possono emergere con maggiore chiarezza;</li>
+                    <li>annotare quanto prima i recapiti di eventuali testimoni, poiché le persone presenti sul posto possono fornire elementi utili alla ricostruzione dei fatti e, con il passare del tempo, possono diventare difficili da rintracciare;</li>
+                    <li>verificare tempestivamente l’eventuale presenza di telecamere, impianti di videosorveglianza, dashcam o altri dispositivi di registrazione, poiché le immagini disponibili possono essere cancellate o sovrascritte in tempi molto brevi;</li>
+                    <li>valutare tempestivamente, per i mezzi e le attrezzature coinvolti, l’eventuale presenza di dispositivi elettronici, telematici o sistemi di bordo in grado di registrare dati utili, quali scatole nere assicurative, sistemi GPS, centraline EDR, cronotachigrafi, registri macchina o altri sistemi di controllo, così da comprenderne la rilevanza nel caso concreto e verificare l’opportunità di conservarli o acquisirli prima che vadano perduti, vengano sovrascritti o non siano più disponibili;</li>
+                    <li>conservare indumenti, caschi, dispositivi di protezione, componenti, parti danneggiate o altri oggetti coinvolti nell’evento, senza modificarli o eliminarli, poiché possono fornire elementi utili alla ricostruzione della dinamica;</li>
+                    <li>conservare, per quanto possibile, i mezzi e le attrezzature coinvolti, evitando riparazioni, demolizioni, rottamazioni o alterazioni prima che il caso sia stato adeguatamente valutato. Anche dopo un eventuale dissequestro, la disponibilità del mezzo o dell’attrezzatura può risultare decisiva per eseguire ulteriori verifiche tecniche, controllare ricostruzioni già svolte e individuare elementi non emersi fino a quel momento;</li>
+                    <li>annotare quanto prima, anche in forma semplice, ciò che si ricorda dell’evento, delle condizioni dei luoghi, delle persone presenti e delle circostanze immediatamente successive, prima che il trascorrere del tempo renda meno preciso il ricordo;</li>
+                    <li>conservare ricevute, fatture, scontrini e ogni documentazione relativa alle spese sostenute a causa dell’evento, poiché anche tali elementi possono assumere rilievo nella successiva valutazione dei profili risarcitori;</li>
+                    <li>evitare la pubblicazione sui social network di fotografie, video, commenti o ricostruzioni dell’evento, poiché contenuti diffusi nell’immediatezza possono essere successivamente fraintesi o utilizzati fuori contesto.</li>
+                  </ul>
+                  <p>Ove possibile, è infine opportuno coinvolgere tempestivamente il professionista che dovrà occuparsi della valutazione tecnica e giuridica del caso, così da individuare, valutare e conservare da subito gli elementi utili all’analisi della condotta, dell’evento, del nesso causale, della responsabilità e dei profili risarcitori.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="glass-card editorial-section" id="contatti">
+          <button class="section-trigger" type="button" aria-expanded="false">
+            <span class="card-icon" aria-hidden="true"><img src="icona-contatti.png" alt=""></span>
+            <span class="section-head-copy">
+              <span class="section-title">Contatti</span>
+            </span>
+            <span class="section-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="section-content">
+            <div class="section-content-inner">
+              <div class="section-richtext">
+                <p>Per sottopormi una pratica è necessario inviarmi preliminarmente via email la documentazione disponibile, accompagnata da una sintetica esposizione dei fatti e da ogni ulteriore informazione ritenuta utile alla comprensione del caso. Nella comunicazione è opportuno indicare anche lo stato attuale della pratica e i propri recapiti.</p>
+                <p>Esaminerò la documentazione ricevuta per valutare se il caso rientri nell’ambito della mia attività e se vi siano le condizioni per un mio eventuale intervento. Terminata questa valutazione preliminare, qualora ritenga che vi siano le condizioni per approfondire il caso, provvederò a ricontattare l’interessato via email per concordare come procedere e gli eventuali successivi contatti.</p>
+                <p>Telefonate e appuntamenti vengono pertanto concordati soltanto dopo l’esame preliminare della documentazione.</p>
+                <div class="contact-lines">
+                  <p><strong>Attuali sedi di incontro:</strong><br>
+                    Thiene (VI), via Marco Corner n. 9, presso lo Studio Legale Corner - <a href="https://studiolegalecorner.it" target="_blank" rel="noopener noreferrer" style="color: inherit;">studiolegalecorner.it</a><br>
+                    Rovigo, via Giovanni Amendola n. 51.<br>
+                    Qualora le esigenze del caso lo richiedano, gli incontri potranno essere concordati anche in altra sede.
+                  </p>
+                  <p><strong>Email:</strong> <a href="mailto:gabriele.berto@gmail.com" style="color: inherit;">gabriele.berto@gmail.com</a><br>
+                    <strong>PEC:</strong> <a href="mailto:gabriele.berto@pec.it" style="color: inherit;">gabriele.berto@pec.it</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <script>
+      (() => {
+        if (!document.documentElement.classList.contains("mobile-reset-pending")) return;
+
+        document.querySelectorAll(".editorial-section.is-open, .editorial-section.is-section-active")
+          .forEach(card => {
+            card.classList.remove("is-open", "is-section-active", "is-closing", "is-animating");
+          });
+
+        document.querySelectorAll(".section-trigger[aria-expanded=\"true\"]")
+          .forEach(trigger => trigger.setAttribute("aria-expanded", "false"));
+      })();
+    </script>
+
+  </main>
+
+  
+  <script>
+    const mobileLayoutMedia = window.matchMedia("(max-width: 900px)");
+
+    mobileLayoutMedia.addEventListener("change", () => {
+      const contentActive = document.body.classList.contains("content-entered")
+        || document.body.classList.contains("mobile-content");
+      const sectionHash = /^#(profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/.test(window.location.hash)
+        ? window.location.hash
+        : "#contenuti";
+
+      history.replaceState(
+        null,
+        "",
+        contentActive
+          ? `${window.location.pathname}${window.location.search}${sectionHash}`
+          : `${window.location.pathname}${window.location.search}#intro`
+      );
+
+      window.location.reload();
+    });
+
+    if (mobileLayoutMedia.matches) {
+      const video = document.getElementById("bgVideo");
+      const playButton = document.getElementById("playVideo");
+      const discoverButton = document.getElementById("discoverBtn");
+      const siteHeader = document.getElementById("siteHeader");
+      const headerBrand = document.querySelector(".header-brand");
+      const menuToggle = document.getElementById("menuToggle");
+      const glassMenu = document.getElementById("glassMenu");
+      const sectionCards = Array.from(document.querySelectorAll(".editorial-section"));
+      const sectionTriggers = Array.from(document.querySelectorAll(".section-trigger"));
+      const validSectionIds = new Set(sectionCards.map(card => card.id));
+
+      sectionCards.forEach(card => {
+        const inner = card.querySelector(".section-content-inner");
+        if (!inner || inner.querySelector(".section-mobile-ellipsis")) return;
+        const ellipsis = document.createElement("span");
+        ellipsis.className = "section-mobile-ellipsis";
+        ellipsis.textContent = "...";
+        ellipsis.setAttribute("aria-hidden", "true");
+        inner.appendChild(ellipsis);
+      });
+
+      const mobileLabels = [
+        "Home",
+        "Formazione",
+        "Ambito di intervento",
+        "Seconda valutazione",
+        "Rapporto diretto",
+        "Consigli utili",
+        "Contatti"
+      ];
+
+      Array.from(glassMenu.querySelectorAll("a")).forEach((link, index) => {
+        if (mobileLabels[index]) link.textContent = mobileLabels[index];
+      });
+
+      const mobileTitle = document.querySelector(".intro-title");
+      mobileTitle.innerHTML = `
+        <span class="white-line">competenze</span>
+        <span class="white-line">tecniche e giuridiche</span>
+        <span class="gold-line">incidenti stradali e</span>
+        <span class="gold-line">infortuni sul lavoro</span>
+      `;
+
+      const mobileRole = document.querySelector(".intro-role");
+      mobileRole.innerHTML = "Abogado e Dottore Magistrale in<br>Ingegneria Meccanica";
+
+      video.poster = "hero-poster-mobile.png";
+
+      let activeCard = null;
+      let resizeFrame = null;
+      let menuNavigationBusy = false;
+
+      const navigationEntry = performance.getEntriesByType("navigation")[0];
+      const mobilePageWasReloaded = navigationEntry
+        ? navigationEntry.type === "reload"
+        : performance.navigation?.type === 1;
+
+      function revealResetMobileContent() {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            document.documentElement.classList.remove("mobile-reset-pending");
+          });
+        });
+      }
+
+      const wait = milliseconds => new Promise(resolve => {
+        window.setTimeout(resolve, milliseconds);
+      });
+
+      async function startVideo() {
+        if (document.body.classList.contains("mobile-content")) return;
+
+        try {
+          video.muted = true;
+          await video.play();
+          document.documentElement.classList.add("video-ok");
+          document.documentElement.classList.remove("video-blocked");
+        } catch (error) {
+          document.documentElement.classList.add("video-blocked");
+        }
+      }
+
+      function pauseVideo() {
+        video.pause();
+      }
+
+      function closeMobileMenu() {
+        glassMenu.classList.remove("is-open");
+        menuToggle.setAttribute("aria-expanded", "false");
+      }
+
+      function syncMenuWithOpenCards() {
+        const openSectionIds = new Set(
+          sectionCards
+            .filter(card => card.classList.contains("is-open"))
+            .map(card => card.id)
+        );
+
+        glassMenu.querySelectorAll("a").forEach(link => {
+          const destination = link.getAttribute("href") || "";
+          const sectionId = destination.replace(/^#/, "");
+          const isOpenSection = validSectionIds.has(sectionId)
+            && openSectionIds.has(sectionId);
+
+          link.classList.toggle("is-current", isOpenSection);
+          link.removeAttribute("aria-current");
+
+          if (validSectionIds.has(sectionId)) {
+            link.setAttribute("aria-expanded", String(isOpenSection));
+          } else {
+            link.removeAttribute("aria-expanded");
+          }
+        });
+      }
+
+      function toggleMobileMenu() {
+        const willOpen = !glassMenu.classList.contains("is-open");
+        if (willOpen) syncMenuWithOpenCards();
+        glassMenu.classList.toggle("is-open", willOpen);
+        menuToggle.setAttribute("aria-expanded", String(willOpen));
+      }
+
+      function waitForScrollToSettle(timeout = 1100) {
+        return new Promise(resolve => {
+          const startedAt = performance.now();
+          let lastY = window.scrollY;
+          let stableFrames = 0;
+
+          function check() {
+            const currentY = window.scrollY;
+            if (Math.abs(currentY - lastY) < .5) {
+              stableFrames += 1;
+            } else {
+              stableFrames = 0;
+              lastY = currentY;
+            }
+
+            if (stableFrames >= 5 || performance.now() - startedAt >= timeout) {
+              resolve();
+              return;
+            }
+
+            window.requestAnimationFrame(check);
+          }
+
+          window.requestAnimationFrame(check);
+        });
+      }
+
+      function getClosedContentHeight(card) {
+        const trigger = card.querySelector(".section-trigger");
+        if (!trigger) return 0;
+
+        const cardWidth = card.getBoundingClientRect().width;
+        const targetCardHeight = Math.round(cardWidth * (10 / 17));
+        const triggerHeight = trigger.getBoundingClientRect().height;
+        const closedContentHeight = targetCardHeight - triggerHeight - 2;
+
+        return Math.max(92, Math.round(closedContentHeight));
+      }
+
+      function hideMobileEllipsis(card) {
+        const ellipsis = card.querySelector(".section-mobile-ellipsis");
+        const richtext = card.querySelector(".section-richtext");
+        if (ellipsis) {
+          ellipsis.classList.remove("is-visible", "is-measuring");
+          ellipsis.style.removeProperty("left");
+          ellipsis.style.removeProperty("top");
+        }
+        if (richtext) {
+          richtext.style.removeProperty("clip-path");
+          richtext.style.removeProperty("-webkit-clip-path");
+        }
+      }
+
+      function updateMobileEllipsis(card) {
+        const content = card.querySelector(".section-content");
+        const inner = card.querySelector(".section-content-inner");
+        const richtext = card.querySelector(".section-richtext");
+        const ellipsis = card.querySelector(".section-mobile-ellipsis");
+        if (!content || !inner || !richtext || !ellipsis) return;
+
+        hideMobileEllipsis(card);
+
+        if (
+          card.classList.contains("is-open") ||
+          card.classList.contains("is-mobile-opening") ||
+          card.classList.contains("is-mobile-closing")
+        ) return;
+
+        const contentRect = content.getBoundingClientRect();
+        const innerRect = inner.getBoundingClientRect();
+        const richtextRect = richtext.getBoundingClientRect();
+        const richtextStyle = window.getComputedStyle(richtext);
+        const paddingTop = parseFloat(richtextStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(richtextStyle.paddingRight) || 0;
+        const visibleTop = contentRect.top + paddingTop - .5;
+        const visibleBottom = contentRect.bottom - 2;
+        const visibleRight = contentRect.right - paddingRight;
+
+        ellipsis.classList.add("is-measuring");
+        const ellipsisWidth = ellipsis.getBoundingClientRect().width;
+        ellipsis.classList.remove("is-measuring");
+
+        const visibleWords = [];
+        const walker = document.createTreeWalker(
+          richtext,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          for (const match of node.data.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(node, match.index);
+            range.setEnd(node, match.index + match[0].length);
+            const rect = range.getBoundingClientRect();
+
+            if (
+              rect.width > 0 &&
+              rect.height > 0 &&
+              rect.top >= visibleTop &&
+              rect.bottom <= visibleBottom &&
+              rect.left >= richtextRect.left - .5 &&
+              rect.right <= visibleRight + .5
+            ) {
+              visibleWords.push(rect);
+            }
+          }
+          node = walker.nextNode();
+        }
+
+        if (!visibleWords.length) return;
+
+        const lines = [];
+        visibleWords.forEach(rect => {
+          const currentLine = lines[lines.length - 1];
+          if (!currentLine || Math.abs(currentLine.top - rect.top) > 2) {
+            lines.push({ top: rect.top, bottom: rect.bottom, words: [rect] });
+          } else {
+            currentLine.bottom = Math.max(currentLine.bottom, rect.bottom);
+            currentLine.words.push(rect);
+          }
+        });
+
+        let lastVisibleWord = null;
+        let selectedLine = null;
+
+        for (let lineIndex = lines.length - 1; lineIndex >= 0 && !lastVisibleWord; lineIndex -= 1) {
+          const line = lines[lineIndex];
+          for (let wordIndex = line.words.length - 1; wordIndex >= 0; wordIndex -= 1) {
+            const word = line.words[wordIndex];
+            if (word.right + 2 + ellipsisWidth <= visibleRight + .5) {
+              lastVisibleWord = word;
+              selectedLine = line;
+              break;
+            }
+          }
+        }
+
+        if (!lastVisibleWord || !selectedLine) return;
+
+        const lineTop = Math.max(0, selectedLine.top - richtextRect.top);
+        const lineBottom = Math.max(lineTop, selectedLine.bottom - richtextRect.top);
+        const textEnd = Math.max(0, lastVisibleWord.right - richtextRect.left);
+        const clipPath = `polygon(0 0, 100% 0, 100% ${lineTop}px, ${textEnd}px ${lineTop}px, ${textEnd}px ${lineBottom}px, 0 ${lineBottom}px)`;
+
+        richtext.style.clipPath = clipPath;
+        richtext.style.webkitClipPath = clipPath;
+
+        ellipsis.style.left = `${lastVisibleWord.right - innerRect.left + 2}px`;
+        ellipsis.style.top = `${selectedLine.top - innerRect.top}px`;
+        ellipsis.classList.add("is-visible");
+      }
+
+      function measureMobileOpenContentHeight(card, inner) {
+        if (!card || !inner) return 0;
+
+        card.classList.add("is-mobile-open-measuring");
+        const measuredHeight = inner.scrollHeight;
+        card.classList.remove("is-mobile-open-measuring");
+
+        /* 0220 - reset tecnico dello spazio tra i capoversi.
+           Dopo la misurazione (che usa 15 px senza transizione), imponiamo
+           e consolidiamo realmente lo stato chiuso a 0 px, sempre senza
+           transizione. Poi ripristiniamo la normale transizione restando
+           ancora a 0 px: solo a questo punto l'apertura potrà interpolare
+           in modo morbido da 0 a 15 px. */
+        card.classList.add("is-mobile-gap-reset");
+        void inner.offsetHeight;
+        card.classList.remove("is-mobile-gap-reset");
+        void inner.offsetHeight;
+
+        return measuredHeight;
+      }
+
+      function getMobileOpeningMotion(travel) {
+        const distance = Math.max(0, travel);
+        const cruiseSpeed = 900;          // px/s: uguale per ogni riquadro
+        const rampDuration = 180;         // ms: accelerazione e rallentamento fissi
+        const rampSeconds = rampDuration / 1000;
+        const fullRampDistance = cruiseSpeed * rampSeconds;
+
+        if (distance <= 1) {
+          return {
+            duration: 0,
+            easing: "linear"
+          };
+        }
+
+        let peakSpeed = cruiseSpeed;
+        let cruiseDuration = 0;
+
+        /* Se il percorso è molto corto non esiste una vera fase centrale:
+           manteniamo comunque la stessa durata delle due rampe, riducendo
+           soltanto la velocità di picco. Nei normali riquadri del sito la
+           distanza è sufficiente per raggiungere la velocità di crociera. */
+        if (distance < fullRampDistance) {
+          peakSpeed = distance / rampSeconds;
+        } else {
+          cruiseDuration =
+            ((distance - fullRampDistance) / cruiseSpeed) * 1000;
+        }
+
+        const duration = Math.round(
+          (rampDuration * 2) + cruiseDuration
+        );
+
+        /* Costruiamo una curva "linear()" a tratti che approssima un moto
+           con accelerazione costante, tratto centrale a velocità costante
+           e decelerazione costante. Le rampe restano SEMPRE 180 ms,
+           indipendentemente dalla lunghezza del riquadro. */
+        const rampDistance = .5 * peakSpeed * rampSeconds;
+        const totalDuration = Math.max(1, duration);
+        const accelEndX = rampDuration / totalDuration;
+        const decelStartX = 1 - accelEndX;
+
+        const stops = [{ x: 0, y: 0 }];
+        const subdivisions = 4;
+
+        for (let index = 1; index <= subdivisions; index += 1) {
+          const q = index / subdivisions;
+          const x = accelEndX * q;
+          const y = (rampDistance * q * q) / distance;
+          stops.push({ x, y });
+        }
+
+        if (cruiseDuration > 0) {
+          stops.push({
+            x: decelStartX,
+            y: (distance - rampDistance) / distance
+          });
+        }
+
+        for (let index = 1; index <= subdivisions; index += 1) {
+          const q = index / subdivisions;
+          const x = decelStartX + accelEndX * q;
+          const remainingRamp = rampDistance * (1 - q) * (1 - q);
+          const y = (distance - remainingRamp) / distance;
+          stops.push({ x, y });
+        }
+
+        /* Elimina eventuali duplicati prodotti nel caso senza crociera. */
+        const filteredStops = [];
+        stops.forEach(stop => {
+          const previous = filteredStops[filteredStops.length - 1];
+          if (
+            previous
+            && Math.abs(previous.x - stop.x) < .000001
+          ) {
+            previous.y = Math.max(previous.y, stop.y);
+            return;
+          }
+          filteredStops.push(stop);
+        });
+
+        const profile = filteredStops
+          .map((stop, index) => {
+            const y = Math.min(1, Math.max(0, stop.y));
+            if (index === 0 || index === filteredStops.length - 1) {
+              return y.toFixed(6);
+            }
+            const xPercent =
+              Math.min(100, Math.max(0, stop.x * 100)).toFixed(4);
+            return `${y.toFixed(6)} ${xPercent}%`;
+          })
+          .join(", ");
+
+        const easing = (
+          window.CSS
+          && CSS.supports
+          && CSS.supports(
+            "transition-timing-function",
+            "linear(0, 0.5 50%, 1)"
+          )
+        )
+          ? `linear(${profile})`
+          : "linear";
+
+        return {
+          duration,
+          easing
+        };
+      }
+
+      function setCardHeight(card, isOpen, animate = true) {
+        const content = card.querySelector(".section-content");
+        const inner = card.querySelector(".section-content-inner");
+        if (!content || !inner) return;
+
+        hideMobileEllipsis(card);
+
+        const currentHeight = content.getBoundingClientRect().height;
+
+        /* In apertura misuriamo l'altezza finale con i normali capoversi
+           e con l'intero testo realmente disponibile. La classe di misura
+           neutralizza anche il ritaglio height:100% dello stato chiuso. */
+        const targetHeight = isOpen
+          ? measureMobileOpenContentHeight(card, inner)
+          : getClosedContentHeight(card);
+
+        const travel = Math.abs(targetHeight - currentHeight);
+        const openingMotion = isOpen
+          ? getMobileOpeningMotion(travel)
+          : null;
+        const duration = isOpen
+          ? openingMotion.duration
+          : Math.round(
+              Math.max(720, Math.min(1150, 620 + Math.sqrt(travel) * 9))
+            );
+        const easing = isOpen
+          ? openingMotion.easing
+          : "cubic-bezier(.4, 0, .2, 1)";
+        const visualDuration = Math.round(Math.max(520, Math.min(760, duration * .66)));
+        const chevronDuration = Math.round(Math.max(520, Math.min(760, duration * .62)));
+
+        card.style.setProperty("--mobile-section-duration", `${duration}ms`);
+        card.style.setProperty("--mobile-section-easing", easing);
+        card.style.setProperty("--mobile-section-visual-duration", `${visualDuration}ms`);
+        card.style.setProperty("--mobile-chevron-duration", `${chevronDuration}ms`);
+
+        /* Da qui in poi la procedura di apertura resta quella della 0196:
+           altezza corrente congelata, cambio di stato, poi animazione verso
+           la quota finale. */
+        content.style.transition = "none";
+        content.style.height = `${currentHeight}px`;
+        void content.offsetHeight;
+
+        card.classList.toggle("is-mobile-opening", isOpen && animate);
+        card.classList.toggle("is-mobile-closing", !isOpen && animate);
+        card.classList.toggle("is-open", isOpen);
+        card.classList.toggle("is-section-active", isOpen);
+        card.querySelector(".section-trigger")?.setAttribute("aria-expanded", String(isOpen));
+        syncMenuWithOpenCards();
+
+        content.style.transition = animate ? "" : "none";
+        void content.offsetHeight;
+        content.style.height = `${targetHeight}px`;
+
+        const finish = event => {
+          /* transitionend dei margini dei capoversi risale fino a content:
+             lo ignoriamo e terminiamo solo quando è davvero finita
+             l'animazione dell'altezza del riquadro. */
+          if (
+            event
+            && (event.target !== content || event.propertyName !== "height")
+          ) {
+            return;
+          }
+
+          content.removeEventListener("transitionend", finish);
+
+          if (card.classList.contains("is-open")) {
+            content.style.height = "auto";
+          }
+
+          card.classList.remove("is-mobile-opening", "is-mobile-closing");
+
+          if (!card.classList.contains("is-open")) {
+            updateMobileEllipsis(card);
+          }
+
+          content.style.removeProperty("transition");
+        };
+
+        if (animate) {
+          content.addEventListener("transitionend", finish);
+        } else {
+          finish();
+        }
+
+        return animate ? duration : 0;
+      }
+
+      function scrollCardBelowHeader(card, behavior = "smooth") {
+        const headerHeight = siteHeader.getBoundingClientRect().height || 76;
+        const top = window.scrollY + card.getBoundingClientRect().top - headerHeight - 11;
+        window.scrollTo({ top: Math.max(0, top), behavior });
+      }
+
+      async function scrollCardBelowHeaderAndWait(card) {
+        scrollCardBelowHeader(card, "smooth");
+        await waitForScrollToSettle();
+      }
+
+      function openOnly(card, { animate = true, scroll = true } = {}) {
+        if (!card) return;
+
+        sectionCards.forEach(section => {
+          const shouldOpen = section === card;
+          if (section.classList.contains("is-open") !== shouldOpen) {
+            setCardHeight(section, shouldOpen, animate);
+          } else {
+            section.classList.toggle("is-section-active", shouldOpen);
+            section.querySelector(".section-trigger")?.setAttribute(
+              "aria-expanded",
+              String(shouldOpen)
+            );
+          }
+        });
+
+        activeCard = card;
+
+        if (scroll) {
+          window.setTimeout(() => scrollCardBelowHeader(card), animate ? 520 : 0);
+        }
+      }
+
+      function closeCard(card) {
+        if (!card?.classList.contains("is-open")) return;
+        setCardHeight(card, false, true);
+        if (activeCard === card) activeCard = null;
+      }
+
+      function showHome({ updateHistory = true } = {}) {
+        closeMobileMenu();
+        syncMenuWithOpenCards();
+        document.body.classList.remove("mobile-content", "content-entered");
+        document.body.classList.add("mobile-home");
+        document.documentElement.classList.add("intro-scroll-locked");
+        window.scrollTo(0, 0);
+        if (updateHistory) history.replaceState(null, "", "#intro");
+        startVideo();
+      }
+
+      function closeAllCards({ animate = false } = {}) {
+        let closedCount = 0;
+        let maxDuration = 0;
+        sectionCards.forEach(card => {
+          if (card.classList.contains("is-open")) {
+            closedCount += 1;
+            const duration = setCardHeight(card, false, animate) || 0;
+            maxDuration = Math.max(maxDuration, duration);
+          } else {
+            card.classList.remove("is-section-active");
+            card.querySelector(".section-trigger")?.setAttribute("aria-expanded", "false");
+          }
+        });
+        activeCard = null;
+        syncMenuWithOpenCards();
+        return { closedCount, maxDuration };
+      }
+
+      function showContent(targetId = null, { updateHistory = true } = {}) {
+        pauseVideo();
+        document.body.classList.add("mobile-intro-complete");
+
+        const targetCard = validSectionIds.has(targetId)
+          ? document.getElementById(targetId)
+          : null;
+
+        closeMobileMenu();
+        document.documentElement.classList.remove(
+          "intro-scroll-locked",
+          "content-top-scroll-locked"
+        );
+        document.body.classList.remove("mobile-home", "content-top-body-locked");
+        document.body.style.removeProperty("top");
+        document.body.classList.add("mobile-content", "content-entered");
+
+        if (targetCard) {
+          openOnly(targetCard, { animate: false, scroll: false });
+        } else {
+          closeAllCards({ animate: false });
+        }
+
+        window.scrollTo(0, 0);
+
+        syncMenuWithOpenCards();
+
+        if (updateHistory) {
+          history.replaceState(null, "", targetCard ? `#${targetCard.id}` : "#contenuti");
+        }
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            refreshMobileHeights();
+            if (targetCard && targetCard.id !== "profilo") {
+              scrollCardBelowHeader(targetCard, "auto");
+            }
+          });
+        });
+        window.setTimeout(refreshMobileHeights, 120);
+      }
+
+      function refreshMobileHeights() {
+        sectionCards.forEach(card => {
+          const content = card.querySelector(".section-content");
+          if (!content) return;
+          content.style.transition = "none";
+          content.style.height = card.classList.contains("is-open")
+            ? "auto"
+            : `${getClosedContentHeight(card)}px`;
+          content.style.removeProperty("transition");
+          hideMobileEllipsis(card);
+        });
+
+        sectionCards.forEach(card => {
+          if (!card.classList.contains("is-open")) {
+            updateMobileEllipsis(card);
+          }
+        });
+      }
+
+      discoverButton.classList.add("is-ready");
+      discoverButton.addEventListener("click", () => showContent());
+
+      headerBrand.addEventListener("click", event => {
+        event.preventDefault();
+        showHome();
+      });
+
+      menuToggle.addEventListener("click", toggleMobileMenu);
+
+      document.addEventListener("click", event => {
+        if (!glassMenu.classList.contains("is-open")) return;
+        if (glassMenu.contains(event.target) || menuToggle.contains(event.target)) return;
+        closeMobileMenu();
+      });
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeMobileMenu();
+      });
+
+      glassMenu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", async event => {
+          event.preventDefault();
+          if (menuNavigationBusy) return;
+
+          const destination = link.getAttribute("href");
+
+          if (destination === "#intro") {
+            showHome();
+            return;
+          }
+
+          const targetCard = document.querySelector(destination);
+          if (!targetCard) return;
+
+          menuNavigationBusy = true;
+          menuToggle.disabled = true;
+
+          try {
+            closeMobileMenu();
+            await wait(260);
+
+            document.body.classList.add("mobile-content", "content-entered");
+            document.body.classList.remove("mobile-home");
+            document.documentElement.classList.remove("intro-scroll-locked");
+
+            const { closedCount, maxDuration } = closeAllCards({ animate: true });
+            if (closedCount > 0) {
+              await wait(maxDuration + 60);
+              refreshMobileHeights();
+            }
+
+            await scrollCardBelowHeaderAndWait(targetCard);
+
+            setCardHeight(targetCard, true, true);
+            activeCard = targetCard;
+            syncMenuWithOpenCards();
+            history.replaceState(null, "", destination);
+          } finally {
+            menuToggle.disabled = false;
+            menuNavigationBusy = false;
+          }
+        });
+      });
+
+      sectionTriggers.forEach(trigger => {
+        trigger.addEventListener("click", () => {
+          const card = trigger.closest(".editorial-section");
+          if (!card) return;
+
+          if (card.classList.contains("is-open")) {
+            closeCard(card);
+          } else {
+            setCardHeight(card, true, true);
+            activeCard = card;
+          }
+
+          const destination = `#${card.id}`;
+          syncMenuWithOpenCards();
+          history.replaceState(null, "", destination);
+        });
+      });
+
+      window.addEventListener("resize", () => {
+        if (resizeFrame !== null) window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = window.requestAnimationFrame(() => {
+          resizeFrame = null;
+          refreshMobileHeights();
+        });
+      });
+
+      window.addEventListener("pageshow", () => {
+        if (mobilePageWasReloaded && document.body.classList.contains("mobile-content")) {
+          showContent(null, { updateHistory: true });
+          revealResetMobileContent();
+          return;
+        }
+        refreshMobileHeights();
+        document.documentElement.classList.remove("mobile-reset-pending");
+      });
+
+      window.addEventListener("load", () => {
+        refreshMobileHeights();
+        startVideo();
+      });
+
+      playButton.addEventListener("click", startVideo);
+      document.addEventListener("pointerdown", startVideo, { once: true });
+
+      const requestedId = window.location.hash.replace(/^#/, "");
+      const reloadedInsideContent = mobilePageWasReloaded
+        && (validSectionIds.has(requestedId) || requestedId === "contenuti");
+
+      if (reloadedInsideContent) {
+        showContent(null, { updateHistory: true });
+        revealResetMobileContent();
+      } else if (validSectionIds.has(requestedId)) {
+        showContent(requestedId, { updateHistory: false });
+      } else if (requestedId === "contenuti") {
+        showContent(null, { updateHistory: false });
+      } else {
+        showHome({ updateHistory: false });
+      }
+
+      refreshMobileHeights();
+      syncMenuWithOpenCards();
+      if (!reloadedInsideContent) {
+        document.documentElement.classList.remove("mobile-reset-pending");
+      }
+
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(refreshMobileHeights);
+      }
+    } else {
+      const video = document.getElementById("bgVideo");
+      const playButton = document.getElementById("playVideo");
+      const discoverButton = document.getElementById("discoverBtn");
+      const siteHeader = document.getElementById("siteHeader");
+      const headerBrand = document.querySelector(".header-brand");
+      const introContent = document.querySelector(".intro-content");
+      const menuToggle = document.getElementById("menuToggle");
+      const glassMenu = document.getElementById("glassMenu");
+      const contentSection = document.getElementById("contenuti");
+      const profileCard = document.getElementById("profilo");
+      const contactsCard = document.getElementById("contatti");
+      const sectionCards = Array.from(document.querySelectorAll(".editorial-section"));
+      const sectionTriggers = Array.from(document.querySelectorAll(".section-trigger"));
+      const editorialShell = document.getElementById("editorialShell");
+      const validDesktopSectionIds = new Set(sectionCards.map(card => card.id));
+
+      let desktopSelectedCard = null;
+      let desktopGridPlaceholder = null;
+      let desktopGridBaseHeight = 0;
+      let desktopFocusSourceRect = null;
+      let desktopFocusAnimating = false;
+      let desktopFocusTimer = null;
+      let desktopTitleLayoutTimer = null;
+      let desktopCompactPreviewTimer = null;
+
+      const blockedScrollKeys = new Set([
+        "ArrowDown", "ArrowUp", "PageDown", "PageUp",
+        "Home", "End", " ", "Space", "Spacebar"
+      ]);
+
+      let pageMode = document.documentElement.classList.contains("intro-scroll-locked")
+        ? "home"
+        : "content";
+      let enteringContent = false;
+      let returningHome = false;
+      let touchStartY = null;
+      let touchReturnGestureHandled = false;
+      let returnHomeArmed = false;
+      let wheelTopStepCount = 0;
+      const wheelTopStepsRequired = 10;
+      let contentTopLocked = false;
+      let contentTopLockY = 0;
+
+      let pointerX = -1;
+      let pointerY = -1;
+      let pointerCard = null;
+      let pointerUpdateFrame = null;
+      let menuSelectedCard = null;
+      let menuCloseTimer = null;
+      let menuPointerGuard = false;
+      let menuExitX = -1;
+      let menuExitY = -1;
+      let menuNavigationFrame = null;
+      let menuNavigationResolve = null;
+      let menuNavigationSequence = 0;
+      const sectionAnimationStates = new WeakMap();
+
+      const hoverMenuMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
+      const menuToggleCloseDelay = 600;
+      const menuPanelCloseDelay = 180;
+      const menuPointerReleaseDistance = 18;
+      const sectionMotionMinAnimationMs = 620;
+      const sectionMotionMaxAnimationMs = 2600;
+      const sectionOpenPixelsPerSecond = 900;
+      const sectionClosePixelsPerSecond = 800;
+      const sectionMotionBaseAnimationMs = 420;
+      const sectionAnimationBufferMs = 34;
+      const menuScrollMinAnimationMs = 560;
+      const menuScrollMaxAnimationMs = 1900;
+      const menuScrollPixelsPerSecond = 1550;
+      const menuScrollBaseAnimationMs = 250;
+
+      setupDesktopGridLayout();
+
+      function clamp(value, minimum, maximum) {
+        return Math.min(maximum, Math.max(minimum, value));
+      }
+
+      function getSectionMotionAnimationMs(motionDistance, isOpen) {
+        const pixelsPerSecond = isOpen
+          ? sectionOpenPixelsPerSecond
+          : sectionClosePixelsPerSecond;
+        const duration = sectionMotionBaseAnimationMs
+          + (Math.max(0, motionDistance) / pixelsPerSecond) * 1000;
+
+        return Math.round(clamp(
+          duration,
+          sectionMotionMinAnimationMs,
+          sectionMotionMaxAnimationMs
+        ));
+      }
+
+      function getMenuScrollAnimationMs(scrollDistance) {
+        const duration = menuScrollBaseAnimationMs
+          + (Math.abs(scrollDistance) / menuScrollPixelsPerSecond) * 1000;
+
+        return Math.round(clamp(
+          duration,
+          menuScrollMinAnimationMs,
+          menuScrollMaxAnimationMs
+        ));
+      }
+
+      function setHomeScrollLock(locked) {
+        if (locked) unlockContentTop();
+        document.documentElement.classList.toggle("intro-scroll-locked", locked);
+      }
+
+      function getOpenSection() {
+        return sectionCards.find(card => card.classList.contains("is-open")) || profileCard;
+      }
+
+      function getSectionPreviewHeight(card) {
+        const firstParagraph = card?.querySelector(".section-richtext > p:first-child");
+        if (!firstParagraph) return 0;
+
+        const computedStyle = window.getComputedStyle(firstParagraph);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+        return Number.isFinite(lineHeight) ? lineHeight : 0;
+      }
+
+      function updateSectionPreviewHeights() {
+        sectionCards.forEach(card => {
+          const previewHeight = getSectionPreviewHeight(card);
+          if (previewHeight > 0) {
+            card.style.setProperty("--section-preview-height", `${previewHeight}px`);
+          }
+        });
+      }
+
+      function setSectionOpen(
+        card,
+        isOpen,
+        {
+          activateImmediately = true,
+          activateAtEnd = false,
+          preserveScrollTop = null
+        } = {}
+      ) {
+        if (!card) return 0;
+
+        const currentlyOpen = card.classList.contains("is-open");
+
+        if (currentlyOpen === isOpen) {
+          if (isOpen && activateImmediately) {
+            card.classList.add("is-section-active");
+          }
+          return 0;
+        }
+
+        const trigger = card.querySelector(".section-trigger");
+        const content = card.querySelector(".section-content");
+        const contentInner = card.querySelector(".section-content-inner");
+
+        if (!trigger || !content || !contentInner) return 0;
+
+        let animationState = sectionAnimationStates.get(card);
+        if (!animationState) {
+          animationState = {
+            sequence: 0,
+            timer: null,
+            frame: null
+          };
+          sectionAnimationStates.set(card, animationState);
+        }
+
+        animationState.sequence += 1;
+        const animationSequence = animationState.sequence;
+
+        if (animationState.timer !== null) {
+          window.clearTimeout(animationState.timer);
+          animationState.timer = null;
+        }
+
+        if (animationState.frame !== null) {
+          window.cancelAnimationFrame(animationState.frame);
+          animationState.frame = null;
+        }
+
+        /* Se il comando arriva durante un movimento, l'altezza visibile
+           corrente diventa il nuovo punto di partenza. La transizione in
+           corso viene fermata su quel fotogramma e riparte subito nella
+           direzione opposta, senza attendere il completamento precedente. */
+        const contentStartHeight = content.getBoundingClientRect().height;
+        content.style.transition = "none";
+        content.style.height = `${contentStartHeight}px`;
+        void content.offsetHeight;
+
+        /* Prima di misurare l’altezza finale di apertura, il primo
+           capoverso viene portato nello stesso assetto multilinea usato
+           durante l’animazione. In questo modo il valore finale coincide
+           già con l’altezza reale del contenuto aperto e non è necessario
+           alcun assestamento visibile al termine del movimento. */
+        card.classList.add("is-animating");
+
+        const closedPreviewHeight = getSectionPreviewHeight(card);
+        const contentEndHeight = isOpen
+          ? contentInner.getBoundingClientRect().height
+          : closedPreviewHeight;
+        const motionDistance = Math.abs(contentEndHeight - contentStartHeight);
+        const animationDuration = getSectionMotionAnimationMs(
+          motionDistance,
+          isOpen
+        );
+        const shouldPreserveScrollTop = !isOpen
+          && Number.isFinite(preserveScrollTop);
+
+        /* La durata viene impostata prima del cambio di stato, così apertura
+           e attivazione visiva iniziano nello stesso fotogramma e terminano
+           insieme anche per i riquadri di altezza diversa. */
+        card.style.setProperty(
+          "--section-runtime-duration",
+          `${animationDuration}ms`
+        );
+
+        card.classList.remove("is-closing", "is-opening");
+        if (isOpen) {
+          card.classList.remove("is-menu-batch-closing");
+        }
+        card.classList.add(isOpen ? "is-opening" : "is-closing");
+
+        if (isOpen) {
+          if (activateImmediately && !activateAtEnd) {
+            card.classList.add("is-section-active");
+          } else {
+            card.classList.remove("is-section-active");
+          }
+          card.classList.add("is-open");
+        } else {
+          card.classList.remove("is-open");
+        }
+
+        trigger.setAttribute("aria-expanded", String(isOpen));
+
+        if (shouldPreserveScrollTop) {
+          reserveEndScrollSpaceForClosing(
+            preserveScrollTop,
+            motionDistance
+          );
+          setScrollTopInstant(preserveScrollTop);
+        }
+
+        content.style.removeProperty("transition");
+        void content.offsetHeight;
+
+        animationState.frame = window.requestAnimationFrame(() => {
+          animationState.frame = null;
+          if (animationState.sequence !== animationSequence) return;
+          content.style.height = `${contentEndHeight}px`;
+        });
+
+        const finishAnimation = () => {
+          if (animationState.sequence !== animationSequence) return;
+
+          animationState.timer = null;
+          content.style.removeProperty("transition");
+          content.style.removeProperty("height");
+          card.classList.remove("is-animating");
+          card.classList.remove("is-closing");
+          card.classList.remove("is-opening");
+          card.classList.remove("is-menu-batch-closing");
+          card.style.removeProperty("--section-runtime-duration");
+
+          if (isOpen) {
+            if (activateAtEnd || activateImmediately) {
+              card.classList.add("is-section-active");
+            }
+          } else {
+            card.classList.remove("is-section-active");
+          }
+
+          if (shouldPreserveScrollTop) {
+            setScrollTopInstant(preserveScrollTop);
+            updateEndScrollSpace();
+
+            window.requestAnimationFrame(() => {
+              if (animationState.sequence !== animationSequence) return;
+              setScrollTopInstant(preserveScrollTop);
+            });
+          } else {
+            updateEndScrollSpace();
+          }
+        };
+
+        animationState.timer = window.setTimeout(
+          finishAnimation,
+          animationDuration + sectionAnimationBufferMs
+        );
+
+        if (!shouldPreserveScrollTop) {
+          updateEndScrollSpace();
+        }
+        return animationDuration;
+      }
+
+      function openSection(card) {
+        setSectionOpen(card, true);
+      }
+
+      function toggleSection(card, options = {}) {
+        if (!card) return;
+        setSectionOpen(
+          card,
+          !card.classList.contains("is-open"),
+          options
+        );
+      }
+
+      function activateSection(card, { scroll = false, behavior = "smooth" } = {}) {
+        if (!card) return;
+
+        openSection(card);
+
+        if (scroll) {
+          const targetTop = getCardTargetTop(card);
+          window.scrollTo({ top: targetTop, behavior });
+        }
+      }
+
+      function waitForLayoutFrames(frameCount = 2) {
+        return new Promise(resolve => {
+          function waitFrame(remainingFrames) {
+            if (remainingFrames <= 0) {
+              resolve();
+              return;
+            }
+
+            window.requestAnimationFrame(() => {
+              waitFrame(remainingFrames - 1);
+            });
+          }
+
+          waitFrame(frameCount);
+        });
+      }
+
+      async function waitForAllSectionsToSettle(navigationSequence) {
+        while (sectionCards.some(section => section.classList.contains("is-animating"))) {
+          if (navigationSequence !== menuNavigationSequence) return false;
+          await waitForLayoutFrames(1);
+        }
+
+        return navigationSequence === menuNavigationSequence;
+      }
+
+      function waitForSectionToSettle(
+        card,
+        animationDuration,
+        navigationSequence,
+        pinnedScrollTop = null
+      ) {
+        return new Promise(resolve => {
+          const minimumDuration = Math.max(
+            0,
+            animationDuration + sectionAnimationBufferMs + 12
+          );
+          const startedAt = performance.now();
+
+          function checkSection(now) {
+            if (navigationSequence !== menuNavigationSequence) {
+              resolve(false);
+              return;
+            }
+
+            if (Number.isFinite(pinnedScrollTop)) {
+              setScrollTopInstant(pinnedScrollTop);
+            }
+
+            const minimumTimeElapsed = now - startedAt >= minimumDuration;
+            const animationFinished = !card.classList.contains("is-animating");
+
+            if (minimumTimeElapsed && animationFinished) {
+              resolve(true);
+              return;
+            }
+
+            window.requestAnimationFrame(checkSection);
+          }
+
+          window.requestAnimationFrame(checkSection);
+        });
+      }
+
+      function cancelMenuNavigationAnimation() {
+        if (menuNavigationFrame !== null) {
+          window.cancelAnimationFrame(menuNavigationFrame);
+          menuNavigationFrame = null;
+        }
+
+        if (menuNavigationResolve) {
+          const resolveNavigation = menuNavigationResolve;
+          menuNavigationResolve = null;
+          resolveNavigation(false);
+        }
+      }
+
+      function animateMenuNavigationToCard(card, navigationSequence) {
+        cancelMenuNavigationAnimation();
+
+        return new Promise(resolve => {
+          if (!card || navigationSequence !== menuNavigationSequence) {
+            resolve(false);
+            return;
+          }
+
+          menuNavigationResolve = resolve;
+
+          updateEndScrollSpace();
+          const startScrollTop = window.scrollY;
+          const targetScrollTop = getMenuCardTargetTop(card);
+          const scrollDistance = targetScrollTop - startScrollTop;
+          const duration = getMenuScrollAnimationMs(scrollDistance);
+          const startedAt = performance.now();
+
+          function finishNavigation(completed) {
+            if (menuNavigationResolve === resolve) {
+              menuNavigationResolve = null;
+            }
+            resolve(completed);
+          }
+
+          function easeInOutSine(progress) {
+            return -(Math.cos(Math.PI * progress) - 1) / 2;
+          }
+
+          function animateScroll(now) {
+            if (navigationSequence !== menuNavigationSequence) {
+              menuNavigationFrame = null;
+              finishNavigation(false);
+              return;
+            }
+
+            const progress = Math.min(1, (now - startedAt) / duration);
+            const easedProgress = easeInOutSine(progress);
+            setScrollTopInstant(
+              startScrollTop + scrollDistance * easedProgress
+            );
+
+            if (progress < 1) {
+              menuNavigationFrame = window.requestAnimationFrame(animateScroll);
+              return;
+            }
+
+            menuNavigationFrame = null;
+            setScrollTopInstant(targetScrollTop);
+            updateHeaderState();
+            schedulePointerCardUpdate();
+
+            window.requestAnimationFrame(() => {
+              if (navigationSequence !== menuNavigationSequence) {
+                finishNavigation(false);
+                return;
+              }
+
+              finishNavigation(true);
+            });
+          }
+
+          if (Math.abs(scrollDistance) <= 1) {
+            setScrollTopInstant(targetScrollTop);
+            menuNavigationFrame = null;
+            window.requestAnimationFrame(() => finishNavigation(true));
+            return;
+          }
+
+          menuNavigationFrame = window.requestAnimationFrame(animateScroll);
+        });
+      }
+
+      async function activateSectionFromMenu(card) {
+        if (!card) return;
+
+        cancelMenuNavigationAnimation();
+        menuNavigationSequence += 1;
+        clearMenuSelection();
+
+        await openDesktopFocus(card, {
+          scroll: true,
+          updateHistory: false
+        });
+      }
+
+      function lockContentTop(targetTop = getContentTopTarget()) {
+        const exactTop = Math.max(0, targetTop);
+
+        if (contentTopLocked) {
+          contentTopLockY = exactTop;
+          document.body.style.top = `-${contentTopLockY}px`;
+          return;
+        }
+
+        setScrollTopInstant(exactTop);
+        contentTopLocked = true;
+        contentTopLockY = exactTop;
+        document.body.style.top = `-${contentTopLockY}px`;
+        document.body.classList.add("content-top-body-locked");
+        document.documentElement.classList.add("content-top-scroll-locked");
+      }
+
+      function unlockContentTop(preservePosition = true) {
+        const wasLocked = contentTopLocked
+          || document.documentElement.classList.contains("content-top-scroll-locked")
+          || document.body.classList.contains("content-top-body-locked");
+
+        if (!wasLocked) return;
+
+        const lockedTop = contentTopLockY;
+        contentTopLocked = false;
+        contentTopLockY = 0;
+        document.body.classList.remove("content-top-body-locked");
+        document.body.style.removeProperty("top");
+        document.documentElement.classList.remove("content-top-scroll-locked");
+
+        if (preservePosition && pageMode === "content") {
+          setScrollTopInstant(lockedTop || getContentTopTarget());
+        }
+      }
+
+      function clearMenuCloseTimer() {
+        if (menuCloseTimer === null) return;
+        window.clearTimeout(menuCloseTimer);
+        menuCloseTimer = null;
+      }
+
+      function clearMenuPointerGuard() {
+        menuPointerGuard = false;
+        menuExitX = -1;
+        menuExitY = -1;
+      }
+
+      function clearMenuSelection() {
+        if (menuSelectedCard) {
+          menuSelectedCard.classList.remove("is-menu-selected");
+          menuSelectedCard = null;
+        }
+        clearMenuPointerGuard();
+      }
+
+      function selectMenuCard(card) {
+        clearMenuSelection();
+        menuSelectedCard = card;
+        menuSelectedCard.classList.add("is-menu-selected");
+      }
+
+      function openMenu() {
+        clearMenuCloseTimer();
+        clearMenuPointerGuard();
+        glassMenu.classList.add("is-open");
+        menuToggle.setAttribute("aria-expanded", "true");
+      }
+
+      function hideMenu({ clearSelection = false, guardPointer = false } = {}) {
+        clearMenuCloseTimer();
+        glassMenu.classList.remove("is-open");
+        menuToggle.setAttribute("aria-expanded", "false");
+
+        if (clearSelection) {
+          clearMenuSelection();
+          return;
+        }
+
+        if (guardPointer && menuSelectedCard) {
+          menuPointerGuard = true;
+          menuExitX = pointerX;
+          menuExitY = pointerY;
+        }
+      }
+
+      function closeMenu() {
+        hideMenu({ clearSelection: true });
+      }
+
+      function scheduleMenuHide(delay) {
+        clearMenuCloseTimer();
+        menuCloseTimer = window.setTimeout(() => {
+          menuCloseTimer = null;
+          hideMenu({ guardPointer: true });
+          schedulePointerCardUpdate();
+        }, delay);
+      }
+
+      function getLayoutDocumentTop(element) {
+        let top = 0;
+        let currentElement = element;
+
+        while (currentElement) {
+          top += currentElement.offsetTop;
+          currentElement = currentElement.offsetParent;
+        }
+
+        return top;
+      }
+
+      function getCardTargetTop(card) {
+        const scrollMarginTop = parseFloat(
+          window.getComputedStyle(card).scrollMarginTop
+        ) || 0;
+        const subsequentCardOffsetAdjustment = card && card !== profileCard ? 7 : 0;
+
+        return Math.max(0, getLayoutDocumentTop(card) - scrollMarginTop + subsequentCardOffsetAdjustment);
+      }
+
+      function getMenuCardTargetTop(card) {
+        if (!card || card === profileCard) {
+          return getCardTargetTop(card);
+        }
+
+        const cardIndex = sectionCards.indexOf(card);
+        const previousCard = cardIndex > 0 ? sectionCards[cardIndex - 1] : null;
+
+        if (!previousCard) {
+          return getCardTargetTop(card);
+        }
+
+        const separatorStyle = window.getComputedStyle(previousCard, "::after");
+        const separatorBottom = parseFloat(separatorStyle.bottom) || 0;
+        const separatorHeight = parseFloat(separatorStyle.height) || 1;
+        const separatorDocumentTop = getLayoutDocumentTop(previousCard)
+          + previousCard.offsetHeight
+          - separatorBottom
+          - separatorHeight;
+        const headerStyle = window.getComputedStyle(siteHeader);
+        const headerBorderBottom = parseFloat(headerStyle.borderBottomWidth) || 0;
+        const headerSeparatorTop = Math.max(0, siteHeader.offsetHeight - headerBorderBottom);
+
+        return Math.max(0, separatorDocumentTop - headerSeparatorTop);
+      }
+
+      function getProfileTargetTop() {
+        return getCardTargetTop(profileCard);
+      }
+
+      function setScrollTopInstant(targetTop) {
+        const exactTop = Math.max(0, targetTop);
+
+        if (document.body.classList.contains("desktop-screen-layout")) {
+          contentSection.scrollTop = exactTop;
+          return;
+        }
+
+        const scrollingElement = document.scrollingElement || document.documentElement;
+        scrollingElement.scrollTop = exactTop;
+      }
+
+      function setupDesktopGridLayout() {
+        if (!editorialShell) return;
+
+        document.body.classList.add("desktop-grid-layout", "desktop-screen-layout");
+
+        const applyDesktopTitleBreak = (cardId, firstLine, secondLine) => {
+          const title = document.querySelector(`#${cardId} .section-title`);
+          if (!title || title.dataset.desktopBreakApplied === "true") return;
+
+          const lineBreak = document.createElement("br");
+          lineBreak.className = "desktop-title-break";
+          lineBreak.setAttribute("aria-hidden", "true");
+
+          title.textContent = "";
+          title.append(document.createTextNode(firstLine));
+          title.append(lineBreak);
+          title.append(document.createTextNode(` ${secondLine}`));
+          title.dataset.desktopBreakApplied = "true";
+        };
+
+        sectionCards.forEach(card => {
+          if (card.querySelector(".desktop-focus-close")) return;
+
+          const closeButton = document.createElement("button");
+          closeButton.className = "desktop-focus-close";
+          closeButton.type = "button";
+          closeButton.setAttribute("aria-label", "Chiudi la sezione aperta");
+
+          closeButton.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            closeDesktopFocus({
+              scroll: true,
+              updateHistory: true
+            });
+          });
+
+          card.appendChild(closeButton);
+        });
+
+        resetDesktopGridSelection();
+
+        /* 0218: la schermata desktop viene resa visibile soltanto dopo
+           che lo stato HTML iniziale del primo riquadro è stato azzerato. */
+        document.documentElement.classList.remove("desktop-screen-preinit");
+      }
+
+      function getDesktopGridPlacement(card) {
+        const index = sectionCards.indexOf(card);
+        return {
+          row: index < 3 ? 1 : 2,
+          column: (index % 3) + 1
+        };
+      }
+
+      function clearDesktopFocusTimer() {
+        if (desktopFocusTimer !== null) {
+          window.clearTimeout(desktopFocusTimer);
+          desktopFocusTimer = null;
+        }
+
+        if (desktopTitleLayoutTimer !== null) {
+          window.clearTimeout(desktopTitleLayoutTimer);
+          desktopTitleLayoutTimer = null;
+        }
+
+        if (desktopCompactPreviewTimer !== null) {
+          window.clearTimeout(desktopCompactPreviewTimer);
+          desktopCompactPreviewTimer = null;
+        }
+      }
+
+      function clearDesktopFocusInlineStyles(card) {
+        if (!card) return;
+
+        [
+          "left",
+          "top",
+          "width",
+          "height",
+          "transition",
+          "z-index",
+          "visibility"
+        ].forEach(property => {
+          card.style.removeProperty(property);
+        });
+      }
+
+      function lockDesktopFocusTextLayout(card, targetWidth) {
+        if (!card) return;
+
+        const contentInner = card.querySelector(".section-content-inner");
+        if (!contentInner) return;
+
+        const cardStyle = window.getComputedStyle(card);
+        const borderLeft = parseFloat(cardStyle.borderLeftWidth) || 0;
+        const borderRight = parseFloat(cardStyle.borderRightWidth) || 0;
+        const finalInnerWidth = Math.max(
+          0,
+          targetWidth - borderLeft - borderRight
+        );
+
+        contentInner.style.width = `${finalInnerWidth}px`;
+        contentInner.style.maxWidth = "none";
+      }
+
+      function clearDesktopFocusTextLayout(card) {
+        const contentInner = card?.querySelector(".section-content-inner");
+        if (!contentInner) return;
+
+        contentInner.style.removeProperty("width");
+        contentInner.style.removeProperty("max-width");
+      }
+
+      function removeDesktopCompactPreview(card) {
+        if (!card) return;
+        card.querySelector(".desktop-compact-preview-clone")?.remove();
+        card.classList.remove("is-focus-preview-swap");
+      }
+
+      function createDesktopCompactPreview(card, targetWidth) {
+        removeDesktopCompactPreview(card);
+
+        const sourceParagraph = card?.querySelector(
+          ".section-richtext > p:first-child"
+        );
+        if (!sourceParagraph) return null;
+
+        const cardStyle = window.getComputedStyle(card);
+        const borderLeft = parseFloat(cardStyle.borderLeftWidth) || 0;
+        const borderRight = parseFloat(cardStyle.borderRightWidth) || 0;
+        const compactInnerWidth = Math.max(
+          0,
+          targetWidth - borderLeft - borderRight
+        );
+
+        const preview = document.createElement("p");
+        preview.className = "desktop-compact-preview-clone";
+        preview.textContent = sourceParagraph.textContent;
+        preview.setAttribute("aria-hidden", "true");
+        preview.style.setProperty(
+          "--desktop-compact-preview-width",
+          `${compactInnerWidth}px`
+        );
+
+        card.appendChild(preview);
+        return preview;
+      }
+
+      function removeDesktopGridPlaceholder() {
+        if (!desktopGridPlaceholder) return;
+        desktopGridPlaceholder.remove();
+        desktopGridPlaceholder = null;
+      }
+
+      function resetDesktopGridSelection() {
+        clearDesktopFocusTimer();
+        desktopFocusAnimating = false;
+        desktopSelectedCard = null;
+        desktopGridBaseHeight = 0;
+        desktopFocusSourceRect = null;
+        removeDesktopGridPlaceholder();
+
+        editorialShell?.classList.remove(
+          "is-grid-focus-mode",
+          "is-grid-focus-settled",
+          "is-grid-transitioning"
+        );
+        contentSection?.classList.remove("is-focus-scroll");
+        if (contentSection) contentSection.scrollTop = 0;
+        editorialShell?.style.removeProperty("height");
+        editorialShell?.style.removeProperty("transition");
+
+        sectionCards.forEach(card => {
+          card.classList.remove(
+            "is-open",
+            "is-section-active",
+            "is-opening",
+            "is-closing",
+            "is-animating",
+            "is-menu-batch-closing",
+            "is-menu-selected",
+            "is-focus-card",
+            "is-focus-title-compact",
+            "is-grid-faded",
+            "is-grid-returning"
+          );
+          card.style.removeProperty("--section-runtime-duration");
+          clearDesktopFocusInlineStyles(card);
+          clearDesktopFocusTextLayout(card);
+          removeDesktopCompactPreview(card);
+          card.querySelector(".section-trigger")?.setAttribute("aria-expanded", "false");
+
+          const content = card.querySelector(".section-content");
+          if (content) {
+            content.style.removeProperty("height");
+            content.style.removeProperty("transition");
+          }
+        });
+      }
+
+      function getDesktopGridViewportTop() {
+        const headerHeight = siteHeader.getBoundingClientRect().height || 96;
+        const breathingRoom = Math.max(
+          86,
+          Math.min(118, window.innerHeight * .11)
+        );
+
+        return headerHeight + breathingRoom;
+      }
+
+      function getDesktopGridTargetTop() {
+        return 0;
+      }
+
+      function getContentTopTarget() {
+        return document.body.classList.contains("desktop-grid-layout")
+          ? getDesktopGridTargetTop()
+          : getProfileTargetTop();
+      }
+
+      function createDesktopGridPlaceholder(card, cardRect, shellRect) {
+        removeDesktopGridPlaceholder();
+
+        const placement = getDesktopGridPlacement(card);
+        const placeholder = document.createElement("div");
+        placeholder.className = "desktop-grid-placeholder";
+        placeholder.setAttribute("aria-hidden", "true");
+        placeholder.style.gridRow = String(placement.row);
+        placeholder.style.gridColumn = String(placement.column);
+        placeholder.style.height = `${cardRect.height}px`;
+
+        editorialShell.appendChild(placeholder);
+        desktopGridPlaceholder = placeholder;
+
+        return placeholder;
+      }
+
+      function getDesktopShellAbsoluteOrigin(shellRect = editorialShell.getBoundingClientRect()) {
+        /* Un elemento assoluto figlio di editorialShell usa come containing
+           block il padding box del contenitore. clientLeft/clientTop eliminano
+           il bordo dal sistema di coordinate ed evitano qualunque doppio
+           conteggio del padding. */
+        return {
+          left: shellRect.left + editorialShell.clientLeft,
+          top: shellRect.top + editorialShell.clientTop
+        };
+      }
+
+      function getDesktopGridFinalRect(shellRect = editorialShell.getBoundingClientRect()) {
+        /* La destinazione finale viene ricavata dalla geometria REALE della
+           griglia prima che il riquadro venga sganciato. È quindi identica per
+           tutti e sei i riquadri: bordo sinistro della prima colonna, bordo
+           superiore della prima riga e bordo destro della terza colonna. */
+        const rects = sectionCards.map(section => section.getBoundingClientRect());
+        const origin = getDesktopShellAbsoluteOrigin(shellRect);
+
+        const leftViewport = Math.min(...rects.map(rect => rect.left));
+        const topViewport = Math.min(...rects.map(rect => rect.top));
+        const rightViewport = Math.max(...rects.map(rect => rect.right));
+
+        return {
+          left: leftViewport - origin.left,
+          top: topViewport - origin.top,
+          width: rightViewport - leftViewport
+        };
+      }
+
+      function measureDesktopFocusHeight(card, targetWidth) {
+        const previous = {
+          width: card.style.width,
+          height: card.style.height,
+          visibility: card.style.visibility,
+          transition: card.style.transition
+        };
+
+        card.style.transition = "none";
+        card.style.visibility = "hidden";
+        card.style.width = `${targetWidth}px`;
+        card.style.height = "auto";
+
+        const measuredHeight = Math.ceil(card.scrollHeight);
+
+        card.style.width = previous.width;
+        card.style.height = previous.height;
+        card.style.visibility = previous.visibility;
+        card.style.transition = previous.transition;
+
+        return measuredHeight;
+      }
+
+      function getDesktopFocusDuration(targetHeight) {
+        const growth = Math.max(0, targetHeight - desktopGridBaseHeight);
+        return Math.round(
+          Math.max(780, Math.min(1080, 800 + Math.sqrt(growth) * 5.8))
+        );
+      }
+
+      function scrollDesktopGridToAnchor(behavior = "smooth") {
+        if (Math.abs(contentSection.scrollTop) <= 1) return;
+
+        contentSection.scrollTo({
+          top: 0,
+          behavior
+        });
+      }
+
+      function finishDesktopFocusOpen(card) {
+        if (desktopSelectedCard !== card) return;
+
+        desktopFocusAnimating = false;
+        desktopFocusTimer = null;
+        editorialShell.classList.remove("is-grid-transitioning");
+        editorialShell.classList.add("is-grid-focus-settled");
+
+        sectionCards.forEach(section => {
+          if (section !== card) {
+            section.classList.add("is-grid-faded");
+          }
+        });
+
+        updateEndScrollSpace();
+        schedulePointerCardUpdate();
+      }
+
+      async function openDesktopFocus(
+        card,
+        {
+          scroll = true,
+          updateHistory = true
+        } = {}
+      ) {
+        if (!card || !editorialShell) return false;
+
+        if (
+          desktopSelectedCard === card
+          && editorialShell.classList.contains("is-grid-focus-mode")
+        ) {
+          if (scroll) scrollDesktopGridToAnchor("smooth");
+          return true;
+        }
+
+        if (desktopFocusAnimating) return false;
+
+        if (desktopSelectedCard && desktopSelectedCard !== card) {
+          const closed = await closeDesktopFocus({
+            scroll: false,
+            updateHistory: false
+          });
+
+          if (!closed) return false;
+
+          await waitForLayoutFrames(2);
+        }
+
+        if (scroll) {
+          scrollDesktopGridToAnchor("smooth");
+        }
+
+        clearPointerCard(true);
+        clearMenuSelection();
+        clearDesktopFocusTimer();
+        removeDesktopCompactPreview(card);
+
+        const shellRect = editorialShell.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const shellStyle = window.getComputedStyle(editorialShell);
+        const paddingBottom = parseFloat(shellStyle.paddingBottom) || 0;
+        const borderBottom = parseFloat(shellStyle.borderBottomWidth) || 0;
+        const absoluteOrigin = getDesktopShellAbsoluteOrigin(shellRect);
+        const finalRect = getDesktopGridFinalRect(shellRect);
+
+        const startLeft = cardRect.left - absoluteOrigin.left;
+        const startTop = cardRect.top - absoluteOrigin.top;
+        const startWidth = cardRect.width;
+        const startHeight = cardRect.height;
+        const targetLeft = finalRect.left;
+        const targetTop = finalRect.top;
+        const targetWidth = finalRect.width;
+
+        desktopGridBaseHeight = shellRect.height;
+        desktopFocusSourceRect = {
+          left: startLeft,
+          top: startTop,
+          width: startWidth,
+          height: startHeight
+        };
+        desktopSelectedCard = card;
+        desktopFocusAnimating = true;
+
+        createDesktopGridPlaceholder(card, cardRect, shellRect);
+
+        editorialShell.style.transition = "none";
+        editorialShell.style.height = `${desktopGridBaseHeight}px`;
+
+        card.classList.remove("is-focus-title-compact");
+        card.classList.add("is-focus-card", "is-section-active");
+        card.querySelector(".section-trigger")?.setAttribute("aria-expanded", "true");
+        lockDesktopFocusTextLayout(card, targetWidth);
+
+        card.style.transition = "none";
+        card.style.left = `${startLeft}px`;
+        card.style.top = `${startTop}px`;
+        card.style.width = `${startWidth}px`;
+        card.style.height = `${startHeight}px`;
+        card.style.zIndex = "12";
+
+        const targetHeight = measureDesktopFocusHeight(card, targetWidth);
+        const targetShellHeight = Math.ceil(
+          editorialShell.clientTop
+            + targetTop
+            + targetHeight
+            + paddingBottom
+            + borderBottom
+        );
+        const duration = getDesktopFocusDuration(targetHeight);
+        const easing = "cubic-bezier(.16, 1, .3, 1)";
+
+        sectionCards.forEach(section => {
+          if (section !== card) {
+            section.classList.add("is-grid-faded");
+          }
+        });
+
+        editorialShell.classList.add(
+          "is-grid-focus-mode",
+          "is-grid-transitioning"
+        );
+        contentSection.classList.add("is-focus-scroll");
+
+        void editorialShell.offsetHeight;
+
+        editorialShell.style.transition = `height ${duration}ms ${easing}`;
+        card.style.transition = [
+          `left ${duration}ms ${easing}`,
+          `top ${duration}ms ${easing}`,
+          `width ${duration}ms ${easing}`,
+          `height ${duration}ms ${easing}`,
+          `background ${Math.min(duration, 720)}ms ${easing}`,
+          `border-color ${Math.min(duration, 720)}ms ${easing}`,
+          `box-shadow ${Math.min(duration, 720)}ms ${easing}`
+        ].join(", ");
+
+        window.requestAnimationFrame(() => {
+          if (desktopSelectedCard !== card) return;
+
+          card.style.left = `${targetLeft}px`;
+          card.style.top = `${targetTop}px`;
+          card.style.width = `${targetWidth}px`;
+          card.style.height = `${targetHeight}px`;
+          editorialShell.style.height = `${targetShellHeight}px`;
+        });
+
+        if (updateHistory) {
+          history.replaceState(null, "", `#${card.id}`);
+        }
+
+        desktopFocusTimer = window.setTimeout(
+          () => finishDesktopFocusOpen(card),
+          duration + 36
+        );
+
+        return true;
+      }
+
+      function finishDesktopFocusClose(card) {
+        if (desktopSelectedCard !== card) return;
+
+        clearDesktopFocusTimer();
+
+        card.classList.remove(
+          "is-focus-card",
+          "is-focus-title-compact",
+          "is-section-active",
+          "is-grid-returning"
+        );
+        card.querySelector(".section-trigger")?.setAttribute("aria-expanded", "false");
+        clearDesktopFocusInlineStyles(card);
+        clearDesktopFocusTextLayout(card);
+
+        const compactPreview = card.querySelector(".desktop-compact-preview-clone");
+        if (compactPreview) {
+          void card.offsetHeight;
+          window.requestAnimationFrame(() => {
+            card.classList.remove("is-focus-preview-swap");
+            compactPreview.remove();
+          });
+        } else {
+          card.classList.remove("is-focus-preview-swap");
+        }
+
+        sectionCards.forEach(section => {
+          section.classList.remove("is-grid-faded", "is-grid-returning");
+        });
+
+        removeDesktopGridPlaceholder();
+
+        editorialShell.classList.remove(
+          "is-grid-focus-mode",
+          "is-grid-focus-settled",
+          "is-grid-transitioning"
+        );
+        contentSection.classList.remove("is-focus-scroll");
+        contentSection.scrollTop = 0;
+        editorialShell.style.removeProperty("height");
+        editorialShell.style.removeProperty("transition");
+
+        desktopSelectedCard = null;
+        desktopGridBaseHeight = 0;
+        desktopFocusSourceRect = null;
+        desktopFocusAnimating = false;
+
+        updateEndScrollSpace();
+        schedulePointerCardUpdate();
+      }
+
+      function closeDesktopFocus(
+        {
+          scroll = true,
+          updateHistory = true
+        } = {}
+      ) {
+        if (!desktopSelectedCard || !editorialShell) {
+          if (scroll) scrollDesktopGridToAnchor("smooth");
+          return Promise.resolve(true);
+        }
+
+        if (desktopFocusAnimating) {
+          return Promise.resolve(false);
+        }
+
+        const card = desktopSelectedCard;
+        const sourceRect = desktopFocusSourceRect;
+
+        if (!sourceRect) {
+          finishDesktopFocusClose(card);
+          return Promise.resolve(true);
+        }
+
+        clearPointerCard(false);
+        card.classList.remove("pointer-switch-off");
+        clearMenuSelection();
+        clearDesktopFocusTimer();
+
+        desktopFocusAnimating = true;
+        editorialShell.classList.remove("is-grid-focus-settled");
+        editorialShell.classList.add("is-grid-transitioning");
+
+        if (scroll) {
+          scrollDesktopGridToAnchor("smooth");
+        }
+
+        const targetLeft = sourceRect.left;
+        const targetTop = sourceRect.top;
+        const targetWidth = sourceRect.width;
+        const targetHeight = sourceRect.height;
+        const currentHeight = card.getBoundingClientRect().height;
+        const duration = Math.round(
+          Math.max(760, Math.min(1020, 770 + Math.sqrt(Math.max(0, currentHeight - targetHeight)) * 5.2))
+        );
+        const easing = "cubic-bezier(.4, 0, .2, 1)";
+        const compactPreview = createDesktopCompactPreview(card, targetWidth);
+        const previewSwapDuration = 150;
+
+        sectionCards.forEach(section => {
+          if (section !== card) {
+            section.classList.add("is-grid-returning");
+            section.classList.remove("is-grid-faded");
+          }
+        });
+
+        card.classList.remove("is-focus-title-compact");
+        if (card.querySelector(".desktop-title-break")) {
+          desktopTitleLayoutTimer = window.setTimeout(() => {
+            desktopTitleLayoutTimer = null;
+            if (desktopSelectedCard === card && desktopFocusAnimating) {
+              card.classList.add("is-focus-title-compact");
+            }
+          }, Math.max(0, duration - 170));
+        }
+
+        if (compactPreview) {
+          desktopCompactPreviewTimer = window.setTimeout(() => {
+            desktopCompactPreviewTimer = null;
+            if (desktopSelectedCard === card && desktopFocusAnimating) {
+              card.classList.add("is-focus-preview-swap");
+              compactPreview.classList.add("is-visible");
+            }
+          }, Math.max(0, duration - previewSwapDuration));
+        }
+
+        card.style.transition = [
+          `left ${duration}ms ${easing}`,
+          `top ${duration}ms ${easing}`,
+          `width ${duration}ms ${easing}`,
+          `height ${duration}ms ${easing}`,
+          `background ${Math.min(duration, 700)}ms ${easing}`,
+          `border-color ${Math.min(duration, 700)}ms ${easing}`,
+          `box-shadow ${Math.min(duration, 700)}ms ${easing}`
+        ].join(", ");
+        editorialShell.style.transition = `height ${duration}ms ${easing}`;
+
+        void editorialShell.offsetHeight;
+
+        window.requestAnimationFrame(() => {
+          if (desktopSelectedCard !== card) return;
+
+          card.style.left = `${targetLeft}px`;
+          card.style.top = `${targetTop}px`;
+          card.style.width = `${targetWidth}px`;
+          card.style.height = `${targetHeight}px`;
+          editorialShell.style.height = `${desktopGridBaseHeight}px`;
+        });
+
+        if (updateHistory) {
+          history.replaceState(null, "", "#contenuti");
+        }
+
+        return new Promise(resolve => {
+          desktopFocusTimer = window.setTimeout(() => {
+            finishDesktopFocusClose(card);
+            resolve(true);
+          }, duration + 36);
+        });
+      }
+
+      function reserveEndScrollSpaceForClosing(
+        targetScrollTop,
+        anticipatedHeightLoss
+      ) {
+        const scrollingElement = document.scrollingElement || document.documentElement;
+        const contentStyle = window.getComputedStyle(contentSection);
+        const currentTechnicalSpace = parseFloat(contentStyle.paddingBottom) || 0;
+        const currentMaximumScroll = Math.max(
+          0,
+          scrollingElement.scrollHeight - window.innerHeight
+        );
+        const finalMaximumScrollWithoutReserve = Math.max(
+          0,
+          currentMaximumScroll - Math.max(0, anticipatedHeightLoss)
+        );
+        const additionalSpace = Math.max(
+          0,
+          Math.ceil(targetScrollTop - finalMaximumScrollWithoutReserve + 2)
+        );
+
+        if (additionalSpace > 0) {
+          contentSection.style.setProperty(
+            "--end-scroll-space",
+            `${Math.ceil(currentTechnicalSpace + additionalSpace)}px`
+          );
+        }
+      }
+
+      function updateEndScrollSpace() {
+        if (document.body.classList.contains("desktop-grid-layout")) {
+          const focusMode = editorialShell?.classList.contains("is-grid-focus-mode");
+
+          if (!focusMode) {
+            contentSection.style.removeProperty("overflow-y");
+            contentSection.style.setProperty("--end-scroll-space", "0px");
+            return;
+          }
+
+          const contentRect = contentSection.getBoundingClientRect();
+          const shellRect = editorialShell?.getBoundingClientRect();
+          const shellBottom = shellRect
+            ? shellRect.bottom - contentRect.top + contentSection.scrollTop
+            : 0;
+          const needsVerticalScroll = shellBottom > contentSection.clientHeight + 1;
+
+          contentSection.style.setProperty(
+            "overflow-y",
+            needsVerticalScroll ? "auto" : "hidden"
+          );
+
+          if (!needsVerticalScroll && contentSection.scrollTop !== 0) {
+            contentSection.scrollTop = 0;
+          }
+
+          const requiredSpace = needsVerticalScroll
+            ? Math.max(96, Math.round(window.innerHeight * .14))
+            : 0;
+
+          contentSection.style.setProperty(
+            "--end-scroll-space",
+            `${requiredSpace}px`
+          );
+          return;
+        }
+
+        const scrollingElement = document.scrollingElement || document.documentElement;
+        const contentStyle = window.getComputedStyle(contentSection);
+        const currentTechnicalSpace = parseFloat(contentStyle.paddingBottom) || 0;
+        const currentMaximumScroll = Math.max(
+          0,
+          scrollingElement.scrollHeight - window.innerHeight
+        );
+        const contactsTargetTop = getMenuCardTargetTop(contactsCard);
+        const requiredSpace = Math.max(
+          0,
+          Math.ceil(
+            currentTechnicalSpace
+            + contactsTargetTop
+            - currentMaximumScroll
+          )
+        );
+
+        contentSection.style.setProperty("--end-scroll-space", `${requiredSpace}px`);
+      }
+
+      function waitForScrollPosition(targetTop, callback) {
+        const startedAt = performance.now();
+
+        function checkPosition() {
+          const reachedTarget = Math.abs(window.scrollY - targetTop) <= 2;
+          const timedOut = performance.now() - startedAt > 1800;
+
+          if (reachedTarget || timedOut) {
+            callback();
+            return;
+          }
+
+          window.requestAnimationFrame(checkPosition);
+        }
+
+        window.requestAnimationFrame(checkPosition);
+      }
+
+      function resetContentToInitialState() {
+        cancelMenuNavigationAnimation();
+        menuNavigationSequence += 1;
+        clearMenuSelection();
+        clearPointerCard(true);
+
+        sectionCards.forEach(card => {
+          const animationState = sectionAnimationStates.get(card);
+
+          if (animationState) {
+            animationState.sequence += 1;
+
+            if (animationState.timer !== null) {
+              window.clearTimeout(animationState.timer);
+              animationState.timer = null;
+            }
+
+            if (animationState.frame !== null) {
+              window.cancelAnimationFrame(animationState.frame);
+              animationState.frame = null;
+            }
+          }
+
+          const trigger = card.querySelector(".section-trigger");
+          const content = card.querySelector(".section-content");
+
+          card.classList.remove(
+            "is-open",
+            "is-section-active",
+            "is-opening",
+            "is-closing",
+            "is-animating",
+            "is-menu-batch-closing",
+            "is-menu-selected",
+            "is-pointer-over",
+            "pointer-switch-off"
+          );
+          card.style.removeProperty("--section-runtime-duration");
+
+          if (trigger) {
+            trigger.setAttribute("aria-expanded", "false");
+          }
+
+          if (content) {
+            content.style.removeProperty("transition");
+            content.style.removeProperty("height");
+          }
+        });
+
+        if (document.body.classList.contains("desktop-grid-layout")) {
+          resetDesktopGridSelection();
+          return;
+        }
+
+        profileCard.classList.add("is-open", "is-section-active");
+        const profileTrigger = profileCard.querySelector(".section-trigger");
+        if (profileTrigger) {
+          profileTrigger.setAttribute("aria-expanded", "true");
+        }
+      }
+
+      function enterContent() {
+        if (enteringContent || returningHome || pageMode === "content") return;
+
+        pauseVideo();
+        enteringContent = true;
+        pageMode = "content";
+        unlockContentTop(false);
+        closeMenu();
+        resetReturnHomeIntent();
+        updateSectionPreviewHeights();
+        contentSection.scrollTop = 0;
+        updateEndScrollSpace();
+
+        document.body.classList.add("content-entered");
+        history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}#contenuti`
+        );
+
+        let finished = false;
+        const finishEntering = (event) => {
+          if (finished) return;
+          if (event && event.target !== contentSection) return;
+          finished = true;
+          contentSection.removeEventListener("transitionend", finishEntering);
+          enteringContent = false;
+          updateHeaderState();
+          schedulePointerCardUpdate();
+        };
+
+        contentSection.addEventListener("transitionend", finishEntering);
+        window.setTimeout(() => finishEntering(), 950);
+      }
+
+      function returnToHome() {
+        if (returningHome || pageMode === "home") return;
+
+        returningHome = true;
+        enteringContent = false;
+        closeMenu();
+        clearPointerCard(true);
+        resetReturnHomeIntent();
+
+        contentSection.scrollTop = 0;
+        document.body.classList.remove("content-entered");
+
+        let finished = false;
+        const finishReturning = (event) => {
+          if (finished) return;
+          if (event && event.target !== contentSection) return;
+          finished = true;
+          contentSection.removeEventListener("transitionend", finishReturning);
+
+          resetContentToInitialState();
+          updateSectionPreviewHeights();
+          updateEndScrollSpace();
+
+          pageMode = "home";
+          returningHome = false;
+          setHomeScrollLock(true);
+
+          history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${window.location.search}`
+          );
+
+          updateHeaderState();
+          startVideo();
+        };
+
+        contentSection.addEventListener("transitionend", finishReturning);
+        window.setTimeout(() => finishReturning(), 950);
+      }
+
+      function normalizedWheelDelta(event) {
+        if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return event.deltaY * 16;
+        if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return event.deltaY * window.innerHeight;
+        return event.deltaY;
+      }
+
+      function resetReturnHomeIntent() {
+        returnHomeArmed = false;
+        wheelTopStepCount = 0;
+        touchReturnGestureHandled = false;
+      }
+
+      function handleReturnHomeRequest() {
+        if (returnHomeArmed) {
+          resetReturnHomeIntent();
+          returnToHome();
+          return;
+        }
+
+        returnHomeArmed = true;
+      }
+
+      function handleWheelTopStep() {
+        wheelTopStepCount += 1;
+
+        if (wheelTopStepCount >= wheelTopStepsRequired) {
+          resetReturnHomeIntent();
+          returnToHome();
+        }
+      }
+
+      function handleWheel(event) {
+        if (pageMode === "home" || enteringContent || returningHome) {
+          event.preventDefault();
+          return;
+        }
+
+        const deltaY = normalizedWheelDelta(event);
+        const focusOpen = Boolean(desktopSelectedCard)
+          && editorialShell.classList.contains("is-grid-focus-mode");
+
+        if (!focusOpen) {
+          event.preventDefault();
+          contentSection.scrollTop = 0;
+
+          if (deltaY < 0) {
+            handleWheelTopStep();
+          } else {
+            resetReturnHomeIntent();
+          }
+          return;
+        }
+
+        if (deltaY < 0 && contentSection.scrollTop <= 2) {
+          event.preventDefault();
+          handleWheelTopStep();
+          return;
+        }
+
+        if (deltaY > 0) {
+          resetReturnHomeIntent();
+        }
+      }
+
+      function handleScrollKey(event) {
+        if (!blockedScrollKeys.has(event.key)) return;
+
+        const interactiveElement = event.target.closest(
+          "button, a, input, textarea, select"
+        );
+
+        if (pageMode === "home" || enteringContent || returningHome) {
+          if (!interactiveElement) event.preventDefault();
+          return;
+        }
+
+        const spaceKey = event.key === " "
+          || event.key === "Space"
+          || event.key === "Spacebar";
+        const upwardKey = event.key === "ArrowUp"
+          || event.key === "PageUp"
+          || event.key === "Home"
+          || (spaceKey && event.shiftKey);
+        const downwardKey = event.key === "ArrowDown"
+          || event.key === "PageDown"
+          || event.key === "End"
+          || (spaceKey && !event.shiftKey);
+        const focusOpen = Boolean(desktopSelectedCard)
+          && editorialShell.classList.contains("is-grid-focus-mode");
+
+        if (!focusOpen) {
+          if (!interactiveElement) event.preventDefault();
+          contentSection.scrollTop = 0;
+
+          if (upwardKey && !event.repeat) {
+            handleReturnHomeRequest();
+          }
+          return;
+        }
+
+        if (upwardKey && contentSection.scrollTop <= 2) {
+          if (!interactiveElement) event.preventDefault();
+          if (!event.repeat) handleReturnHomeRequest();
+          return;
+        }
+
+        if (downwardKey) {
+          resetReturnHomeIntent();
+        }
+      }
+
+      function handleTouchStart(event) {
+        if (event.touches.length === 1) {
+          touchStartY = event.touches[0].clientY;
+          touchReturnGestureHandled = false;
+        }
+      }
+
+      function handleTouchMove(event) {
+        if (pageMode === "home" || enteringContent || returningHome) {
+          event.preventDefault();
+          return;
+        }
+
+        if (touchStartY === null || event.touches.length !== 1) return;
+
+        const currentY = event.touches[0].clientY;
+        const fingerMovedDown = currentY - touchStartY;
+        const focusOpen = Boolean(desktopSelectedCard)
+          && editorialShell.classList.contains("is-grid-focus-mode");
+
+        if (!focusOpen) {
+          event.preventDefault();
+          contentSection.scrollTop = 0;
+
+          if (fingerMovedDown > 12 && !touchReturnGestureHandled) {
+            touchReturnGestureHandled = true;
+            handleReturnHomeRequest();
+          }
+          return;
+        }
+
+        if (
+          fingerMovedDown > 12
+          && contentSection.scrollTop <= 2
+        ) {
+          event.preventDefault();
+
+          if (!touchReturnGestureHandled) {
+            touchReturnGestureHandled = true;
+            handleReturnHomeRequest();
+          }
+          return;
+        }
+
+        if (fingerMovedDown < -12) {
+          resetReturnHomeIntent();
+        }
+      }
+
+      function clearPointerCard(instant = false) {
+        if (!pointerCard) return;
+
+        const previousCard = pointerCard;
+        pointerCard = null;
+        const protectFocusTransition = desktopFocusAnimating
+          && previousCard === desktopSelectedCard;
+
+        if (protectFocusTransition) {
+          previousCard.classList.remove("pointer-switch-off");
+        }
+
+        if (instant && !protectFocusTransition) {
+          previousCard.classList.add("pointer-switch-off");
+        }
+
+        previousCard.classList.remove("is-pointer-over");
+
+        if (instant && !protectFocusTransition) {
+          window.requestAnimationFrame(() => {
+            previousCard.classList.remove("pointer-switch-off");
+          });
+        }
+      }
+
+      function updatePointerCard() {
+        pointerUpdateFrame = null;
+
+        if (pointerX < 0 || pointerY < 0) {
+          clearPointerCard();
+          return;
+        }
+
+        const elementBelowPointer = document.elementFromPoint(pointerX, pointerY);
+        const nextCard = elementBelowPointer
+          ? elementBelowPointer.closest(".glass-card")
+          : null;
+
+        if (menuPointerGuard && menuSelectedCard) {
+          if (!nextCard || nextCard === menuSelectedCard) {
+            clearPointerCard();
+            return;
+          }
+
+          const movementFromMenuExit = Math.hypot(
+            pointerX - menuExitX,
+            pointerY - menuExitY
+          );
+
+          if (movementFromMenuExit < menuPointerReleaseDistance) {
+            clearPointerCard();
+            return;
+          }
+
+          clearMenuPointerGuard();
+        }
+
+        if (
+          nextCard
+          && menuSelectedCard
+          && nextCard !== menuSelectedCard
+        ) {
+          clearMenuSelection();
+        }
+
+        if (nextCard === pointerCard) return;
+
+        const switchingDirectly = Boolean(pointerCard && nextCard);
+        clearPointerCard(switchingDirectly);
+        pointerCard = nextCard;
+
+        if (pointerCard) {
+          pointerCard.classList.add("is-pointer-over");
+        }
+      }
+
+      function schedulePointerCardUpdate() {
+        if (pointerUpdateFrame !== null) return;
+        pointerUpdateFrame = window.requestAnimationFrame(updatePointerCard);
+      }
+
+      async function startVideo() {
+        if (pageMode !== "home") return;
+
+        try {
+          video.muted = true;
+          await video.play();
+          document.documentElement.classList.add("video-ok");
+          document.documentElement.classList.remove("video-blocked");
+        } catch (error) {
+          document.documentElement.classList.add("video-blocked");
+        }
+      }
+
+      function pauseVideo() {
+        video.pause();
+      }
+
+      function updateHeaderState() {
+        const showHeader = pageMode === "content" && !returningHome;
+
+        document.body.classList.toggle("content-entered", showHeader);
+
+        if (!showHeader) {
+          closeMenu();
+        }
+      }
+
+      window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+      window.addEventListener("keydown", handleScrollKey, { passive: false });
+      window.addEventListener("touchstart", handleTouchStart, { passive: true });
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("touchend", () => {
+        touchStartY = null;
+        touchReturnGestureHandled = false;
+      }, { passive: true });
+      window.addEventListener("touchcancel", () => {
+        touchStartY = null;
+        touchReturnGestureHandled = false;
+      }, { passive: true });
+
+      window.addEventListener("pointermove", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+
+        pointerX = event.clientX;
+        pointerY = event.clientY;
+        schedulePointerCardUpdate();
+      }, { passive: true });
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
+      }, { passive: true });
+
+      contentSection.addEventListener("scroll", () => {
+        schedulePointerCardUpdate();
+
+        if (contentSection.scrollTop > 24) {
+          resetReturnHomeIntent();
+        }
+      }, { passive: true });
+
+      window.addEventListener("resize", () => {
+        updateSectionPreviewHeights();
+        updateEndScrollSpace();
+
+        if (
+          pageMode === "content"
+          && !desktopSelectedCard
+          && !editorialShell.classList.contains("is-grid-focus-mode")
+        ) {
+          contentSection.scrollTop = 0;
+        }
+
+        updateHeaderState();
+        schedulePointerCardUpdate();
+      });
+
+      window.addEventListener("mouseout", (event) => {
+        if (event.relatedTarget || event.toElement) return;
+
+        pointerX = -1;
+        pointerY = -1;
+        clearPointerCard();
+      });
+
+      window.addEventListener("load", () => {
+        window.scrollTo(0, 0);
+        contentSection.scrollTop = 0;
+        updateSectionPreviewHeights();
+        updateEndScrollSpace();
+
+        if (pageMode === "home") {
+          setHomeScrollLock(true);
+          document.body.classList.remove("content-entered");
+          startVideo();
+        } else {
+          setHomeScrollLock(false);
+          pauseVideo();
+          document.body.classList.add("content-entered");
+        }
+
+        document.documentElement.classList.remove("initial-content-screen");
+        updateHeaderState();
+      });
+
+      window.addEventListener("pageshow", () => {
+        window.scrollTo(0, 0);
+        updateSectionPreviewHeights();
+        updateEndScrollSpace();
+
+        if (pageMode === "home") {
+          setHomeScrollLock(true);
+          document.body.classList.remove("content-entered");
+        } else {
+          setHomeScrollLock(false);
+          pauseVideo();
+          document.body.classList.add("content-entered");
+        }
+
+        document.documentElement.classList.remove("initial-content-screen");
+        updateHeaderState();
+      });
+
+      updateSectionPreviewHeights();
+      updateEndScrollSpace();
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          updateSectionPreviewHeights();
+          updateEndScrollSpace();
+        });
+      }
+
+      playButton.addEventListener("click", startVideo);
+      document.addEventListener("click", startVideo, { once: true });
+
+      discoverButton.addEventListener("animationend", (event) => {
+        if (event.animationName === "discoverIn") {
+          discoverButton.classList.add("is-ready");
+        }
+      });
+
+      discoverButton.addEventListener("click", enterContent);
+
+      headerBrand.addEventListener("click", (event) => {
+        event.preventDefault();
+        returnToHome();
+      });
+
+      menuToggle.addEventListener("pointerenter", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+        if (!hoverMenuMedia.matches) return;
+        openMenu();
+      });
+
+      menuToggle.addEventListener("pointerleave", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+        if (!hoverMenuMedia.matches) return;
+        scheduleMenuHide(menuToggleCloseDelay);
+      });
+
+      glassMenu.addEventListener("pointerenter", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+        if (!hoverMenuMedia.matches) return;
+        openMenu();
+      });
+
+      glassMenu.addEventListener("pointerleave", (event) => {
+        if (event.pointerType && event.pointerType !== "mouse") return;
+        if (!hoverMenuMedia.matches) return;
+        scheduleMenuHide(menuPanelCloseDelay);
+      });
+
+      menuToggle.addEventListener("click", () => {
+        if (hoverMenuMedia.matches) {
+          openMenu();
+          return;
+        }
+
+        if (glassMenu.classList.contains("is-open")) {
+          hideMenu({ guardPointer: false });
+          return;
+        }
+
+        openMenu();
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!glassMenu.classList.contains("is-open")) return;
+        if (glassMenu.contains(event.target) || menuToggle.contains(event.target)) return;
+        hideMenu({ guardPointer: hoverMenuMedia.matches, clearSelection: false });
+      });
+
+      glassMenu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", (event) => {
+          const destination = link.getAttribute("href");
+
+          if (destination === "#intro") {
+            event.preventDefault();
+            returnToHome();
+            return;
+          }
+
+          const targetCard = document.querySelector(destination);
+          if (!targetCard) return;
+
+          event.preventDefault();
+          pageMode = "content";
+          enteringContent = false;
+          returningHome = false;
+          unlockContentTop();
+          setHomeScrollLock(false);
+          resetReturnHomeIntent();
+          document.body.classList.add("content-entered");
+          activateSectionFromMenu(targetCard);
+          history.replaceState(null, "", destination);
+
+          if (hoverMenuMedia.matches) {
+            openMenu();
+          } else {
+            hideMenu();
+          }
+        });
+      });
+
+      function activateDesktopGridCard(card) {
+        if (!card || card.classList.contains("is-focus-card")) return;
+
+        pageMode = "content";
+        enteringContent = false;
+        returningHome = false;
+        unlockContentTop();
+        setHomeScrollLock(false);
+        resetReturnHomeIntent();
+        document.body.classList.add("content-entered");
+        clearMenuSelection();
+
+        openDesktopFocus(card, {
+          scroll: true,
+          updateHistory: true
+        });
+
+        updateHeaderState();
+      }
+
+      sectionTriggers.forEach(trigger => {
+        trigger.addEventListener("click", () => {
+          activateDesktopGridCard(trigger.closest(".editorial-section"));
+        });
+      });
+
+      sectionCards.forEach(card => {
+        card.addEventListener("click", event => {
+          if (card.classList.contains("is-focus-card")) return;
+          if (event.target.closest(".section-trigger")) return;
+          if (event.target.closest("a, button, input, textarea, select, label")) return;
+
+          activateDesktopGridCard(card);
+        });
+      });
+
+    }
+  </script>
+
+</body>
+</html>
