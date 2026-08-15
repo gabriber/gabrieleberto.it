@@ -72,7 +72,13 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background: #070101;
+  background: transparent;
+  opacity: 0;
+  transition: opacity .16s ease-out;
+}
+
+.bg-video.is-ready {
+  opacity: 1;
 }
 
 
@@ -2846,4 +2852,14 @@ main {
    - rimozione della riserva scrollbar desktop che lasciava una fascia
      vuota sul lato destro;
    - mobile, geometrie, contenuti e animazioni invariati.
+   ================================================================ */
+
+
+/* ================================================================
+   VERSIONE 0225
+   Correzione chirurgica dell'avvio del video online.
+   - poster desktop/mobile precaricati con priorità alta;
+   - il video non copre più il poster con uno sfondo nero;
+   - il video diventa visibile solo quando il primo fotogramma è disponibile;
+   - video, qualità, layout, testi e animazioni restano invariati.
    ================================================================ */
