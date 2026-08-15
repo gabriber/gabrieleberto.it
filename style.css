@@ -2888,3 +2888,80 @@ main {
   }
 }
 
+/* ================================================================
+   VERSIONE MOBILE 0230
+   Fondo pagina dinamico:
+   - a riposo resta sotto "Contatti" soltanto lo stesso margine di 11 px
+     presente tra la barra superiore e "Formazione";
+   - durante apertura di un riquadro o navigazione da menu viene
+     ripristinato temporaneamente lo spazio tecnico della 0229;
+   - a operazione conclusa lo spazio tecnico viene rimosso.
+   Animazioni, geometrie dei riquadri e desktop restano invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  .content.content-editorial {
+    margin-bottom: 0;
+    padding-bottom: 11px;
+  }
+
+  .content.content-editorial.mobile-technical-end-space {
+    margin-bottom: 48px;
+    padding-bottom: calc(100svh - var(--mobile-header-height) - 34px);
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0231
+   Compensazione dello scroll durante la chiusura manuale dei riquadri.
+   Se la contrazione renderebbe impossibile la posizione di scroll
+   corrente, viene aggiunta temporaneamente in fondo una riserva pari
+   alla contrazione del riquadro. Lo scroll viene accompagnato verso
+   il nuovo limite naturale durante la stessa animazione di chiusura.
+   Terminata l'operazione, torna il margine finale di 11 px della 0230.
+   Desktop, apertura, menu, testi e geometrie restano invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  .content.content-editorial.mobile-close-scroll-compensation {
+    padding-bottom:
+      calc(11px + var(--mobile-close-scroll-compensation, 0px));
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0232
+   Strategia di chiusura in due fasi:
+   - prima della contrazione viene predisposta una riserva finale ampia;
+   - durante la chiusura lo scroll resta fermo;
+   - soltanto a chiusura completata la pagina viene accompagnata verso
+     il nuovo limite naturale;
+   - la riserva viene eliminata solo dopo il riposizionamento.
+   Il fondo compatto di 11 px della 0230 resta invariato.
+   Nessuna modifica a desktop, aperture, menu, testi o geometrie.
+   ================================================================ */
+
+/* ================================================================
+   VERSIONE MOBILE 0233
+   Chiusura dei riquadri in fondo pagina con compensazione visiva FLIP:
+   - la riserva tecnica resta fino alla chiusura completa;
+   - la riserva viene poi rimossa e lo scroll fisico viene portato
+     istantaneamente al nuovo limite naturale prima del paint;
+   - il pannello editoriale riceve nello stesso ciclo una traslazione
+     opposta, che annulla visivamente il clamp del browser;
+   - soltanto la traslazione grafica rientra poi dolcemente a zero.
+   Il fondo compatto di 11 px della 0230 resta invariato.
+   Desktop, aperture, menu, video, testi e geometrie restano invariati.
+   ================================================================ */
+
+/* ================================================================
+   VERSIONE MOBILE 0234
+   Stabilizzazione dei cicli ripetuti di chiusura in fondo pagina:
+   - ogni ciclo di compensazione visiva è completamente autonomo;
+   - eliminati transitionend e timer della 0233;
+   - la compensazione viene predisposta prima della rimozione della
+     riserva e corretta sulla posizione geometrica reale del pannello;
+   - il rientro grafico usa requestAnimationFrame e viene azzerato
+     completamente al termine di ogni ciclo;
+   - rientro moderatamente rallentato e durata proporzionale alla distanza.
+   Il fondo compatto di 11 px della 0230 resta invariato.
+   Desktop, aperture, menu, video, testi e geometrie restano invariati.
+   ================================================================ */

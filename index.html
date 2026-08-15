@@ -99,7 +99,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0229">
+  <link rel="stylesheet" href="style.css?v=0237">
 </head>
 
 <body>
@@ -435,6 +435,7 @@
       const headerBrand = document.querySelector(".header-brand");
       const menuToggle = document.getElementById("menuToggle");
       const glassMenu = document.getElementById("glassMenu");
+      const contentSection = document.getElementById("contenuti");
       const sectionCards = Array.from(document.querySelectorAll(".editorial-section"));
       const sectionTriggers = Array.from(document.querySelectorAll(".section-trigger"));
       const validSectionIds = new Set(sectionCards.map(card => card.id));
@@ -477,6 +478,251 @@
       let activeCard = null;
       let resizeFrame = null;
       let menuNavigationBusy = false;
+
+      function enableMobileTechnicalEndSpace() {
+        contentSection?.classList.add("mobile-technical-end-space");
+      }
+
+      function releaseMobileTechnicalEndSpaceIfIdle() {
+        const openingInProgress = sectionCards.some(card =>
+          card.classList.contains("is-mobile-opening")
+        );
+
+        if (!menuNavigationBusy && !openingInProgress) {
+          contentSection?.classList.remove("mobile-technical-end-space");
+        }
+      }
+
+      let mobileCloseScrollCompensation = null;
+      let mobileCloseScrollCycleId = 0;
+
+      function getMobileDocumentScrollHeight() {
+        return Math.max(
+          document.documentElement.scrollHeight,
+          document.body?.scrollHeight || 0
+        );
+      }
+
+      function getMobileViewportHeight() {
+        return window.innerHeight || document.documentElement.clientHeight || 0;
+      }
+
+      function mobileCloseVisualEase(progress) {
+        const t = Math.min(1, Math.max(0, progress));
+        return t * t * t * (t * (t * 6 - 15) + 10);
+      }
+
+      function clearMobileCloseScrollCompensation() {
+        const state = mobileCloseScrollCompensation;
+
+        if (state?.frame) {
+          window.cancelAnimationFrame(state.frame);
+          state.frame = null;
+        }
+
+        if (editorialShell) {
+          editorialShell.style.removeProperty("transition");
+          editorialShell.style.removeProperty("transform");
+          editorialShell.style.removeProperty("will-change");
+        }
+
+        contentSection?.classList.remove("mobile-close-scroll-compensation");
+        contentSection?.style.removeProperty("--mobile-close-scroll-compensation");
+        mobileCloseScrollCompensation = null;
+      }
+
+      function prepareMobileCloseScrollCompensation(travel) {
+        if (
+          !contentSection
+          || !editorialShell
+          || travel <= .5
+          || menuNavigationBusy
+          || mobileCloseScrollCompensation
+        ) {
+          return null;
+        }
+
+        const hadTechnicalEndSpace =
+          contentSection.classList.contains("mobile-technical-end-space");
+        const viewportHeight = getMobileViewportHeight();
+        const currentMax = Math.max(
+          0,
+          getMobileDocumentScrollHeight() - viewportHeight
+        );
+        const startY = window.scrollY;
+        const bottomRoom = Math.max(0, currentMax - startY);
+
+        /* Se la contrazione non può raggiungere il limite inferiore
+           corrente, la chiusura non richiede alcuna compensazione. */
+        if (!hadTechnicalEndSpace && travel + 32 <= bottomRoom) {
+          return null;
+        }
+
+        const compensation = Math.ceil(travel + viewportHeight + 96);
+
+        contentSection.style.setProperty(
+          "--mobile-close-scroll-compensation",
+          `${compensation}px`
+        );
+        contentSection.classList.add("mobile-close-scroll-compensation");
+        void contentSection.offsetHeight;
+
+        /* Se la chiusura viene richiesta mentre è ancora attiva la riserva
+           tecnica dell'apertura, la trasferiamo direttamente alla riserva
+           di chiusura. In questo modo anche una chiusura rapida, prima che
+           l'apertura abbia terminato il proprio ciclo, non resta mai priva
+           di spazio di sicurezza. */
+        if (hadTechnicalEndSpace) {
+          contentSection.classList.remove("mobile-technical-end-space");
+          void contentSection.offsetHeight;
+        }
+
+        const state = {
+          id: ++mobileCloseScrollCycleId,
+          compensation,
+          frame: null
+        };
+
+        mobileCloseScrollCompensation = state;
+        return state;
+      }
+
+      function settleMobileCloseScrollCompensation(state) {
+        if (
+          !state
+          || mobileCloseScrollCompensation !== state
+          || !contentSection
+          || !editorialShell
+        ) {
+          return;
+        }
+
+        /* 0234: il ciclo è completamente autonomo. Non usiamo più
+           transitionend né timer residui: il rientro visivo è pilotato
+           interamente da requestAnimationFrame e termina azzerando sempre
+           ogni stato inline prima di rendere disponibile il ciclo seguente. */
+        const beforeY = window.scrollY;
+        const beforeTop = editorialShell.getBoundingClientRect().top;
+        const viewportHeight = getMobileViewportHeight();
+
+        /* La pagina naturale è già stabilizzata perché il riquadro ha
+           terminato la chiusura. Finché la riserva è ancora presente,
+           il suo contributo può essere sottratto senza provocare alcun
+           clamp del browser. */
+        const naturalScrollHeight = Math.max(
+          0,
+          getMobileDocumentScrollHeight() - state.compensation
+        );
+        const naturalMax = Math.max(
+          0,
+          naturalScrollHeight - viewportHeight
+        );
+        const targetY = Math.min(beforeY, naturalMax);
+
+        /* Anticipiamo graficamente il clamp PRIMA di togliere la riserva.
+           Se lo scroll fisico dovrà diminuire, la trasformazione opposta è
+           quindi già pronta e nessun fotogramma può mostrare il salto. */
+        let visualOffset = targetY - beforeY;
+
+        editorialShell.style.transition = "none";
+        editorialShell.style.willChange = "transform";
+        editorialShell.style.transform =
+          `translate3d(0, ${visualOffset}px, 0)`;
+        void editorialShell.offsetHeight;
+
+        const rootStyle = document.documentElement.style;
+        const previousInlineScrollBehavior = rootStyle.scrollBehavior;
+        rootStyle.scrollBehavior = "auto";
+
+        contentSection.classList.remove("mobile-close-scroll-compensation");
+        contentSection.style.removeProperty("--mobile-close-scroll-compensation");
+        void contentSection.offsetHeight;
+
+        window.scrollTo({
+          top: targetY,
+          left: 0,
+          behavior: "auto"
+        });
+        void document.documentElement.offsetHeight;
+
+        /* Correzione geometrica reale: se il browser ha applicato un clamp
+           leggermente diverso da quello previsto, misuriamo lo spostamento
+           effettivo del pannello sullo schermo e lo annulliamo nello stesso
+           task, prima del paint. Questo rende identici anche i cicli
+           successivi sullo stesso riquadro. */
+        const afterTop = editorialShell.getBoundingClientRect().top;
+        const residualOffset = beforeTop - afterTop;
+        visualOffset += residualOffset;
+
+        editorialShell.style.transform =
+          `translate3d(0, ${visualOffset}px, 0)`;
+        void editorialShell.offsetHeight;
+
+        if (previousInlineScrollBehavior) {
+          rootStyle.scrollBehavior = previousInlineScrollBehavior;
+        } else {
+          rootStyle.removeProperty("scroll-behavior");
+        }
+
+        if (Math.abs(visualOffset) <= .5) {
+          editorialShell.style.removeProperty("transition");
+          editorialShell.style.removeProperty("transform");
+          editorialShell.style.removeProperty("will-change");
+          mobileCloseScrollCompensation = null;
+          return;
+        }
+
+        const distance = Math.abs(visualOffset);
+
+        /* Contatti risulta moderatamente più lento della 0233; per gli
+           spostamenti più lunghi (per esempio Consigli utili) la durata
+           cresce quasi linearmente con la distanza, evitando accelerazioni
+           eccessive quando il pannello deve rientrare di molti pixel. */
+        const duration = Math.round(
+          1.25 * Math.max(600, Math.min(1600, 500 + (distance / 1.8)))
+        );
+        const startedAt = performance.now();
+        const startOffset = visualOffset;
+
+        const finishVisualSettle = () => {
+          if (mobileCloseScrollCompensation !== state) return;
+
+          if (state.frame) {
+            window.cancelAnimationFrame(state.frame);
+            state.frame = null;
+          }
+
+          editorialShell.style.transform = "translate3d(0, 0, 0)";
+          void editorialShell.offsetHeight;
+          editorialShell.style.removeProperty("transition");
+          editorialShell.style.removeProperty("transform");
+          editorialShell.style.removeProperty("will-change");
+          mobileCloseScrollCompensation = null;
+        };
+
+        const step = now => {
+          if (mobileCloseScrollCompensation !== state) return;
+
+          const progress = Math.min(
+            1,
+            Math.max(0, (now - startedAt) / duration)
+          );
+          const eased = mobileCloseVisualEase(progress);
+          const offset = startOffset * (1 - eased);
+
+          editorialShell.style.transform =
+            `translate3d(0, ${offset}px, 0)`;
+
+          if (progress < 1) {
+            state.frame = window.requestAnimationFrame(step);
+          } else {
+            state.frame = null;
+            finishVisualSettle();
+          }
+        };
+
+        state.frame = window.requestAnimationFrame(step);
+      }
 
       const navigationEntry = performance.getEntriesByType("navigation")[0];
       const mobilePageWasReloaded = navigationEntry
@@ -838,12 +1084,20 @@
         };
       }
 
-      function setCardHeight(card, isOpen, animate = true) {
+      function setCardHeight(card, isOpen, animate = true, { preserveBottomScroll = false } = {}) {
         const content = card.querySelector(".section-content");
         const inner = card.querySelector(".section-content-inner");
         if (!content || !inner) return;
 
         hideMobileEllipsis(card);
+
+        /* 0230: durante la sola apertura mobile viene ripristinato
+           temporaneamente lo stesso spazio tecnico usato fino alla 0229.
+           La posizione corrente resta ferma e il riquadro può crescere
+           verso il basso anche quando parte dal fondo della pagina. */
+        if (isOpen && animate) {
+          enableMobileTechnicalEndSpace();
+        }
 
         const currentHeight = content.getBoundingClientRect().height;
 
@@ -868,6 +1122,14 @@
           : "cubic-bezier(.4, 0, .2, 1)";
         const visualDuration = Math.round(Math.max(520, Math.min(760, duration * .66)));
         const chevronDuration = Math.round(Math.max(520, Math.min(760, duration * .62)));
+
+        const closeScrollState = (
+          !isOpen
+          && animate
+          && preserveBottomScroll
+        )
+          ? prepareMobileCloseScrollCompensation(travel)
+          : null;
 
         card.style.setProperty("--mobile-section-duration", `${duration}ms`);
         card.style.setProperty("--mobile-section-easing", easing);
@@ -916,6 +1178,14 @@
           }
 
           content.style.removeProperty("transition");
+
+          if (closeScrollState) {
+            settleMobileCloseScrollCompensation(closeScrollState);
+          }
+
+          if (animate) {
+            releaseMobileTechnicalEndSpaceIfIdle();
+          }
         };
 
         if (animate) {
@@ -963,12 +1233,19 @@
 
       function closeCard(card) {
         if (!card?.classList.contains("is-open")) return;
-        setCardHeight(card, false, true);
+        setCardHeight(
+          card,
+          false,
+          true,
+          { preserveBottomScroll: true }
+        );
         if (activeCard === card) activeCard = null;
       }
 
       function showHome({ updateHistory = true } = {}) {
         closeMobileMenu();
+        clearMobileCloseScrollCompensation();
+        contentSection?.classList.remove("mobile-technical-end-space");
         syncMenuWithOpenCards();
         document.body.classList.remove("mobile-content", "content-entered");
         document.body.classList.add("mobile-home");
@@ -1005,6 +1282,12 @@
           : null;
         const enteringOverviewFromHome =
           !targetCard && document.body.classList.contains("mobile-home");
+
+        if (targetCard) {
+          enableMobileTechnicalEndSpace();
+        } else {
+          contentSection?.classList.remove("mobile-technical-end-space");
+        }
 
         /* 0228: durante il passaggio Home -> panoramica Contenuti il primo
            riquadro nasce nell'HTML come aperto/attivo. Neutralizziamo per
@@ -1046,6 +1329,11 @@
             refreshMobileHeights();
             if (targetCard && targetCard.id !== "profilo") {
               scrollCardBelowHeader(targetCard, "auto");
+            }
+            if (targetCard) {
+              window.requestAnimationFrame(() => {
+                releaseMobileTechnicalEndSpaceIfIdle();
+              });
             }
             if (enteringOverviewFromHome) {
               document.documentElement.classList.remove("mobile-content-entering");
@@ -1114,6 +1402,7 @@
 
           menuNavigationBusy = true;
           menuToggle.disabled = true;
+          enableMobileTechnicalEndSpace();
 
           try {
             closeMobileMenu();
@@ -1138,6 +1427,7 @@
           } finally {
             menuToggle.disabled = false;
             menuNavigationBusy = false;
+            releaseMobileTechnicalEndSpaceIfIdle();
           }
         });
       });
