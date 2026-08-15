@@ -62,7 +62,7 @@ body {
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background: #070101 url("hero-poster-desktop.png") center center / cover no-repeat;
+  background-color: #070101;
 }
 
 .bg-video {
@@ -72,7 +72,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background: #070101;
+  background: transparent;
 }
 
 
@@ -1133,7 +1133,7 @@ main {
   }
 
   .video-layer {
-    background: #050001 url("hero-poster-mobile.png") center center / cover no-repeat;
+    background-color: #050001;
   }
 
   .bg-video {
@@ -2846,4 +2846,14 @@ main {
    - rimozione della riserva scrollbar desktop che lasciava una fascia
      vuota sul lato destro;
    - mobile, geometrie, contenuti e animazioni invariati.
+   ================================================================ */
+
+
+/* ================================================================
+   VERSIONE 0226
+   Correzione chirurgica dell'avvio online del video hero.
+   - placeholder del primo fotogramma incorporato direttamente nell'HTML;
+   - nessun poster PNG esterno prima dell'avvio;
+   - sfondo del video trasparente finché il primo frame non viene disegnato;
+   - meccanismo di autoplay/playback della 0224 mantenuto, con load() esplicito.
    ================================================================ */
