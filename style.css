@@ -2857,3 +2857,14 @@ main {
    - sfondo del video trasparente finché il primo frame non viene disegnato;
    - meccanismo di autoplay/playback della 0224 mantenuto, con load() esplicito.
    ================================================================ */
+
+
+/* ================================================================
+   VERSIONE 0227
+   Ottimizzazione del caricamento iniziale:
+   - le sei icone dei contenuti non vengono richieste durante la Home;
+   - il loro download parte solo dopo il buffering completo del video,
+     oppure immediatamente se l'utente richiede i Contenuti;
+   - icone ridotte deterministicamente a 256x256 PNG.
+   Nessun'altra modifica grafica o funzionale.
+   ================================================================ */

@@ -99,7 +99,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0226">
+  <link rel="stylesheet" href="style.css?v=0227">
 </head>
 
 <body>
@@ -110,6 +110,76 @@
         const video = document.getElementById("bgVideo");
         const useMobileHero = window.matchMedia("(max-width: 900px)").matches;
         const source = document.createElement("source");
+
+        let deferredIconsRequested = false;
+
+        window.loadDeferredCardIcons = () => {
+          if (deferredIconsRequested) return;
+          deferredIconsRequested = true;
+
+          const applyIconSources = () => {
+            document.querySelectorAll("img[data-icon-src]").forEach(image => {
+              if (!image.hasAttribute("src")) {
+                image.src = image.dataset.iconSrc;
+              }
+            });
+          };
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", applyIconSources, { once: true });
+          } else {
+            applyIconSources();
+          }
+        };
+
+        const contentHashPattern =
+          /^#(contenuti|profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/;
+
+        if (contentHashPattern.test(window.location.hash)) {
+          window.loadDeferredCardIcons();
+        }
+
+        document.addEventListener("click", event => {
+          const contentRequest = event.target.closest(
+            "#discoverBtn, .glass-menu a[href]:not([href='#intro'])"
+          );
+
+          if (contentRequest) {
+            window.loadDeferredCardIcons();
+          }
+        }, true);
+
+        const stopWatchingVideoBuffer = () => {
+          ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
+            .forEach(eventName => {
+              video.removeEventListener(eventName, maybeLoadIconsAfterFullBuffer);
+            });
+        };
+
+        const maybeLoadIconsAfterFullBuffer = () => {
+          if (
+            !Number.isFinite(video.duration)
+            || video.duration <= 0
+            || video.buffered.length === 0
+          ) {
+            return;
+          }
+
+          let bufferedEnd = 0;
+          for (let index = 0; index < video.buffered.length; index += 1) {
+            bufferedEnd = Math.max(bufferedEnd, video.buffered.end(index));
+          }
+
+          if (bufferedEnd >= video.duration - .05) {
+            stopWatchingVideoBuffer();
+            window.loadDeferredCardIcons();
+          }
+        };
+
+        ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
+          .forEach(eventName => {
+            video.addEventListener(eventName, maybeLoadIconsAfterFullBuffer);
+          });
 
         source.src = useMobileHero
           ? "hero-video-mobile.mp4"
@@ -176,7 +246,7 @@
       <div class="editorial-shell" id="editorialShell">
         <article class="glass-card editorial-section is-open is-section-active" id="profilo">
           <button class="section-trigger" type="button" aria-expanded="true">
-            <span class="card-icon" aria-hidden="true"><img src="icona-formazione.png" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-formazione.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Formazione</span>
             </span>
@@ -196,7 +266,7 @@
 
         <article class="glass-card editorial-section" id="ambito">
           <button class="section-trigger" type="button" aria-expanded="false">
-            <span class="card-icon" aria-hidden="true"><img src="icona-ambito.png" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-ambito.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Ambito di intervento</span>
             </span>
@@ -216,7 +286,7 @@
 
         <article class="glass-card editorial-section" id="seconda-valutazione">
           <button class="section-trigger" type="button" aria-expanded="false">
-            <span class="card-icon" aria-hidden="true"><img src="icona-seconda-valutazione.png" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-seconda-valutazione.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Seconda valutazione</span>
             </span>
@@ -234,7 +304,7 @@
 
         <article class="glass-card editorial-section" id="rapporto-diretto">
           <button class="section-trigger" type="button" aria-expanded="false">
-            <span class="card-icon" aria-hidden="true"><img src="icona-rapporto-diretto.png" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-rapporto-diretto.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Rapporto diretto</span>
             </span>
@@ -253,7 +323,7 @@
 
         <article class="glass-card editorial-section" id="consigli">
           <button class="section-trigger" type="button" aria-expanded="false">
-            <span class="card-icon" aria-hidden="true"><img src="icona-consigli.png?v=0215" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-consigli.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Consigli utili</span>
             </span>
@@ -290,7 +360,7 @@
 
         <article class="glass-card editorial-section" id="contatti">
           <button class="section-trigger" type="button" aria-expanded="false">
-            <span class="card-icon" aria-hidden="true"><img src="icona-contatti.png" alt=""></span>
+            <span class="card-icon" aria-hidden="true"><img data-icon-src="icona-contatti.png?v=0227" alt="" width="256" height="256" decoding="async" fetchpriority="low"></span>
             <span class="section-head-copy">
               <span class="section-title">Contatti</span>
             </span>
