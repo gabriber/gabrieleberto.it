@@ -598,23 +598,23 @@ main {
     gap: 22px;
     background:
       radial-gradient(
-        ellipse at 18% -70%,
-        rgba(143, 39, 57, .50) 0%,
-        rgba(96, 19, 34, .27) 31%,
-        rgba(40, 5, 13, .08) 53%,
-        rgba(10, 1, 3, 0) 70%
+        ellipse at 18% -52%,
+        rgba(154, 46, 64, .62) 0%,
+        rgba(105, 25, 40, .34) 31%,
+        rgba(49, 8, 17, .12) 54%,
+        rgba(10, 1, 3, 0) 73%
       ),
       linear-gradient(
         180deg,
-        rgba(28, 4, 10, .995) 0%,
-        rgba(16, 2, 6, .992) 58%,
+        rgba(34, 5, 12, .996) 0%,
+        rgba(20, 3, 8, .994) 58%,
         rgba(7, 0, 2, .998) 100%
       );
     border-bottom: 0;
     box-shadow:
       0 14px 38px rgba(0, 0, 0, .44),
-      inset 0 1px 0 rgba(255, 243, 221, .07),
-      inset 0 -16px 30px rgba(95, 21, 30, .09);
+      inset 0 1px 0 rgba(255, 243, 221, .08),
+      inset 0 -18px 34px rgba(105, 25, 40, .14);
     -webkit-backdrop-filter: blur(18px) saturate(1.08);
     backdrop-filter: blur(18px) saturate(1.08);
   }
@@ -628,11 +628,11 @@ main {
     height: 1px;
     background: linear-gradient(
       90deg,
-      rgba(215, 173, 87, .44) 0%,
-      rgba(243, 216, 140, .62) 50%,
-      rgba(215, 173, 87, .44) 100%
+      rgba(215, 173, 87, .50) 0%,
+      rgba(243, 216, 140, .70) 50%,
+      rgba(215, 173, 87, .50) 100%
     );
-    box-shadow: 0 0 7px rgba(215, 173, 87, .20);
+    box-shadow: 0 0 8px rgba(215, 173, 87, .28);
     pointer-events: none;
   }
 
@@ -1227,9 +1227,9 @@ main {
   .glass-menu {
     top: calc(var(--mobile-header-height) + 11px);
     right: var(--mobile-side-space);
-    left: var(--mobile-side-space);
-    width: auto;
-    max-width: none;
+    left: auto;
+    width: clamp(250px, 68vw, 286px);
+    max-width: calc(100vw - (2 * var(--mobile-side-space)));
     max-height: calc(100svh - var(--mobile-header-height) - 24px);
     overflow-y: auto;
     padding: 8px;
@@ -2965,3 +2965,417 @@ main {
    Il fondo compatto di 11 px della 0230 resta invariato.
    Desktop, aperture, menu, video, testi e geometrie restano invariati.
    ================================================================ */
+
+/* ================================================================
+   VERSIONE MOBILE 0238
+   Stabilizzazione chirurgica della Home mobile fra browser/dispositivi:
+   - riferimento estetico: distribuzione Zenfone 6 + Chrome;
+   - eliminate dalle sole distanze verticali della Home le componenti
+     dipendenti da svh che potevano variare con la UI del browser;
+   - dimensioni dei testi principali rese quasi costanti sui normali
+     smartphone, mantenendo una riduzione di sicurezza solo sotto 340 px;
+   - nessuna modifica a Contenuti, riquadri, animazioni, video o desktop.
+   ================================================================ */
+@media (max-width: 900px) {
+  :root {
+    --mobile-intro-top-space: max(46px, env(safe-area-inset-top));
+  }
+
+  .intro-identity {
+    margin-bottom: 40px;
+  }
+
+  .intro-title {
+    margin-top: 140px;
+  }
+
+  .intro-name {
+    font-size: 1.80rem;
+  }
+
+  .intro-role {
+    font-size: .82rem;
+  }
+
+  .white-line {
+    font-size: 2rem;
+  }
+
+  .gold-line {
+    font-size: 1.625rem;
+  }
+}
+
+/* Solo per schermi eccezionalmente stretti viene conservato un piccolo
+   margine di adattamento, così le righe restano sempre contenute. */
+@media (max-width: 340px) {
+  .intro-name {
+    font-size: 1.72rem;
+  }
+
+  .intro-role {
+    font-size: .79rem;
+  }
+
+  .white-line {
+    font-size: 1.84rem;
+  }
+
+  .gold-line {
+    font-size: 1.50rem;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0239
+   Correzione chirurgica del solo caso Firefox su viewport stretti:
+   - S21 + Chrome resta invariato;
+   - Zenfone 6 + Chrome/Firefox resta invariato;
+   - sui viewport Firefox fino a 380 px il blocco centrale della Home
+     viene anticipato verticalmente per ricondurlo alla distribuzione
+     di riferimento Zenfone 6 + Chrome;
+   - tipografia 0238, Contenuti, animazioni, video e desktop invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    .intro-title {
+      margin-top: 100px;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0241
+   Rifinitura chirurgica del solo caso Firefox su viewport stretti:
+   - riferimento visivo: Zenfone 6 + Chrome della 0237;
+   - scala relativa di nome, qualifica, titolo e pulsante ricondotta
+     alle proporzioni del riferimento senza modificare il logo;
+   - composizione complessiva leggermente anticipata verso l'alto;
+   - Chrome, Zenfone, Contenuti, animazioni, video e desktop invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    :root {
+      --mobile-intro-top-space: max(34px, env(safe-area-inset-top));
+    }
+
+    .intro-identity {
+      gap: 10px;
+    }
+
+    .intro-logo {
+      width: 56px;
+      height: 56px;
+    }
+
+    .intro-title {
+      margin-top: 94px;
+    }
+
+    .intro-name {
+      font-size: 1.56rem;
+    }
+
+    .intro-role {
+      max-width: 242px;
+      font-size: .71rem;
+      line-height: 1.28;
+    }
+
+    .white-line {
+      font-size: 1.78rem;
+    }
+
+    .gold-line {
+      font-size: 1.43rem;
+    }
+
+    .intro-title > .gold-line:nth-child(3) {
+      margin-top: 16px;
+    }
+
+    .discover {
+      width: 61vw;
+      margin-top: 18px;
+      padding: 12px 16px;
+      gap: 16px;
+      font-size: .73rem;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0242
+   Rifinitura chirurgica finale del solo caso S21 + Firefox:
+   - invariata la geometria verticale della 0241;
+   - lieve riduzione del blocco centrale Home e del pulsante CTA;
+   - blocco identità iniziale, logo, contenuti, animazioni, video e
+     comportamento desktop/mobile generale invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    .white-line {
+      font-size: 1.70rem;
+    }
+
+    .gold-line {
+      font-size: 1.37rem;
+    }
+
+    .discover {
+      width: 58vw;
+      margin-top: 16px;
+      padding: 11px 15px;
+      gap: 14px;
+      font-size: .71rem;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0243
+   Rifinitura chirurgica finale richiesta:
+   - su Firefox mobile stretto restano invariate geometria verticale,
+     logo, blocco identità e titolo bianco della 0242;
+   - lieve riallargamento del pulsante CTA;
+   - leggerissimo recupero dimensionale della riga oro;
+   - nessuna modifica a Chrome, Zenfone, Contenuti, animazioni,
+     video o desktop.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    .gold-line {
+      font-size: 1.40rem;
+    }
+
+    .discover {
+      width: 60vw;
+      margin-top: 16px;
+      padding: 12px 16px;
+      gap: 15px;
+      font-size: .72rem;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0248
+   Primo allineamento chirurgico dei soli Contenuti su Firefox mobile
+   stretto al riferimento Zenfone 6 + Chrome:
+   - Home 0247 invariata;
+   - Chrome e desktop invariati;
+   - proporzione 17:10 dei riquadri invariata;
+   - ridotta la scala interna di barra superiore, icone, titoli,
+     testo, chevron, raggi e spaziature per compensare il viewport
+     CSS più stretto osservato su S21 + Firefox;
+   - animazioni e logiche JavaScript invariate.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content {
+      --mobile-header-height: 62px;
+    }
+
+    body.mobile-content .site-header {
+      padding-top: 7px;
+      padding-bottom: 7px;
+      gap: 10px;
+    }
+
+    body.mobile-content .header-brand {
+      gap: 8px;
+    }
+
+    body.mobile-content .header-logo,
+    body.mobile-content .menu-toggle {
+      width: 40px;
+      height: 40px;
+    }
+
+    body.mobile-content .header-name {
+      max-width: calc(100vw - 116px);
+      font-size: 1.05rem;
+    }
+
+    body.mobile-content .menu-toggle {
+      gap: 4px;
+      border-width: 1.35px;
+    }
+
+    body.mobile-content .menu-toggle span {
+      width: 18px;
+      height: 2px;
+    }
+
+    body.mobile-content .menu-toggle[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(6px) rotate(45deg);
+    }
+
+    body.mobile-content .menu-toggle[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
+    body.mobile-content .editorial-shell {
+      gap: 18px;
+    }
+
+    body.mobile-content .editorial-shell .glass-card.editorial-section {
+      border-radius: 16px;
+    }
+
+    body.mobile-content .editorial-shell
+    .glass-card.editorial-section:not(:last-child)::after {
+      bottom: -10px;
+    }
+
+    body.mobile-content .section-trigger {
+      grid-template-columns: 42px minmax(0, 1fr) 32px;
+      gap: 9px;
+      padding: 11px 9px 7px;
+      border-radius: 15px 15px 0 0;
+    }
+
+    body.mobile-content .editorial-section .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+    }
+
+    body.mobile-content .section-title {
+      font-size: 1rem;
+      line-height: 1.08;
+    }
+
+    body.mobile-content .section-chevron {
+      width: 32px;
+      height: 32px;
+    }
+
+    body.mobile-content .section-chevron::before {
+      width: 7px;
+      height: 7px;
+      border-right-width: 1.7px;
+      border-bottom-width: 1.7px;
+    }
+
+    body.mobile-content .section-richtext {
+      padding-right: 9px;
+      padding-bottom: 15px;
+      padding-left: 9px;
+    }
+
+    body.mobile-content .section-richtext p,
+    body.mobile-content .section-richtext li,
+    body.mobile-content .section-mobile-ellipsis {
+      font-size: .82rem;
+      line-height: 1.58;
+    }
+
+    body.mobile-content .section-richtext p {
+      margin-bottom: 12px;
+    }
+
+    body.mobile-content .editorial-section.is-open
+    .section-richtext > p:not(:last-child),
+    body.mobile-content .editorial-section.is-mobile-opening
+    .section-richtext > p:not(:last-child),
+    body.mobile-content .editorial-section.is-mobile-open-measuring
+    .section-richtext > p:not(:last-child),
+    body.mobile-content .editorial-section.is-mobile-open-measuring:not(.is-open):not(.is-mobile-opening)
+    .section-richtext > p:not(:last-child) {
+      margin-bottom: 12px !important;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0249
+   Rifinitura chirurgica dei soli Contenuti su Firefox mobile stretto:
+   - base esatta 0248;
+   - corpo testo, titoli e proporzione 17:10 invariati;
+   - lieve compattazione della fascia superiore;
+   - lieve riduzione delle icone dei riquadri e dei chevron;
+   - Home, Chrome, desktop, animazioni e logiche JavaScript invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content {
+      --mobile-header-height: 60px;
+    }
+
+    body.mobile-content .site-header {
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    body.mobile-content .header-logo,
+    body.mobile-content .menu-toggle {
+      width: 39px;
+      height: 39px;
+    }
+
+    body.mobile-content .header-name {
+      font-size: 1.02rem;
+    }
+
+    body.mobile-content .section-trigger {
+      grid-template-columns: 40px minmax(0, 1fr) 31px;
+    }
+
+    body.mobile-content .editorial-section .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+    }
+
+    body.mobile-content .section-chevron {
+      width: 31px;
+      height: 31px;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0250
+   Rifinitura tipografica chirurgica dei soli Contenuti su Firefox mobile stretto:
+   - base esatta 0249;
+   - riduzione del solo corpo testo da .82rem a .80rem (~2,4%);
+   - stessa riduzione applicata ai puntini finali delle anteprime;
+   - titoli, header, icone, chevron, riquadri 17:10, spaziature,
+     Home, Chrome, desktop, animazioni e logiche JavaScript invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .section-richtext p,
+    body.mobile-content .section-richtext li,
+    body.mobile-content .section-mobile-ellipsis {
+      font-size: .80rem;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0255
+   Rifinitura chirurgica dei soli riquadri chiusi su Firefox mobile stretto:
+   - base esatta 0250;
+   - anteprima testuale abbassata di 2 px per ridurre di 2 px il margine
+     visivo fra l'ultima riga con puntini e il bordo inferiore;
+   - il limite di visibilità dei puntini recupera gli stessi 2 px, così
+     restano invariati numero di righe e testo mostrato;
+   - Home, Chrome/Opera, desktop, geometria 17:10 e tipografia invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .section-content-inner {
+      transition: transform var(--mobile-section-duration, .46s)
+        var(--mobile-section-easing, cubic-bezier(.16, 1, .3, 1));
+    }
+
+    body.mobile-content
+    .editorial-section:not(.is-open) .section-content-inner {
+      transform: translateY(2px);
+    }
+  }
+}

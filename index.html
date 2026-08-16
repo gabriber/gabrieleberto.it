@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="msapplication-navbutton-color" content="#000000">
   <title>Gabriele Berto | Incidenti stradali e infortuni sul lavoro</title>
-  <meta name="description" content="Gabriele Berto offre consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.">
+  <meta name="description" content="Gabriele Berto offre consulenze in materia di incidenti stradali e infortuni sul lavoro.">
   <link rel="canonical" href="https://www.gabrieleberto.it/">
 
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -19,7 +19,7 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="it_IT">
   <meta property="og:site_name" content="Gabriele Berto">
-  <meta property="og:title" content="Consulenze tecnico-giuridiche">
+  <meta property="og:title" content="Competenze tecniche e giuridiche">
   <meta property="og:description" content="Incidenti stradali e infortuni sul lavoro: responsabilità e risarcimento del danno.">
   <meta property="og:url" content="https://www.gabrieleberto.it/">
   <meta property="og:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
@@ -28,7 +28,7 @@
   <meta property="og:image:type" content="image/png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Consulenze tecnico-giuridiche">
+  <meta name="twitter:title" content="Competenze tecniche e giuridiche">
   <meta name="twitter:description" content="Incidenti stradali e infortuni sul lavoro: responsabilità e risarcimento del danno.">
   <meta name="twitter:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
 
@@ -41,12 +41,12 @@
     "url": "https://www.gabrieleberto.it/",
     "image": "https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png",
     "jobTitle": "Abogado",
-    "description": "Consulenze tecnico-giuridiche in materia di incidenti stradali e infortuni sul lavoro.",
+    "description": "Consulenze in materia di incidenti stradali e infortuni sul lavoro.",
     "knowsAbout": [
       "Incidenti stradali",
       "Infortuni sul lavoro",
       "Ricostruzione del sinistro",
-      "Consulenza tecnico-giuridica",
+      "Competenze tecniche e giuridiche",
       "Analisi di incidenti stradali",
       "Analisi di infortuni sul lavoro"
     ]
@@ -99,7 +99,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0237">
+  <link rel="stylesheet" href="style.css?v=0264">
 </head>
 
 <body>
@@ -228,9 +228,9 @@
         </div>
 
         <h1 class="intro-title">
-          <span class="white-line">competenze</span>
+          <span class="white-line">Competenze</span>
           <span class="white-line">tecniche e giuridiche</span>
-          <span class="gold-line">incidenti stradali e</span>
+          <span class="gold-line">Incidenti stradali e</span>
           <span class="gold-line">infortuni sul lavoro</span>
         </h1>
 
@@ -451,7 +451,7 @@
       });
 
       const mobileLabels = [
-        "Home",
+        "Home page",
         "Formazione",
         "Ambito di intervento",
         "Seconda valutazione",
@@ -466,9 +466,9 @@
 
       const mobileTitle = document.querySelector(".intro-title");
       mobileTitle.innerHTML = `
-        <span class="white-line">competenze</span>
+        <span class="white-line">Competenze</span>
         <span class="white-line">tecniche e giuridiche</span>
-        <span class="gold-line">incidenti stradali e</span>
+        <span class="gold-line">Incidenti stradali e</span>
         <span class="gold-line">infortuni sul lavoro</span>
       `;
 
@@ -821,7 +821,7 @@
         });
       }
 
-      function getClosedContentHeight(card) {
+      function getBaseClosedContentHeight(card) {
         const trigger = card.querySelector(".section-trigger");
         if (!trigger) return 0;
 
@@ -831,6 +831,112 @@
         const closedContentHeight = targetCardHeight - triggerHeight - 2;
 
         return Math.max(92, Math.round(closedContentHeight));
+      }
+
+      function isFirefoxNarrowMobileContent() {
+        return window.matchMedia("(max-width: 380px)").matches
+          && typeof CSS !== "undefined"
+          && typeof CSS.supports === "function"
+          && CSS.supports("(-moz-appearance: none)")
+          && document.body.classList.contains("mobile-content");
+      }
+
+      function getClosedContentHeight(card) {
+        const baseClosedContentHeight = getBaseClosedContentHeight(card);
+        if (!baseClosedContentHeight) return 0;
+
+        /* 0261: la geometria chiusa resta basata sul 17:10 della 0255.
+           Se però l'ultima riga dell'anteprima finisce troppo vicino al
+           bordo inferiore, il riquadro recupera solo i pixel necessari a
+           garantire un margine minimo proporzionato alla tipografia e mai
+           superiore al padding già previsto. La riga mostrata resta quella
+           determinata dal 17:10 originario: nessun elemento interno viene
+           spostato o ridimensionato. */
+        if (
+          window.matchMedia("(min-width: 901px)").matches
+          || isFirefoxNarrowMobileContent()
+        ) {
+          return baseClosedContentHeight;
+        }
+
+        const content = card.querySelector(".section-content");
+        const richtext = card.querySelector(".section-richtext");
+        if (!content || !richtext) return baseClosedContentHeight;
+
+        const contentRect = content.getBoundingClientRect();
+        const richtextRect = richtext.getBoundingClientRect();
+        const richtextStyle = window.getComputedStyle(richtext);
+        const paddingTop = parseFloat(richtextStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(richtextStyle.paddingBottom) || 0;
+        const paddingRight = parseFloat(richtextStyle.paddingRight) || 0;
+        const firstTextBlock = richtext.querySelector("p, li");
+        const firstTextStyle = firstTextBlock
+          ? window.getComputedStyle(firstTextBlock)
+          : null;
+        const textLineHeight = firstTextStyle
+          ? parseFloat(firstTextStyle.lineHeight) || 0
+          : 0;
+        const minimumBottomGap = Math.min(
+          paddingBottom,
+          textLineHeight > 0 ? textLineHeight * .60 : paddingBottom
+        );
+
+        if (minimumBottomGap <= 0) return baseClosedContentHeight;
+
+        const visibleTop = contentRect.top + paddingTop - .5;
+        const previewBottom = contentRect.top + baseClosedContentHeight - 2;
+        const visibleRight = contentRect.right - paddingRight;
+
+        let lastVisibleBottom = null;
+        const walker = document.createTreeWalker(
+          richtext,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          for (const match of node.data.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(node, match.index);
+            range.setEnd(node, match.index + match[0].length);
+            const rect = range.getBoundingClientRect();
+
+            if (
+              rect.width > 0
+              && rect.height > 0
+              && rect.top >= visibleTop
+              && rect.bottom <= previewBottom
+              && rect.left >= richtextRect.left - .5
+              && rect.right <= visibleRight + .5
+            ) {
+              lastVisibleBottom = lastVisibleBottom === null
+                ? rect.bottom
+                : Math.max(lastVisibleBottom, rect.bottom);
+            }
+          }
+          node = walker.nextNode();
+        }
+
+        if (lastVisibleBottom === null) return baseClosedContentHeight;
+
+        const currentBottomGap =
+          (contentRect.top + baseClosedContentHeight) - lastVisibleBottom;
+
+        /* Mezzo pixel di tolleranza evita micro-variazioni dovute agli
+           arrotondamenti sub-pixel quando il margine è già adeguato. */
+        if (currentBottomGap >= minimumBottomGap - .5) {
+          return baseClosedContentHeight;
+        }
+
+        const missingBottomGap = minimumBottomGap - currentBottomGap;
+        return Math.round(baseClosedContentHeight + Math.ceil(missingBottomGap));
       }
 
       function hideMobileEllipsis(card) {
@@ -869,7 +975,13 @@
         const paddingTop = parseFloat(richtextStyle.paddingTop) || 0;
         const paddingRight = parseFloat(richtextStyle.paddingRight) || 0;
         const visibleTop = contentRect.top + paddingTop - .5;
-        const visibleBottom = contentRect.bottom - 2;
+        const firefoxNarrowMobileContent = isFirefoxNarrowMobileContent();
+        const baseClosedContentHeight = getBaseClosedContentHeight(card);
+        const previewContentBottom = Math.min(
+          contentRect.bottom,
+          contentRect.top + baseClosedContentHeight
+        );
+        const visibleBottom = previewContentBottom - (firefoxNarrowMobileContent ? 0 : 2);
         const visibleRight = contentRect.right - paddingRight;
 
         ellipsis.classList.add("is-measuring");
@@ -3516,6 +3628,62 @@
       });
 
     }
+  </script>
+
+  <script>
+    (() => {
+      const mobileHomeQuery = window.matchMedia("(max-width: 900px)");
+      const discoverButton = document.getElementById("discoverBtn");
+      const referenceLine = document.querySelector(".intro-title .gold-line:last-child");
+
+      if (!discoverButton || !referenceLine) return;
+
+      let syncFrame = 0;
+
+      const syncDiscoverWidth = () => {
+        syncFrame = 0;
+
+        if (!mobileHomeQuery.matches) {
+          discoverButton.style.removeProperty("width");
+          return;
+        }
+
+        const range = document.createRange();
+        range.selectNodeContents(referenceLine);
+        const referenceWidth = range.getBoundingClientRect().width;
+        range.detach?.();
+
+        if (referenceWidth > 0) {
+          discoverButton.style.width = `${Math.max(0, referenceWidth - 2)}px`;
+        }
+      };
+
+      const scheduleDiscoverWidthSync = () => {
+        if (syncFrame) {
+          cancelAnimationFrame(syncFrame);
+        }
+        syncFrame = requestAnimationFrame(syncDiscoverWidth);
+      };
+
+      mobileHomeQuery.addEventListener?.("change", scheduleDiscoverWidthSync);
+      window.addEventListener("resize", scheduleDiscoverWidthSync, { passive: true });
+      window.addEventListener("orientationchange", scheduleDiscoverWidthSync, { passive: true });
+      window.addEventListener("hashchange", scheduleDiscoverWidthSync, { passive: true });
+      window.visualViewport?.addEventListener("resize", scheduleDiscoverWidthSync, { passive: true });
+
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(scheduleDiscoverWidthSync);
+      }
+
+      const bodyClassObserver = new MutationObserver(scheduleDiscoverWidthSync);
+      bodyClassObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class"]
+      });
+
+      scheduleDiscoverWidthSync();
+      window.addEventListener("load", scheduleDiscoverWidthSync, { once: true });
+    })();
   </script>
 
 </body>
