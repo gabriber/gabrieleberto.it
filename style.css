@@ -2424,15 +2424,22 @@ main {
   body.desktop-grid-layout .desktop-focus-close {
     display: none;
     position: absolute;
-    top: 27px;
+    top: 29px;
     right: 28px;
     z-index: 18;
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
-    border: 1px solid rgba(243,216,140,.65);
-    background: rgba(10,1,2,.18);
+    border: 1px solid rgba(243,216,140,.72);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,244,219,.12), rgba(255,244,219,0) 44%),
+      linear-gradient(180deg, rgba(45,5,11,.34), rgba(17,1,4,.28));
+    box-shadow:
+      inset 0 1px 0 rgba(255,244,219,.10),
+      inset 0 -1px 0 rgba(0,0,0,.24),
+      0 0 0 1px rgba(243,216,140,.05),
+      0 0 16px rgba(196,118,27,.10);
     opacity: 0;
     cursor: pointer;
     pointer-events: none;
@@ -2440,7 +2447,8 @@ main {
       opacity .30s ease,
       border-color .22s ease,
       background .22s ease,
-      box-shadow .22s ease;
+      box-shadow .22s ease,
+      transform .22s ease;
   }
 
   body.desktop-grid-layout .is-focus-card .desktop-focus-close {
@@ -2459,10 +2467,11 @@ main {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 17px;
-    height: 2px;
+    width: 13px;
+    height: 1.9px;
     border-radius: 999px;
-    background: rgba(255,243,221,.94);
+    background: rgba(255,243,221,.96);
+    box-shadow: 0 0 8px rgba(255,232,158,.10);
   }
 
   body.desktop-grid-layout .desktop-focus-close::before {
@@ -2475,10 +2484,15 @@ main {
 
   body.desktop-grid-layout .desktop-focus-close:hover {
     border-color: rgba(255,232,158,.92);
-    background: rgba(95,21,30,.28);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,244,219,.16), rgba(255,244,219,0) 44%),
+      linear-gradient(180deg, rgba(84,17,27,.42), rgba(25,2,7,.34));
     box-shadow:
-      0 0 12px rgba(255,224,128,.24),
-      0 0 28px rgba(196,118,27,.12);
+      inset 0 1px 0 rgba(255,244,219,.14),
+      inset 0 -1px 0 rgba(0,0,0,.26),
+      0 0 14px rgba(255,224,128,.22),
+      0 0 30px rgba(196,118,27,.12);
+    transform: translateY(-1px);
   }
 
   body.desktop-grid-layout .desktop-focus-close:focus-visible {
@@ -3391,6 +3405,861 @@ main {
   @supports (-webkit-touch-callout: none) {
     .editorial-shell .glass-card.editorial-section.is-mobile-closing {
       aspect-ratio: auto;
+    }
+  }
+}
+
+/* ================================================================
+   VERSIONE 0269
+   Rifinitura estetica chirurgica dei soli controlli della modalità
+   di lettura, sulla base funzionale invariata della 0268.
+   - stesso impianto logico della 0268;
+   - sole/luna ridisegnati con segno più essenziale;
+   - pulsante desktop di chiusura armonizzato alla stessa famiglia;
+   - su mobile il toggle resta molto discreto e il chevron aperto
+     viene soltanto compattato, senza alterare la colonna del titolo.
+   Nessun'altra modifica grafica o funzionale.
+   ================================================================ */
+.reading-light-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(145deg, rgba(248, 241, 230, .985), rgba(239, 228, 211, .985));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .24s cubic-bezier(.16, 1, .3, 1);
+}
+
+.editorial-section.is-reading-light .reading-light-surface {
+  opacity: 1;
+}
+
+.editorial-section.is-reading-light .section-title {
+  color: #7a5418;
+  transition: color .18s ease;
+}
+
+.editorial-section.is-reading-light .section-richtext p,
+.editorial-section.is-reading-light .section-richtext li,
+.editorial-section.is-reading-light .section-mobile-ellipsis {
+  color: rgba(39, 32, 27, .90) !important;
+  transition: color .18s ease;
+}
+
+.editorial-section.is-reading-light .section-richtext strong {
+  color: #231914 !important;
+  transition: color .18s ease;
+}
+
+.reading-theme-toggle {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(243, 216, 140, .72);
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,244,219,.12), rgba(255,244,219,0) 44%),
+    linear-gradient(180deg, rgba(45,5,11,.34), rgba(17,1,4,.28));
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,219,.10),
+    inset 0 -1px 0 rgba(0,0,0,.24),
+    0 0 0 1px rgba(243,216,140,.05),
+    0 0 16px rgba(196,118,27,.10);
+  color: rgba(255, 243, 221, .88);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    opacity .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+.reading-theme-toggle:hover {
+  color: rgba(255, 243, 221, .98);
+  border-color: rgba(255, 232, 158, .90);
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,244,219,.16), rgba(255,244,219,0) 44%),
+    linear-gradient(180deg, rgba(84,17,27,.42), rgba(25,2,7,.34));
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,219,.14),
+    inset 0 -1px 0 rgba(0,0,0,.26),
+    0 0 14px rgba(255,224,128,.22),
+    0 0 30px rgba(196,118,27,.12);
+  transform: translateY(-1px);
+}
+
+.reading-theme-toggle:focus-visible {
+  outline: 2px solid rgba(243, 216, 140, .72);
+  outline-offset: 2px;
+}
+
+.reading-theme-icon {
+  display: block;
+  width: 13px;
+  height: 13px;
+  line-height: 0;
+}
+
+.reading-theme-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.reading-theme-icon-moon {
+  display: none;
+}
+
+/* 0272: la nuova sagoma lunare è riservata al desktop; mobile invariato. */
+.reading-moon-path-desktop {
+  display: none;
+}
+
+.editorial-section.is-reading-light .reading-theme-icon-sun {
+  display: none;
+}
+
+.editorial-section.is-reading-light .reading-theme-icon-moon {
+  display: block;
+}
+
+.editorial-section.is-reading-light .reading-theme-toggle {
+  color: rgba(73, 53, 31, .88);
+  border-color: rgba(122, 84, 24, .50);
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,255,255,.30), rgba(255,255,255,0) 46%),
+    linear-gradient(180deg, rgba(255,255,255,.34), rgba(241,233,221,.20));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.56),
+    inset 0 -1px 0 rgba(122,84,24,.08),
+    0 0 0 1px rgba(122,84,24,.05),
+    0 0 16px rgba(196,118,27,.08);
+}
+
+.editorial-section.is-reading-light .reading-theme-toggle:hover {
+  color: rgba(66, 39, 27, .96);
+  border-color: rgba(122, 84, 24, .74);
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,255,255,.46), rgba(255,255,255,0) 46%),
+    linear-gradient(180deg, rgba(255,255,255,.44), rgba(241,233,221,.28));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.70),
+    inset 0 -1px 0 rgba(122,84,24,.10),
+    0 0 14px rgba(196,118,27,.12);
+}
+
+@media (min-width: 901px) {
+  body.desktop-grid-layout .reading-theme-toggle {
+    top: 29px;
+    right: 76px;
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .reading-theme-toggle {
+    display: grid;
+    opacity: .92;
+    pointer-events: auto;
+  }
+
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .desktop-focus-close::before,
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .desktop-focus-close::after {
+    background: rgba(59, 43, 33, .90);
+  }
+
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .desktop-focus-close {
+    border-color: rgba(122, 84, 24, .50);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,255,255,.30), rgba(255,255,255,0) 46%),
+      linear-gradient(180deg, rgba(255,255,255,.34), rgba(241,233,221,.20));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.56),
+      inset 0 -1px 0 rgba(122,84,24,.08),
+      0 0 0 1px rgba(122,84,24,.05),
+      0 0 16px rgba(196,118,27,.08);
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1150px) {
+  body.desktop-grid-layout .reading-theme-toggle {
+    right: 72px;
+  }
+}
+
+@media (max-width: 900px) {
+  body.mobile-content .reading-theme-toggle {
+    display: grid;
+    top: 29px;
+    right: 46px;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .reading-theme-toggle {
+    opacity: .88;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron {
+    width: 28px;
+    height: 28px;
+  }
+
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron::before {
+    width: 7px;
+    height: 7px;
+    border-right-width: 1.7px;
+    border-bottom-width: 1.7px;
+  }
+
+  body.mobile-content .reading-theme-icon {
+    width: 10px;
+    height: 10px;
+  }
+
+  body.mobile-content .editorial-section.is-reading-light .section-chevron {
+    border-color: rgba(122, 84, 24, .48);
+  }
+
+  .editorial-section.is-reading-light .section-chevron::before {
+    border-right-color: rgba(59, 43, 33, .88);
+    border-bottom-color: rgba(59, 43, 33, .88);
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-content .reading-theme-toggle {
+    top: 25px;
+    right: 42px;
+    width: 22px;
+    height: 22px;
+  }
+
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron {
+    width: 26px;
+    height: 26px;
+  }
+
+  body.mobile-content .reading-theme-icon {
+    width: 9px;
+    height: 9px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-theme-toggle {
+      top: 22px;
+      right: 36px;
+      width: 20px;
+      height: 20px;
+    }
+
+    body.mobile-content
+    .editorial-section.is-open:not(.is-mobile-opening)
+    .section-chevron {
+      width: 24px;
+      height: 24px;
+    }
+
+    body.mobile-content .reading-theme-icon {
+      width: 8px;
+      height: 8px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reading-light-surface,
+  .reading-theme-toggle,
+  .editorial-section.is-reading-light .section-title,
+  .editorial-section.is-reading-light .section-richtext p,
+  .editorial-section.is-reading-light .section-richtext li,
+  .editorial-section.is-reading-light .section-richtext strong {
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE DESKTOP 0270
+   Rifinitura chirurgica dei soli controlli del riquadro aperto desktop.
+   - maggiore presenza grafica di circonferenze e simboli;
+   - sole/luna e X ricondotti alla resa visiva del Concept A;
+   - mobile completamente invariato.
+   ================================================================ */
+@media (min-width: 901px) {
+  body.desktop-grid-layout .desktop-focus-close,
+  body.desktop-grid-layout .reading-theme-toggle {
+    width: 42px;
+    height: 42px;
+    border-width: 1.6px;
+    border-color: rgba(243,216,140,.90);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,244,219,.15), rgba(255,244,219,0) 46%),
+      linear-gradient(180deg, rgba(52,7,13,.40), rgba(18,1,4,.34));
+    box-shadow:
+      inset 0 1px 0 rgba(255,244,219,.15),
+      inset 0 -1px 0 rgba(0,0,0,.28),
+      0 0 0 1px rgba(243,216,140,.08),
+      0 0 9px rgba(255,224,128,.18),
+      0 0 20px rgba(196,118,27,.13);
+  }
+
+  body.desktop-grid-layout .desktop-focus-close {
+    top: 28px;
+  }
+
+  body.desktop-grid-layout .reading-theme-toggle {
+    top: 28px;
+    right: 80px;
+    color: rgba(255,243,221,.97);
+  }
+
+  body.desktop-grid-layout .desktop-focus-close::before,
+  body.desktop-grid-layout .desktop-focus-close::after {
+    width: 16px;
+    height: 2.25px;
+    background: rgba(255,243,221,.985);
+    box-shadow:
+      0 0 5px rgba(255,232,158,.18),
+      0 0 10px rgba(215,173,87,.10);
+  }
+
+  body.desktop-grid-layout .reading-theme-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* 0271: unica micro-modifica: sole desktop più grande, come Concept A. */
+  body.desktop-grid-layout .reading-theme-icon-sun {
+    width: 21px;
+    height: 21px;
+  }
+
+  /* 0272: luna desktop più grande e con crescente più naturale. */
+  body.desktop-grid-layout .reading-theme-icon-moon {
+    width: 22px;
+    height: 22px;
+  }
+
+  body.desktop-grid-layout .reading-moon-path-mobile {
+    display: none;
+  }
+
+  body.desktop-grid-layout .reading-moon-path-desktop {
+    display: block;
+  }
+
+  body.desktop-grid-layout .reading-theme-icon svg {
+    stroke-width: 2.05;
+  }
+
+  body.desktop-grid-layout .reading-theme-icon-moon svg {
+    stroke-width: 2.2;
+  }
+
+  body.desktop-grid-layout .desktop-focus-close:hover,
+  body.desktop-grid-layout .reading-theme-toggle:hover {
+    border-color: rgba(255,232,158,.98);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,244,219,.20), rgba(255,244,219,0) 46%),
+      linear-gradient(180deg, rgba(91,19,29,.46), rgba(27,2,7,.38));
+    box-shadow:
+      inset 0 1px 0 rgba(255,244,219,.18),
+      inset 0 -1px 0 rgba(0,0,0,.28),
+      0 0 0 1px rgba(243,216,140,.10),
+      0 0 12px rgba(255,224,128,.27),
+      0 0 27px rgba(196,118,27,.17);
+  }
+
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .reading-theme-toggle {
+    opacity: 1;
+  }
+
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .desktop-focus-close,
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .reading-theme-toggle {
+    border-color: rgba(122,84,24,.67);
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,255,255,.40), rgba(255,255,255,0) 47%),
+      linear-gradient(180deg, rgba(255,255,255,.42), rgba(241,233,221,.25));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.70),
+      inset 0 -1px 0 rgba(122,84,24,.10),
+      0 0 0 1px rgba(122,84,24,.07),
+      0 0 10px rgba(196,118,27,.10);
+  }
+
+  body.desktop-grid-layout .is-focus-card.is-reading-light
+  .reading-theme-toggle {
+    color: rgba(66,39,27,.96);
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1150px) {
+  body.desktop-grid-layout .desktop-focus-close {
+    top: 24px;
+    right: 24px;
+  }
+
+  body.desktop-grid-layout .reading-theme-toggle {
+    top: 24px;
+    right: 76px;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE DESKTOP 0273
+   Comparsa coordinata premium dei due controlli del riquadro aperto.
+   - sole/luna e X restano invisibili durante l'espansione;
+   - compaiono insieme, come un unico gruppo, soltanto a focus stabilizzato;
+   - stessa dissolvenza e stesso micro-movimento verticale/di scala;
+   - mobile completamente invariato.
+   ================================================================ */
+@media (min-width: 901px) {
+  body.desktop-grid-layout .is-focus-card .reading-theme-toggle {
+    display: grid;
+  }
+
+  body.desktop-grid-layout .is-focus-card .desktop-focus-close,
+  body.desktop-grid-layout .is-focus-card .reading-theme-toggle {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px) scale(.94);
+    transition:
+      opacity .20s ease,
+      transform .22s cubic-bezier(.16,1,.3,1),
+      border-color .22s ease,
+      background .22s ease,
+      box-shadow .22s ease;
+  }
+
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .desktop-focus-close,
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .reading-theme-toggle {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .desktop-focus-close:hover,
+  body.desktop-grid-layout .editorial-shell.is-grid-focus-settled
+  .is-focus-card .reading-theme-toggle:hover {
+    transform: translateY(-1px) scale(1);
+  }
+}
+
+@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
+  body.desktop-grid-layout .is-focus-card .desktop-focus-close,
+  body.desktop-grid-layout .is-focus-card .reading-theme-toggle {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE DESKTOP 0281
+   Chiusura dalla modalità di lettura chiara:
+   - superficie avorio e palette del testo sono temporizzate separatamente;
+   - titolo e testo non cambiano mai opacità;
+   - il passaggio cromatico del testo resta istantaneo e attraversa la
+     fascia di minor contrasto nello stesso brevissimo ponte dello sfondo;
+   - mobile completamente invariato.
+   ================================================================ */
+@media (min-width: 901px) {
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-snap .section-title,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-snap .section-richtext p,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-snap .section-richtext li,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-snap .section-richtext strong,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-snap .section-mobile-ellipsis {
+    transition: none !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE DESKTOP 0284
+   Rifinitura chirurgica della sola transizione cromatica del testo
+   durante la chiusura dalla modalità di lettura chiara.
+   - dissolvenza dello sfondo della 0281 invariata;
+   - cambio palette del testo ritardato verso il lato già scuro;
+   - transizione molto breve, senza variazioni di opacità;
+   - micro-contrasto temporaneo sui bordi delle lettere per evitare
+     qualsiasi perdita percettiva durante i pochi fotogrammi di passaggio;
+   - mobile completamente invariato.
+   ================================================================ */
+@media (min-width: 901px) {
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-title,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext p,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext li,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext strong,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-mobile-ellipsis {
+    transition:
+      color 84ms cubic-bezier(.4, 0, .2, 1),
+      text-shadow 84ms cubic-bezier(.4, 0, .2, 1) !important;
+    text-shadow:
+      0 0 .8px rgba(255,243,221,.34),
+      0 0 1.2px rgba(7,0,2,.34);
+  }
+}
+
+@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-title,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext p,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext li,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-richtext strong,
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-palette-soft .section-mobile-ellipsis {
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0286
+   Allineamento chirurgico dei controlli nel riquadro aperto.
+   - il chevron mantiene a riquadro aperto lo stesso diametro che ha
+     nello stato chiuso, senza il precedente rimpicciolimento;
+   - il comando sole/luna assume lo stesso diametro del chevron e viene
+     affiancato immediatamente alla sua sinistra;
+   - il simbolo sole/luna viene ingrandito per avvicinarne la presenza
+     grafica ai controlli desktop;
+   - nessuna modifica a geometria dei riquadri, testi, animazioni,
+     modalità di lettura, chiusura da sfondo chiaro o desktop.
+   ================================================================ */
+@media (max-width: 900px) {
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron {
+    width: 40px;
+    height: 40px;
+  }
+
+  body.mobile-content .reading-theme-toggle {
+    top: 20px;
+    right: 61px;
+    width: 40px;
+    height: 40px;
+  }
+
+  body.mobile-content .reading-theme-icon-sun {
+    width: 20px;
+    height: 20px;
+  }
+
+  body.mobile-content .reading-theme-icon-moon {
+    width: 21px;
+    height: 21px;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron {
+    width: 38px;
+    height: 38px;
+  }
+
+  body.mobile-content .reading-theme-toggle {
+    top: 19px;
+    right: 57px;
+    width: 38px;
+    height: 38px;
+  }
+
+  body.mobile-content .reading-theme-icon-sun {
+    width: 19px;
+    height: 19px;
+  }
+
+  body.mobile-content .reading-theme-icon-moon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content
+    .editorial-section.is-open:not(.is-mobile-opening)
+    .section-chevron {
+      width: 31px;
+      height: 31px;
+    }
+
+    body.mobile-content .reading-theme-toggle {
+      top: 16px;
+      right: 47px;
+      width: 31px;
+      height: 31px;
+    }
+
+    body.mobile-content .reading-theme-icon-sun {
+      width: 16px;
+      height: 16px;
+    }
+
+    body.mobile-content .reading-theme-icon-moon {
+      width: 17px;
+      height: 17px;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0287
+   Rifinitura chirurgica dei controlli del riquadro in apertura.
+   - il comando sole/luna compare fin dal primo istante dell'apertura,
+     non soltanto al termine della contrazione/espansione;
+   - il solo simbolo del sole viene leggermente ingrandito;
+   - diametri dei due pulsanti, geometrie, testi, animazioni, desktop e
+     comportamento della modalità di lettura restano invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  body.mobile-content .editorial-shell
+  .editorial-section.is-open .reading-theme-toggle {
+    opacity: .88;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  body.mobile-content .reading-theme-icon-sun {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-content .reading-theme-icon-sun {
+    width: 21px;
+    height: 21px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-theme-icon-sun {
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0288
+   Rifinitura chirurgica dei soli controlli sole/luna mobile.
+   - sole leggermente più grande all'interno del cerchio;
+   - luna con la stessa sagoma e lo stesso peso grafico del desktop;
+   - comparsa e scomparsa del comando sole/luna più morbide durante
+     apertura e chiusura del riquadro, senza modificare le animazioni
+     del riquadro stesso;
+   - desktop, testi, geometrie e modalità di lettura invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  body.mobile-content .reading-theme-toggle {
+    transition:
+      opacity .32s cubic-bezier(.16, 1, .3, 1),
+      visibility 0s linear .32s,
+      color .18s ease,
+      border-color .18s ease,
+      background .18s ease,
+      box-shadow .18s ease,
+      transform .18s ease;
+  }
+
+  body.mobile-content .editorial-shell
+  .editorial-section.is-open .reading-theme-toggle {
+    visibility: visible;
+    opacity: .88;
+    pointer-events: auto;
+    transition-delay: 0s;
+  }
+
+  body.mobile-content .editorial-section.is-mobile-closing
+  .reading-theme-toggle {
+    pointer-events: none;
+  }
+
+  body.mobile-content .reading-theme-icon-sun {
+    width: 24px;
+    height: 24px;
+  }
+
+  body.mobile-content .reading-theme-icon-moon {
+    width: 22px;
+    height: 22px;
+  }
+
+  body.mobile-content .reading-moon-path-mobile {
+    display: none;
+  }
+
+  body.mobile-content .reading-moon-path-desktop {
+    display: block;
+  }
+
+  body.mobile-content .reading-theme-icon-moon svg {
+    stroke-width: 2.2;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-content .reading-theme-icon-sun {
+    width: 23px;
+    height: 23px;
+  }
+
+  body.mobile-content .reading-theme-icon-moon {
+    width: 21px;
+    height: 21px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-theme-icon-sun {
+      width: 20px;
+      height: 20px;
+    }
+
+    body.mobile-content .reading-theme-icon-moon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0289
+   Correzione chirurgica della freccia di apertura/chiusura.
+   - il simbolo del chevron mantiene anche a riquadro aperto la stessa
+     dimensione e lo stesso spessore che possiede a riquadro chiuso;
+   - resta invariata la sola rotazione verso l'alto/basso;
+   - controlli sole/luna 0288, geometrie, animazioni, testi e desktop
+     restano invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  body.mobile-content
+  .editorial-section.is-open:not(.is-mobile-opening)
+  .section-chevron::before,
+  body.mobile-content
+  .editorial-section.is-open.is-mobile-opening
+  .section-chevron::before {
+    width: 9px;
+    height: 9px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content
+    .editorial-section.is-open:not(.is-mobile-opening)
+    .section-chevron::before,
+    body.mobile-content
+    .editorial-section.is-open.is-mobile-opening
+    .section-chevron::before {
+      width: 7px;
+      height: 7px;
+      border-right-width: 1.7px;
+      border-bottom-width: 1.7px;
+    }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0292
+   Controlli compatti sui soli viewport più stretti del riferimento
+   ZenFone 6, lasciato completamente invariato.
+   - sotto 381 px spariscono esclusivamente le circonferenze visibili
+     attorno a sole/luna e chevron;
+   - simboli, rotazione del chevron e comparsa/scomparsa del toggle
+     restano quelli approvati nella 0289;
+   - il toggle mantiene un'area touch ampia ma trasparente e viene
+     avvicinato al chevron per ridurre l'ingombro visivo sul titolo;
+   - desktop e mobile >= 381 px invariati.
+   ================================================================ */
+@media (max-width: 380px) {
+  body.mobile-content .section-chevron {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.mobile-content .reading-theme-toggle,
+  body.mobile-content .reading-theme-toggle:hover,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle:hover {
+    right: 40px;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-theme-toggle,
+    body.mobile-content .reading-theme-toggle:hover,
+    body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle,
+    body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle:hover {
+      right: 33px;
     }
   }
 }

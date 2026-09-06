@@ -99,7 +99,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0267">
+  <link rel="stylesheet" href="style.css?v=0292">
 </head>
 
 <body>
@@ -408,6 +408,173 @@
   
   <script>
     const mobileLayoutMedia = window.matchMedia("(max-width: 900px)");
+
+    /* 0268: modalità di lettura chiara temporanea per il solo riquadro aperto.
+       La preferenza non viene memorizzata e viene sempre azzerata alla chiusura. */
+    const readingThemeCards = Array.from(document.querySelectorAll(".editorial-section"));
+
+    function updateReadingThemeControl(card) {
+      const toggle = card?.querySelector(".reading-theme-toggle");
+      if (!toggle) return;
+
+      const isLight = card.classList.contains("is-reading-light");
+      const label = isLight
+        ? "Passa alla modalità di lettura scura"
+        : "Passa alla modalità di lettura chiara";
+
+      toggle.setAttribute("aria-label", label);
+      toggle.setAttribute("title", label);
+      toggle.setAttribute("aria-pressed", String(isLight));
+    }
+
+    function setReadingTheme(card, isLight) {
+      if (!card) return;
+      card.classList.toggle("is-reading-light", Boolean(isLight));
+      updateReadingThemeControl(card);
+    }
+
+    function resetReadingTheme(card) {
+      setReadingTheme(card, false);
+    }
+
+    /* 0284: rifinitura della chiusura desktop dalla modalità chiara.
+       La dissolvenza dello sfondo resta identica alla 0281. Il solo
+       cambio cromatico del testo viene spostato verso il lato già scuro
+       del breve ponte centrale e ammorbidito in pochi fotogrammi. Durante
+       quei fotogrammi un sottilissimo contrasto di contorno mantiene le
+       lettere leggibili senza modificarne l'opacità. */
+    function fadeReadingSurfaceDuringDesktopClose(card) {
+      if (!card || !card.classList.contains("is-reading-light")) {
+        resetReadingTheme(card);
+        return;
+      }
+
+      const surface = card.querySelector(".reading-light-surface");
+      if (!surface || typeof surface.animate !== "function") {
+        resetReadingTheme(card);
+        return;
+      }
+
+      const holdDuration = 90;
+      const lightSideDuration = 220;
+      const contrastBridgeDuration = 80;
+      const darkSideDuration = 220;
+      const paletteTransitionDuration = 84;
+      const easing = "cubic-bezier(.4, 0, .2, 1)";
+      const runningAnimations = [];
+      let paletteCleanupTimer = null;
+
+      const animateSurface = (fromOpacity, toOpacity, duration, animationEasing = easing) => {
+        const animation = surface.animate([
+          { opacity: fromOpacity },
+          { opacity: toOpacity }
+        ], {
+          duration,
+          easing: animationEasing,
+          fill: "forwards"
+        });
+
+        runningAnimations.push(animation);
+        return animation;
+      };
+
+      const softenTextToDarkThemePalette = () => {
+        if (!card.classList.contains("is-reading-light")) return;
+
+        card.classList.add("is-reading-palette-soft");
+        void card.offsetWidth;
+
+        window.requestAnimationFrame(() => {
+          if (!card.classList.contains("is-reading-light")) return;
+
+          resetReadingTheme(card);
+          paletteCleanupTimer = window.setTimeout(() => {
+            card.classList.remove("is-reading-palette-soft");
+            paletteCleanupTimer = null;
+          }, paletteTransitionDuration + 28);
+        });
+      };
+
+      window.setTimeout(async () => {
+        if (!card.classList.contains("is-reading-light")) return;
+
+        try {
+          const lightSide = animateSurface(1, .60, lightSideDuration);
+          await lightSide.finished.catch(() => {});
+
+          if (!card.classList.contains("is-reading-light")) return;
+
+          /* Il ponte dello sfondo resta identico alla 0281. Il testo non
+             cambia più al centro: aspetta che il fondo sia già vicino al
+             lato scuro, quindi passa alla palette normale in soli 84 ms. */
+          const bridge = animateSurface(.60, .40, contrastBridgeDuration, "linear");
+          const paletteTimer = window.setTimeout(
+            softenTextToDarkThemePalette,
+            Math.round(contrastBridgeDuration * .80)
+          );
+
+          await bridge.finished.catch(() => {});
+          window.clearTimeout(paletteTimer);
+
+          const darkSide = animateSurface(.40, 0, darkSideDuration);
+
+          if (card.classList.contains("is-reading-light")) {
+            softenTextToDarkThemePalette();
+          }
+
+          await darkSide.finished.catch(() => {});
+        } finally {
+          if (paletteCleanupTimer !== null) {
+            window.clearTimeout(paletteCleanupTimer);
+            paletteCleanupTimer = null;
+          }
+
+          if (card.classList.contains("is-reading-light")) {
+            resetReadingTheme(card);
+          }
+
+          runningAnimations.forEach(animation => animation.cancel());
+          card.classList.remove("is-reading-palette-soft");
+        }
+      }, holdDuration);
+    }
+
+    readingThemeCards.forEach(card => {
+      if (!card.querySelector(".reading-light-surface")) {
+        const surface = document.createElement("span");
+        surface.className = "reading-light-surface";
+        surface.setAttribute("aria-hidden", "true");
+        card.prepend(surface);
+      }
+
+      if (card.querySelector(".reading-theme-toggle")) return;
+
+      const toggle = document.createElement("button");
+      toggle.className = "reading-theme-toggle";
+      toggle.type = "button";
+      toggle.innerHTML = `
+        <span class="reading-theme-icon reading-theme-icon-sun" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.1"></circle>
+            <path d="M12 3.4v1.8M12 18.8v1.8M3.4 12h1.8M18.8 12h1.8M6 6l1.25 1.25M16.75 16.75L18 18M18 6l-1.25 1.25M7.25 16.75L6 18"></path>
+          </svg>
+        </span>
+        <span class="reading-theme-icon reading-theme-icon-moon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path class="reading-moon-path-mobile" d="M18.55 14.8A7.85 7.85 0 0 1 9.2 5.45a7.95 7.95 0 1 0 9.35 9.35Z"></path>
+            <path class="reading-moon-path-desktop" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+          </svg>
+        </span>`;
+
+      toggle.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        setReadingTheme(card, !card.classList.contains("is-reading-light"));
+      });
+
+      card.appendChild(toggle);
+      updateReadingThemeControl(card);
+    });
 
     mobileLayoutMedia.addEventListener("change", () => {
       const contentActive = document.body.classList.contains("content-entered")
@@ -1201,6 +1368,10 @@
         const inner = card.querySelector(".section-content-inner");
         if (!content || !inner) return;
 
+        if (!isOpen) {
+          resetReadingTheme(card);
+        }
+
         hideMobileEllipsis(card);
 
         /* 0230: durante la sola apertura mobile viene ripristinato
@@ -1356,6 +1527,7 @@
 
       function showHome({ updateHistory = true } = {}) {
         closeMobileMenu();
+        sectionCards.forEach(resetReadingTheme);
         clearMobileCloseScrollCompensation();
         contentSection?.classList.remove("mobile-technical-end-space");
         syncMenuWithOpenCards();
@@ -2732,7 +2904,8 @@
           "is-focus-card",
           "is-focus-title-compact",
           "is-section-active",
-          "is-grid-returning"
+          "is-grid-returning",
+          "is-reading-palette-soft"
         );
         card.querySelector(".section-trigger")?.setAttribute("aria-expanded", "false");
         clearDesktopFocusInlineStyles(card);
@@ -2791,10 +2964,18 @@
 
         const card = desktopSelectedCard;
         const sourceRect = desktopFocusSourceRect;
+        const closeFromReadingLight = card.classList.contains("is-reading-light");
 
         if (!sourceRect) {
+          resetReadingTheme(card);
           finishDesktopFocusClose(card);
           return Promise.resolve(true);
+        }
+
+        if (closeFromReadingLight) {
+          fadeReadingSurfaceDuringDesktopClose(card);
+        } else {
+          resetReadingTheme(card);
         }
 
         clearPointerCard(false);
@@ -2994,6 +3175,8 @@
         clearPointerCard(true);
 
         sectionCards.forEach(card => {
+          resetReadingTheme(card);
+
           const animationState = sectionAnimationStates.get(card);
 
           if (animationState) {
