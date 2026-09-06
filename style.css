@@ -3377,3 +3377,20 @@ main {
     }
   }
 }
+
+/* ================================================================
+   VERSIONE MOBILE 0267
+   Correzione chirurgica della sola chiusura su iPhone/WebKit:
+   - durante is-mobile-closing il rapporto 17:10 non viene applicato
+     anticipatamente al riquadro esterno;
+   - il bordo segue così la contrazione progressiva del contenuto;
+   - a chiusura terminata il 17:10 torna automaticamente invariato;
+   - Android, desktop, Home, testi, geometrie finali e tempi invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  @supports (-webkit-touch-callout: none) {
+    .editorial-shell .glass-card.editorial-section.is-mobile-closing {
+      aspect-ratio: auto;
+    }
+  }
+}
