@@ -4263,3 +4263,75 @@ main {
     }
   }
 }
+
+/* ================================================================
+   VERSIONE MOBILE 0293
+   Compattazione uniforme del comando sole/luna su tutti i cellulari.
+   - il chevron conserva circonferenza, dimensioni, posizione e rotazione
+     già approvate nella 0289/0292;
+   - il sole/luna mantiene le dimensioni grafiche della 0288 ma perde
+     esclusivamente circonferenza, sfondo e bagliore del proprio pulsante;
+   - il simbolo viene avvicinato al chevron per liberare spazio al titolo;
+   - l'area touch resta più ampia del solo simbolo, senza ingombro visivo;
+   - la precedente eccezione 0292 che eliminava anche il cerchio del
+     chevron sotto 381 px viene neutralizzata;
+   - desktop, testi, riquadri e animazioni restano invariati.
+   ================================================================ */
+@media (max-width: 900px) {
+  body.mobile-content .reading-theme-toggle,
+  body.mobile-content .reading-theme-toggle:hover,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle:hover {
+    right: 55px;
+    width: 30px;
+    height: 40px;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  body.mobile-content .reading-theme-toggle::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: -8px;
+    right: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mobile-content .section-chevron {
+    border-color: rgba(243,216,140,.65) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.mobile-content .editorial-section.is-reading-light .section-chevron {
+    border-color: rgba(122,84,24,.48) !important;
+  }
+
+  body.mobile-content .reading-theme-toggle,
+  body.mobile-content .reading-theme-toggle:hover,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle,
+  body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle:hover {
+    right: 51px;
+    width: 28px;
+    height: 38px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-theme-toggle,
+    body.mobile-content .reading-theme-toggle:hover,
+    body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle,
+    body.mobile-content .editorial-section.is-reading-light .reading-theme-toggle:hover {
+      right: 43px;
+      width: 24px;
+      height: 31px;
+    }
+  }
+}
+
