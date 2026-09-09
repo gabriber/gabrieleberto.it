@@ -4335,3 +4335,172 @@ main {
   }
 }
 
+
+
+/* ================================================================
+   VERSIONE DESKTOP 0295
+   Alleggerimento chirurgico del solo comando sole/luna desktop.
+   - la X mantiene integralmente il pulsante circolare approvato;
+   - sole/luna perdono circonferenza, sfondo e bagliore del pulsante;
+   - dimensioni grafiche delle icone restano quelle approvate;
+   - l'area cliccabile resta ampia ma invisibile;
+   - il toggle viene avvicinato alla X per una composizione più compatta;
+   - mobile completamente invariato.
+   ================================================================ */
+@media (min-width: 901px) {
+  body.desktop-grid-layout .reading-theme-toggle,
+  body.desktop-grid-layout .reading-theme-toggle:hover,
+  body.desktop-grid-layout .is-focus-card.is-reading-light .reading-theme-toggle,
+  body.desktop-grid-layout .is-focus-card.is-reading-light .reading-theme-toggle:hover {
+    right: 72px;
+    width: 32px;
+    height: 42px;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.desktop-grid-layout .reading-theme-toggle::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: -5px;
+    right: -5px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1150px) {
+  body.desktop-grid-layout .reading-theme-toggle,
+  body.desktop-grid-layout .reading-theme-toggle:hover,
+  body.desktop-grid-layout .is-focus-card.is-reading-light .reading-theme-toggle,
+  body.desktop-grid-layout .is-focus-card.is-reading-light .reading-theme-toggle:hover {
+    right: 68px;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0296
+   Sezione Articoli: testo introduttivo approvato e tre collegamenti
+   esterni a Medium con data di pubblicazione.
+   - struttura minimale coerente con il sito;
+   - titoli cliccabili, data e sorgente in secondo livello;
+   - resa dedicata anche alla modalità di lettura chiara;
+   - nessuna modifica alle altre sezioni o alle animazioni.
+   ================================================================ */
+.articles-list {
+  display: grid;
+  margin-top: 24px;
+  border-top: 1px solid rgba(243,216,140,.22);
+}
+
+.article-entry {
+  display: grid;
+  gap: 6px;
+  padding: 17px 2px 18px;
+  border-bottom: 1px solid rgba(243,216,140,.18);
+  color: inherit;
+  text-decoration: none;
+  transition: background .18s ease;
+}
+
+.article-entry-title {
+  color: var(--oro-light);
+  font-family: var(--font-title);
+  font-size: clamp(1.01rem, 1.02vw, 1.10rem);
+  line-height: 1.28;
+  font-weight: 650;
+  letter-spacing: .003em;
+  transition: color .18s ease;
+}
+
+.article-entry-meta {
+  color: rgba(255,243,221,.58);
+  font-family: var(--sans);
+  font-size: .88rem;
+  line-height: 1.35;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .article-entry:hover .article-entry-title {
+    color: #ffe7a6;
+  }
+}
+
+.article-entry:focus-visible {
+  outline: 1px solid rgba(243,216,140,.72);
+  outline-offset: 5px;
+  border-radius: 6px;
+}
+
+.editorial-section.is-reading-light .article-entry {
+  border-bottom-color: rgba(122,84,24,.22);
+}
+
+.editorial-section.is-reading-light .articles-list {
+  border-top-color: rgba(122,84,24,.26);
+}
+
+.editorial-section.is-reading-light .article-entry-title {
+  color: #7a5418;
+}
+
+.editorial-section.is-reading-light .article-entry-meta {
+  color: rgba(39,32,27,.62);
+}
+
+@media (max-width: 900px) {
+  .articles-list {
+    margin-top: 22px;
+  }
+
+  .article-entry {
+    gap: 5px;
+    padding: 15px 0 16px;
+  }
+
+  .article-entry-title {
+    font-size: clamp(1rem, 4.35vw, 1.08rem);
+    line-height: 1.32;
+  }
+
+  .article-entry-meta {
+    font-size: .84rem;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0305
+   Correzione chirurgica dei soli difetti visibili in modalità chiara.
+   - le sei icone vengono fornite come PNG 512x512 con trasparenza esterna
+     pulita e bordo dorato uniforme, senza residui scuri negli spigoli;
+   - la superficie avorio usa il raggio interno corretto rispetto al
+     bordo da 1 px del riquadro, eliminando il cuneo scuro negli angoli.
+   Nessun'altra grafica, logica o animazione viene modificata.
+   ================================================================ */
+.reading-light-surface {
+  background: linear-gradient(145deg, rgb(248, 241, 230), rgb(239, 228, 211));
+  border-radius: 23px;
+}
+
+@media (min-width: 901px) {
+  body.desktop-grid-layout .reading-light-surface {
+    border-radius: 21px;
+  }
+}
+
+@media (max-width: 900px) {
+  .reading-light-surface {
+    border-radius: 19px;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content .reading-light-surface {
+      border-radius: 15px;
+    }
+  }
+}
