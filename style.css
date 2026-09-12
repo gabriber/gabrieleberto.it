@@ -1202,6 +1202,7 @@ main {
     height: 49px;
     gap: 5px;
     border-width: 1.5px;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .menu-toggle span {
@@ -1256,6 +1257,7 @@ main {
   .glass-menu a {
     position: relative;
     padding: 15px 12px;
+    -webkit-tap-highlight-color: transparent;
     white-space: normal;
     border-bottom: 1px solid rgba(243,216,140,.13);
     border-radius: 8px;
@@ -2217,27 +2219,27 @@ main {
     transition: none;
   }
 
-  body.desktop-grid-layout #profilo {
+  body.desktop-grid-layout #formazione {
     grid-column: 1;
     grid-row: 1;
   }
 
-  body.desktop-grid-layout #ambito {
+  body.desktop-grid-layout #settori {
     grid-column: 2;
     grid-row: 1;
   }
 
-  body.desktop-grid-layout #seconda-valutazione {
+  body.desktop-grid-layout #second-opinion {
     grid-column: 3;
     grid-row: 1;
   }
 
-  body.desktop-grid-layout #rapporto-diretto {
+  body.desktop-grid-layout #fiducia {
     grid-column: 1;
     grid-row: 2;
   }
 
-  body.desktop-grid-layout #consigli {
+  body.desktop-grid-layout #articoli {
     grid-column: 2;
     grid-row: 2;
   }
@@ -3393,19 +3395,17 @@ main {
 }
 
 /* ================================================================
-   VERSIONE MOBILE 0267
-   Correzione chirurgica della sola chiusura su iPhone/WebKit:
+   VERSIONE MOBILE 0314
+   Correzione chirurgica della sola chiusura su tutti i browser mobile:
    - durante is-mobile-closing il rapporto 17:10 non viene applicato
      anticipatamente al riquadro esterno;
    - il bordo segue così la contrazione progressiva del contenuto;
    - a chiusura terminata il 17:10 torna automaticamente invariato;
-   - Android, desktop, Home, testi, geometrie finali e tempi invariati.
+   - desktop, Home, testi, geometrie finali e tempi invariati.
    ================================================================ */
 @media (max-width: 800px) {
-  @supports (-webkit-touch-callout: none) {
-    .editorial-shell .glass-card.editorial-section.is-mobile-closing {
-      aspect-ratio: auto;
-    }
+  .editorial-shell .glass-card.editorial-section.is-mobile-closing {
+    aspect-ratio: auto;
   }
 }
 
@@ -4458,6 +4458,7 @@ main {
   .article-entry {
     gap: 5px;
     padding: 15px 0 16px;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .article-entry-title {
@@ -4559,5 +4560,670 @@ main {
     body.mobile-content .article-entry-title {
       font-size: .80rem;
     }
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0311
+   Lettore interno degli articoli.
+   ================================================================ */
+
+#articoli .articles-intro[hidden],
+#articoli .articles-list[hidden],
+#articoli .article-reader[hidden] {
+  display: none !important;
+}
+
+#articoli .article-reader {
+  width: 100%;
+}
+
+#articoli .site-article {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  color: rgba(255,243,221,.88);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 21px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#articoli .site-article-title {
+  margin: 0 0 14px;
+  padding: 0;
+  color: #fff8ed;
+  font-family: var(--sans);
+  font-size: clamp(2rem, 4.15vw, 2.65rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -.025em;
+}
+
+#articoli .site-article-byline {
+  margin: 0 0 34px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255,243,221,.70);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+#articoli .site-article-author-mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  object-fit: contain;
+  filter: invert(1) sepia(.06) saturate(.75) brightness(1.06);
+}
+
+#articoli .site-article-meta {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+#articoli .site-article-author-name {
+  color: #fff8ed;
+  font-weight: 400;
+}
+
+#articoli .site-article-meta-sep {
+  margin: 0 .48em;
+  color: rgba(255,243,221,.58);
+}
+
+#articoli .site-article-hero {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  margin: 0 0 2.25em;
+}
+
+#articoli .site-article-body p {
+  margin: 0 0 1.32em;
+  padding: 0 !important;
+  color: rgba(255,243,221,.88) !important;
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif !important;
+  font-size: 21px !important;
+  line-height: 1.62 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+#articoli .site-article-body .section-heading {
+  margin: 2.05em 0 .75em;
+  padding: 0;
+  color: #f0c979;
+  font-family: var(--sans);
+  font-size: 1.28em;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -.01em;
+}
+
+#articoli .site-article-body .section-heading.main-section {
+  margin-top: 2.15em;
+  font-size: 1.34em;
+}
+
+#articoli .site-article-body .section-heading.subsection {
+  margin-top: 1.65em;
+  font-size: 1.20em;
+}
+
+#articoli .site-article-body strong {
+  color: #fff8ed !important;
+  font-weight: 700;
+}
+
+#articoli .site-article-body em {
+  font-style: italic;
+}
+
+#articoli .site-article-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+#articoli .site-article-body .formula {
+  margin: 1.55em auto 1.65em;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+}
+
+#articoli .site-article-body .formula img {
+  display: block;
+  width: min(var(--formula-natural-width), 100%);
+  max-width: 100%;
+  height: auto;
+  filter: invert(.94) sepia(.08) saturate(.75) brightness(1.08);
+}
+
+#articoli.is-reading-light .site-article {
+  color: rgba(39,32,27,.92);
+}
+
+#articoli.is-reading-light .site-article-title {
+  color: #231914;
+}
+
+#articoli.is-reading-light .site-article-byline {
+  color: rgba(39,32,27,.66);
+}
+
+#articoli.is-reading-light .site-article-author-name {
+  color: #231914;
+}
+
+#articoli.is-reading-light .site-article-meta-sep {
+  color: rgba(39,32,27,.50);
+}
+
+#articoli.is-reading-light .site-article-author-mark {
+  filter: none;
+}
+
+#articoli.is-reading-light .site-article-body p {
+  color: rgba(39,32,27,.92) !important;
+}
+
+#articoli.is-reading-light .site-article-body .section-heading {
+  color: #7a5418;
+}
+
+#articoli.is-reading-light .site-article-body strong {
+  color: #231914 !important;
+}
+
+#articoli.is-reading-light .site-article-body .formula img {
+  filter: none;
+}
+
+#articoli.is-article-reading .section-chevron::before {
+  width: 9px !important;
+  height: 9px !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 2px solid rgba(255,243,221,.94) !important;
+  border-top: 2px solid rgba(255,243,221,.94) !important;
+  transform: rotate(-45deg) !important;
+}
+
+#articoli.is-reading-light.is-article-reading .section-chevron::before {
+  border-left-color: rgba(59,43,33,.88) !important;
+  border-top-color: rgba(59,43,33,.88) !important;
+}
+
+body.desktop-grid-layout #articoli.is-article-reading .desktop-focus-close::before {
+  top: 50%;
+  left: calc(50% + 1px);
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-right: 2.5px solid rgba(255,243,221,.96);
+  border-bottom: 2.5px solid rgba(255,243,221,.96);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(135deg);
+}
+
+body.desktop-grid-layout #articoli.is-article-reading .desktop-focus-close::after {
+  display: none;
+}
+
+body.desktop-grid-layout #articoli.is-reading-light.is-article-reading .desktop-focus-close::before {
+  border-right-color: rgba(59,43,33,.88);
+  border-bottom-color: rgba(59,43,33,.88);
+}
+
+body.desktop-grid-layout #articoli.is-focus-card .article-reader {
+  padding: 0;
+}
+
+body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-richtext {
+  padding-bottom: 42px;
+}
+
+#articoli .article-entry-meta {
+  white-space: normal;
+}
+
+@media (max-width: 800px) {
+  #articoli .site-article {
+    width: 100%;
+    font-size: 19px;
+  }
+
+  #articoli .site-article-title {
+    font-size: clamp(1.32rem, 5.6vw, 1.56rem);
+  }
+
+  #articoli .site-article-byline {
+    margin-bottom: 28px;
+  }
+
+  #articoli .site-article-author-mark {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  #articoli .site-article-hero {
+    margin-bottom: 1.85em;
+  }
+
+  #articoli .site-article-body p {
+    font-size: 19px !important;
+  }
+
+  #articoli .site-article-body .section-heading {
+    margin-top: 1.8em;
+    font-size: 1.18em;
+  }
+
+  #articoli .site-article-body .section-heading.main-section {
+    margin-top: 1.9em;
+    font-size: 1.24em;
+  }
+
+  #articoli .site-article-body .section-heading.subsection {
+    margin-top: 1.55em;
+    font-size: 1.14em;
+  }
+
+  #articoli .site-article-body .formula {
+    margin: 1.35em auto 1.45em;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0320 — Articoli: microcentraggio chevron mobile
+   - nei singoli articoli restano soltanto data e tempo di lettura;
+   - su mobile il ritorno all'elenco usa la stessa geometria del
+     chevron mobile approvato, ruotata verso sinistra e centrata.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content #articoli.is-article-reading .section-chevron::before {
+    top: 50% !important;
+    left: calc(50% + 1px) !important;
+    width: 9px !important;
+    height: 9px !important;
+    border-left: 0 !important;
+    border-top: 0 !important;
+    border-right: 2px solid rgba(255,243,221,.94) !important;
+    border-bottom: 2px solid rgba(255,243,221,.94) !important;
+    transform: translate(-50%, -50%) rotate(135deg) !important;
+  }
+
+  body.mobile-content #articoli.is-reading-light.is-article-reading .section-chevron::before {
+    border-right-color: rgba(59,43,33,.88) !important;
+    border-bottom-color: rgba(59,43,33,.88) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  @supports (-moz-appearance: none) {
+    body.mobile-content #articoli.is-article-reading .section-chevron::before {
+      width: 7px !important;
+      height: 7px !important;
+      border-right-width: 1.7px !important;
+      border-bottom-width: 1.7px !important;
+    }
+  }
+}
+
+
+
+/* ================================================================
+   VERSIONE 0326 — Crossfade continuo elenco -> articolo su mobile
+   - eventuale riposizionamento del riquadro avviene prima, con elenco fermo;
+   - vecchio e nuovo contenuto restano sovrapposti durante la transizione;
+   - nessun fotogramma vuoto o oscuramento intermedio;
+   - desktop e chiusura dei riquadri invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  #articoli .article-transition-outgoing {
+    position: absolute;
+    z-index: 6;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 440ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  #articoli.is-article-crossfade-active .article-reader {
+    opacity: 0;
+    transition: opacity 440ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  #articoli.is-article-crossfade-running .article-transition-outgoing {
+    opacity: 0;
+  }
+
+  #articoli.is-article-crossfade-active.is-article-crossfade-running .article-reader {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 800px) and (prefers-reduced-motion: reduce) {
+  #articoli .article-transition-outgoing,
+  #articoli.is-article-crossfade-active .article-reader {
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0329 — Apertura articoli mobile più lenta e morbida
+   - crossfade elenco -> articolo portato da 220 ms a 440 ms;
+   - recupero verticale del riquadro portato da 280 ms a 560 ms;
+   - easing dello scroll reso più progressivo;
+   - sequenza 0328 invariata: prima movimento completo, poi crossfade.
+   ================================================================ */
+
+
+/* ================================================================
+   VERSIONE 0331 — Crossfade desktop più lento e morbido
+   - durata desktop portata a 760 ms;
+   - easing più progressivo, senza accelerazione brusca al centro;
+   - vecchio e nuovo contenuto restano sempre sovrapposti, senza vuoti;
+   - mobile, geometria, scroll e navigazione invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  #articoli .article-transition-outgoing {
+    position: absolute;
+    z-index: 6;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 760ms cubic-bezier(.22, .61, .36, 1);
+  }
+
+  #articoli.is-article-crossfade-active .article-reader {
+    opacity: 0;
+    transition: opacity 760ms cubic-bezier(.22, .61, .36, 1);
+  }
+
+  #articoli.is-article-crossfade-running .article-transition-outgoing {
+    opacity: 0;
+  }
+
+  #articoli.is-article-crossfade-active.is-article-crossfade-running .article-reader {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 801px) and (prefers-reduced-motion: reduce) {
+  #articoli .article-transition-outgoing,
+  #articoli.is-article-crossfade-active .article-reader {
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0332 — Crossfade desktop garantito
+   - la dissolvenza PC è pilotata direttamente via Web Animations API;
+   - durata 920 ms, con vecchio e nuovo contenuto sempre sovrapposti;
+   - nessun fotogramma vuoto;
+   - la transizione non viene azzerata dalle preferenze di movimento del PC;
+   - mobile 0329 invariato.
+   ================================================================ */
+@media (min-width: 801px) {
+  #articoli .article-transition-outgoing {
+    position: absolute;
+    z-index: 6;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 1;
+    pointer-events: none;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0350 — Articoli: tipografia e colori uniformati al sito
+   - corpo articolo in Aptos, come il resto dei testi del sito;
+   - titoli e intestazioni in Aptos Display, coerenti con i titoli del sito;
+   - titolo principale dorato su fondo scuro e bruno-dorato su fondo chiaro;
+   - dimensioni e interlinea restano volutamente più generose per la lettura;
+   - nessuna modifica a struttura, animazioni, navigazione o immagini.
+   ================================================================ */
+#articoli .site-article {
+  font-family: var(--sans);
+  font-size: 21px;
+  line-height: 1.68;
+}
+
+#articoli .site-article-title {
+  color: var(--oro-light);
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 4.15vw, 2.65rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -.02em;
+}
+
+#articoli .site-article-body p {
+  font-family: var(--sans) !important;
+  font-size: 21px !important;
+  line-height: 1.68 !important;
+}
+
+#articoli .site-article-body .section-heading {
+  color: var(--oro-light);
+  font-family: var(--font-title);
+}
+
+#articoli.is-reading-light .site-article-title,
+#articoli.is-reading-light .site-article-body .section-heading {
+  color: #7a5418;
+}
+
+@media (max-width: 800px) {
+  #articoli .site-article {
+    font-size: 19px;
+    line-height: 1.68;
+  }
+
+  #articoli .site-article-body p {
+    font-size: 19px !important;
+    line-height: 1.68 !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0351 — Formule: colore coerente con il testo articolo
+   - le formule mantengono geometria e dimensioni originali;
+   - versione scura: stesso colore/trasparenza del corpo articolo;
+   - versione chiara: stesso colore/trasparenza del corpo articolo;
+   - nessuna modifica a tipografia, navigazione o animazioni.
+   ================================================================ */
+#articoli .site-article-body .formula .formula-render {
+  position: relative;
+  display: block;
+  width: min(var(--formula-natural-width), 100%);
+  max-width: 100%;
+  aspect-ratio: var(--formula-aspect);
+}
+
+#articoli .site-article-body .formula .formula-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: contain;
+  filter: none !important;
+}
+
+#articoli .site-article-body .formula .formula-image-dark {
+  opacity: .88;
+}
+
+#articoli .site-article-body .formula .formula-image-light {
+  display: none;
+  opacity: .92;
+}
+
+#articoli.is-reading-light .site-article-body .formula .formula-image-dark {
+  display: none;
+}
+
+#articoli.is-reading-light .site-article-body .formula .formula-image-light {
+  display: block;
+}
+
+/* VERSIONE 0352 — i grassetti interni ai titoli degli articoli ereditano il colore del titolo */
+#articoli .site-article-body .section-heading strong {
+  color: inherit !important;
+}
+
+/* VERSIONE 0355 — Titoli articoli mobile: ulteriore riduzione del 20% */
+
+/* ================================================================
+   VERSIONE 0356 — Titolo articoli mobile: riduzione effettiva del 20%
+   - override finale per evitare la sovrascrittura della regola mobile;
+   - nessun'altra modifica.
+   ================================================================ */
+@media (max-width: 800px) {
+  #articoli .site-article-title {
+    font-size: 1.6rem;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0357 — Articoli: spaziatura titoli/paragrafi e capitoli/sottocapitoli
+   - riduzione del 30% della distanza tra intestazioni di sezione e testo seguente;
+   - riduzione del 30% della distanza tra un titolo di capitolo e il sottocapitolo immediatamente successivo;
+   - desktop e mobile; nessun'altra modifica.
+   ================================================================ */
+#articoli .site-article-body .section-heading {
+  margin-bottom: .525em;
+}
+
+#articoli .site-article-body .section-heading + .section-heading.subsection {
+  margin-top: 1.155em;
+}
+
+@media (max-width: 800px) {
+  #articoli .site-article-body .section-heading + .section-heading.subsection {
+    margin-top: 1.085em;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0358 — Articoli: ulteriore riduzione spaziature del 25%
+   - riduzione del 25% delle stesse distanze già modificate nella 0357;
+   - desktop e mobile; nessun'altra modifica.
+   ================================================================ */
+#articoli .site-article-body .section-heading {
+  margin-bottom: .39375em;
+}
+
+#articoli .site-article-body .section-heading + .section-heading.subsection {
+  margin-top: .86625em;
+}
+
+@media (max-width: 800px) {
+  #articoli .site-article-body .section-heading + .section-heading.subsection {
+    margin-top: .81375em;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE 0359 — Articoli: spaziatura simmetrica sopra/sotto immagine
+   - lo spazio tra metadati e immagine viene replicato sotto l'immagine;
+   - desktop: 34px sopra e 34px sotto;
+   - mobile: 28px sopra e 28px sotto;
+   - nessun'altra modifica.
+   ================================================================ */
+#articoli .site-article-hero {
+  margin-bottom: 34px;
+}
+
+@media (max-width: 800px) {
+  #articoli .site-article-hero {
+    margin-bottom: 28px;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0360 — Articoli: spazio effettivo sotto immagine uguale a quello sopra
+   - mantiene invariato lo spazio attuale tra metadati e immagine;
+   - azzera solo il margine superiore del primo titolo dopo l'immagine;
+   - desktop: 34px effettivi sotto l'immagine;
+   - mobile: 28px effettivi sotto l'immagine;
+   - nessun'altra modifica.
+   ================================================================ */
+#articoli .site-article-hero + .site-article-body > .section-heading:first-child {
+  margin-top: 0;
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0372
+   Fondo reale della pagina coincidente con il bordo inferiore di Contatti.
+   A riposo non resta più alcuna fascia trasparente sotto l'ultimo riquadro.
+   Le riserve tecniche temporanee restano disponibili solo durante le
+   animazioni che ne hanno effettivamente bisogno.
+   Desktop invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  .content.content-editorial {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .content.content-editorial.mobile-close-scroll-compensation {
+    padding-bottom: var(--mobile-close-scroll-compensation, 0px);
+  }
+}
+
+/* ================================================================
+   VERSIONE DESKTOP 0374
+   Rafforzamento chirurgico del solo bordo CTA "Scopri di più":
+   - desktop: bordo 3px;
+   - mobile invariato;
+   - geometria, colori, opacità e animazioni invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  .discover {
+    border-width: 3px;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE DESKTOP 0375
+   Rifinitura chirurgica della Home desktop:
+   - intero blocco hero anticipato verticalmente di 14px;
+   - spaziature interne, dimensioni, CTA e mobile invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  .intro-content {
+    transform: translateY(-14px);
   }
 }
