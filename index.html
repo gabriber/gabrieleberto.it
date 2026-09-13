@@ -241,7 +241,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0401">
+  <link rel="stylesheet" href="style.css?v=0405">
 </head>
 
 <body>
@@ -378,7 +378,12 @@
 
         <button class="discover" id="discoverBtn" type="button" aria-label="Scopri di più">
           <span>Scopri di più</span>
-          <span class="arrow" aria-hidden="true">→</span>
+          <span class="arrow" aria-hidden="true">
+            <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+              <path d="M4 12H20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M13 5L20 12L13 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
         </button>
       </div>
     </section>
@@ -2229,6 +2234,7 @@
       }
 
       function showHome({ updateHistory = true } = {}) {
+        window.SiteDiscoverWidth?.applyCached?.();
         closeMobileMenu();
         sectionCards.forEach(resetReadingTheme);
         clearMobileCloseScrollCompensation();
@@ -2462,6 +2468,11 @@
         const transitionDuration = 560;
         const transitionEasing = "cubic-bezier(.22, .61, .36, 1)";
 
+        /* 0403: il CTA deve avere già la larghezza definitiva prima che
+           la Home inizi a diventare visibile. Riapplichiamo quindi subito
+           l'ultima misura valida della riga "Competenze". */
+        window.SiteDiscoverWidth?.applyCached?.();
+
         const previousIntroStyle = {
           display: introSection.style.display,
           position: introSection.style.position,
@@ -2499,6 +2510,10 @@
           pointerEvents: "none",
           transition: `opacity ${transitionDuration}ms ${transitionEasing}`
         });
+        /* Ora la Home è renderizzata ma ancora a opacity 0: possiamo
+           rimisurare "Competenze" senza che l'utente veda alcun assestamento. */
+        window.SiteDiscoverWidth?.syncNow?.();
+
         Object.assign(contentSection.style, {
           position: "relative",
           zIndex: "6",
@@ -4838,6 +4853,10 @@
       function returnToHome({ updateHistory = true } = {}) {
         if (returningHome || pageMode === "home") return;
 
+        /* 0403: ripristina la larghezza già misurata del CTA prima che
+           la Home desktop torni visibile, evitando il frame più largo. */
+        window.SiteDiscoverWidth?.applyCached?.();
+
         returningHome = true;
         enteringContent = false;
         closeMenu();
@@ -6619,6 +6638,22 @@
       if (!discoverButton || !referenceLine) return;
 
       let syncFrame = 0;
+      const cachedWidths = {
+        mobile: 0,
+        desktop: 0
+      };
+
+      const currentWidthMode = () => mobileHomeQuery.matches ? "mobile" : "desktop";
+
+      const applyDiscoverWidth = (width) => {
+        if (!(width > 0)) return false;
+        discoverButton.style.width = `${Math.max(0, width)}px`;
+        return true;
+      };
+
+      const applyCachedDiscoverWidth = () => {
+        return applyDiscoverWidth(cachedWidths[currentWidthMode()]);
+      };
 
       const syncDiscoverWidth = () => {
         syncFrame = 0;
@@ -6629,8 +6664,15 @@
         range.detach?.();
 
         if (referenceWidth > 0) {
-          discoverButton.style.width = `${Math.max(0, referenceWidth)}px`;
+          cachedWidths[currentWidthMode()] = referenceWidth;
+          applyDiscoverWidth(referenceWidth);
+          return true;
         }
+
+        /* Se la Home è nascosta (es. mentre siamo nei Contenuti), non
+           sostituiamo la misura valida con zero: conserviamo e riapplichiamo
+           l'ultima larghezza corretta al prossimo ritorno. */
+        return applyCachedDiscoverWidth();
       };
 
       const scheduleDiscoverWidthSync = () => {
@@ -6638,6 +6680,12 @@
           cancelAnimationFrame(syncFrame);
         }
         syncFrame = requestAnimationFrame(syncDiscoverWidth);
+      };
+
+      window.SiteDiscoverWidth = {
+        applyCached: applyCachedDiscoverWidth,
+        syncNow: syncDiscoverWidth,
+        schedule: scheduleDiscoverWidthSync
       };
 
       mobileHomeQuery.addEventListener?.("change", scheduleDiscoverWidthSync);

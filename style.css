@@ -373,10 +373,23 @@ main {
 
 .arrow {
   margin-left: auto;
-  font-size: 1.55em;
   color: var(--avorio);
   line-height: 1;
   font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.52em;
+  height: 1em;
+  transform-origin: center;
+}
+
+.arrow-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .content {
@@ -5294,6 +5307,34 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
    ================================================================ */
 @media (max-width: 800px) {
   .discover .arrow {
-    font-size: 2.05em;
+    width: 2.05em;
+    height: 1.28em;
   }
 }
+
+/* ================================================================
+   VERSIONE 0405
+   Centraggio strutturale e dimensione freccia CTA "Scopri di più":
+   - desktop e mobile: rimossi gli offset verticali ereditati dal vecchio
+     glifo tipografico; l'SVG è centrato geometricamente dal flex layout;
+   - desktop: sola freccia SVG ridotta del 30% rispetto alla 0404 (quindi +40% rispetto alla base SVG), senza modificare
+     altezza, larghezza o geometria del pulsante;
+   - mobile: dimensione della freccia invariata rispetto alla 0403.
+   ================================================================ */
+@media (min-width: 801px) {
+  .discover .arrow {
+    transform: none;
+  }
+
+  .discover .arrow-svg {
+    transform: scale(1.4);
+    transform-origin: center;
+  }
+}
+
+@media (max-width: 800px) {
+  .discover .arrow {
+    transform: none;
+  }
+}
+
