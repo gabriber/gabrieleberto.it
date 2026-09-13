@@ -241,7 +241,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0382">
+  <link rel="stylesheet" href="style.css?v=0391">
 </head>
 
 <body>
@@ -1631,6 +1631,65 @@
         });
       }
 
+      async function scrollMobileOverviewToTopSmoothly() {
+        /* 0392: il smooth-scroll nativo usa una durata che non cresce in modo
+           sufficientemente proporzionale alla distanza. Con più riquadri aperti
+           il percorso verso Formazione diventa molto più lungo e la stessa
+           animazione viene quindi percepita come una corsa rapidissima.
+
+           Pilotiamo direttamente lo scroll con requestAnimationFrame: la durata
+           aumenta con la distanza, entro limiti ragionevoli, così il ritorno
+           mantiene una velocità visiva dolce sia con tutti i riquadri chiusi
+           sia con diversi riquadri aperti. Nessun riquadro cambia geometria
+           durante questa fase. */
+        const startY = Math.max(0, window.scrollY);
+        if (startY <= 2) {
+          window.scrollTo(0, 0);
+          return;
+        }
+
+        const viewportHeight = Math.max(1, getMobileViewportHeight());
+        const travelInViewports = startY / viewportHeight;
+        const duration = Math.round(
+          Math.max(760, Math.min(3600, 480 + (travelInViewports * 360)))
+        );
+        const rootStyle = document.documentElement.style;
+        const previousInlineScrollBehavior = rootStyle.scrollBehavior;
+        rootStyle.scrollBehavior = "auto";
+
+        try {
+          await new Promise(resolve => {
+            const startedAt = performance.now();
+
+            const step = now => {
+              const progress = Math.min(
+                1,
+                Math.max(0, (now - startedAt) / duration)
+              );
+              const eased = mobileCloseVisualEase(progress);
+              const nextY = startY * (1 - eased);
+
+              window.scrollTo(0, nextY);
+
+              if (progress < 1) {
+                window.requestAnimationFrame(step);
+              } else {
+                window.scrollTo(0, 0);
+                resolve();
+              }
+            };
+
+            window.requestAnimationFrame(step);
+          });
+        } finally {
+          if (previousInlineScrollBehavior) {
+            rootStyle.scrollBehavior = previousInlineScrollBehavior;
+          } else {
+            rootStyle.removeProperty("scroll-behavior");
+          }
+        }
+      }
+
       function getBaseClosedContentHeight(card) {
         const trigger = card.querySelector(".section-trigger");
         if (!trigger) return 0;
@@ -2362,6 +2421,116 @@
         if (event.key === "Escape") closeMobileMenu();
       });
 
+      async function transitionMobileOverviewToHome({ updateHistory = true } = {}) {
+        /* 0387: transizione diretta Contenuti -> Home senza fotogrammi neri.
+           La Home viene predisposta sotto la panoramica ancora visibile;
+           poi le due viste si incrociano per opacità. Solo a transizione
+           conclusa viene applicato lo stato mobile-home definitivo. */
+        const introSection = document.getElementById("intro");
+
+        if (!introSection || !contentSection) {
+          showHome({ updateHistory });
+          return;
+        }
+
+        const transitionDuration = 560;
+        const transitionEasing = "cubic-bezier(.22, .61, .36, 1)";
+
+        const previousIntroStyle = {
+          display: introSection.style.display,
+          position: introSection.style.position,
+          inset: introSection.style.inset,
+          width: introSection.style.width,
+          height: introSection.style.height,
+          minHeight: introSection.style.minHeight,
+          zIndex: introSection.style.zIndex,
+          opacity: introSection.style.opacity,
+          pointerEvents: introSection.style.pointerEvents,
+          transition: introSection.style.transition
+        };
+        const previousContentStyle = {
+          position: contentSection.style.position,
+          zIndex: contentSection.style.zIndex,
+          opacity: contentSection.style.opacity,
+          pointerEvents: contentSection.style.pointerEvents,
+          transition: contentSection.style.transition
+        };
+        const previousHeaderStyle = {
+          opacity: siteHeader?.style.opacity || "",
+          pointerEvents: siteHeader?.style.pointerEvents || "",
+          transition: siteHeader?.style.transition || ""
+        };
+
+        Object.assign(introSection.style, {
+          display: "flex",
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100svh",
+          minHeight: "100svh",
+          zIndex: "4",
+          opacity: "0",
+          pointerEvents: "none",
+          transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+        });
+        Object.assign(contentSection.style, {
+          position: "relative",
+          zIndex: "6",
+          opacity: "1",
+          pointerEvents: "none",
+          transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+        });
+        if (siteHeader) {
+          Object.assign(siteHeader.style, {
+            opacity: "1",
+            pointerEvents: "none",
+            transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+          });
+        }
+
+        /* 0388: il video deve essere già realmente in movimento PRIMA
+           che inizi il crossfade. Non usiamo startVideo() perché, finché
+           body mantiene mobile-content, quella funzione ignora volutamente
+           la richiesta. Avviamo quindi direttamente il video sotto la
+           panoramica ancora opaca e attendiamo un minimo avanzamento reale
+           della timeline prima di renderlo progressivamente visibile. */
+        try {
+          video.muted = true;
+          const videoStartTime = video.currentTime;
+          await video.play();
+          document.documentElement.classList.add("video-ok");
+          document.documentElement.classList.remove("video-blocked");
+
+          const motionWaitStartedAt = performance.now();
+          while (
+            !video.paused
+            && Math.abs(video.currentTime - videoStartTime) < .025
+            && performance.now() - motionWaitStartedAt < 180
+          ) {
+            await new Promise(resolve => window.requestAnimationFrame(resolve));
+          }
+        } catch (error) {
+          document.documentElement.classList.add("video-blocked");
+        }
+
+        await new Promise(resolve => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+          });
+        });
+
+        introSection.style.opacity = "1";
+        contentSection.style.opacity = "0";
+        if (siteHeader) siteHeader.style.opacity = "0";
+
+        await wait(transitionDuration + 40);
+        showHome({ updateHistory });
+
+        Object.assign(introSection.style, previousIntroStyle);
+        Object.assign(contentSection.style, previousContentStyle);
+        if (siteHeader) Object.assign(siteHeader.style, previousHeaderStyle);
+      }
+
       function shouldDeferTechnicalEndSpaceForBottomContacts(targetCard) {
         const contactsCard = document.getElementById("contatti");
         if (
@@ -2392,7 +2561,44 @@
           const destination = link.getAttribute("href");
 
           if (destination === "#intro") {
-            requestHomeNavigation();
+            /* 0390: sequenza mobile Home completa, senza variazioni geometriche
+               durante il ritorno all'inizio dei Contenuti:
+               1) chiusura morbida del menu;
+               2) ritorno morbido della pagina all'inizio, lasciando ancora
+                  invariati tutti i riquadri eventualmente aperti;
+               3) soltanto quando Formazione è già in alto, chiusura simultanea
+                  e morbida di TUTTI i riquadri aperti;
+               4) transizione incrociata diretta verso la Home video già in moto. */
+            menuNavigationBusy = true;
+            menuToggle.disabled = true;
+
+            try {
+              closeMobileMenu();
+              await wait(260);
+
+              /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
+                 anche l'eventuale riserva tecnica finché lo scroll non è finito,
+                 così la geometria della pagina non può provocare scatti o clamp. */
+              const needsTopScroll = window.scrollY > 2;
+              if (needsTopScroll) {
+                await scrollMobileOverviewToTopSmoothly();
+                await wait(90);
+              }
+
+              /* Ora che l'utente vede già Formazione in alto possiamo chiudere
+                 i riquadri senza che la loro contrazione interferisca con lo scroll. */
+              contentSection?.classList.remove("mobile-technical-end-space");
+              const { closedCount, maxDuration } = closeAllCards({ animate: true });
+              if (closedCount > 0) {
+                await wait(maxDuration + 60);
+                refreshMobileHeights();
+              }
+
+              await transitionMobileOverviewToHome();
+            } finally {
+              menuToggle.disabled = false;
+              menuNavigationBusy = false;
+            }
             return;
           }
 
@@ -2534,13 +2740,51 @@
       let mobileOverviewForwardResetPending = false;
       let mobileOverviewResetScrollInProgress = false;
       let mobileOverviewStartReadyForHome = false;
+      let mobileOverviewBackResetBusy = false;
+
+      async function resetMobileOverviewToStartFromBack({ readyForHome = false } = {}) {
+        /* 0390: il primo Back nella pagina Contenuti normalizza sempre la vista,
+           ma in due fasi nettamente separate: prima riporta il viewport all'inizio
+           lasciando invariati i riquadri; soltanto quando Formazione è già in alto
+           chiude morbidamente TUTTI i riquadri aperti. Il Back successivo può
+           quindi raggiungere la Home con la stessa transizione del comando Home. */
+        if (mobileOverviewBackResetBusy) return;
+        mobileOverviewBackResetBusy = true;
+        mobileOverviewResetScrollInProgress = true;
+        closeMobileMenu();
+
+        try {
+          /* Nessuna contrazione della pagina mentre stiamo tornando in alto. */
+          if (window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD) {
+            await scrollMobileOverviewToTopSmoothly();
+            await wait(90);
+          }
+
+          /* Solo a viewport stabilizzato in alto eliminiamo la riserva tecnica
+             e chiudiamo i riquadri. In questo modo il loro cambio di altezza non
+             può più produrre movimenti su/giù della pagina durante lo scroll. */
+          contentSection?.classList.remove("mobile-technical-end-space");
+          const { closedCount, maxDuration } = closeAllCards({ animate: true });
+          if (closedCount > 0) {
+            await wait(maxDuration + 60);
+            refreshMobileHeights();
+          }
+
+          syncMenuWithOpenCards();
+          mobileOverviewStartReadyForHome = readyForHome
+            && window.scrollY <= MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
+        } finally {
+          mobileOverviewResetScrollInProgress = false;
+          mobileOverviewBackResetBusy = false;
+        }
+      }
 
       function restoreMobileOverviewStartFromBack() {
-        /* 0377: il Back che intercetta Home mentre la panoramica Contenuti
-           è ancora scorsa non crea una nuova voce di cronologia. Torna invece
-           alla voce overview già presente con history.forward(), preservando
-           così la Home reale immediatamente dietro. Il Back successivo può
-           quindi raggiungere davvero la Home del sito, senza uscire dalla pagina. */
+        /* Se il Back ha già raggiunto la voce Home mentre la panoramica
+           Contenuti non è ancora nello stato iniziale, torniamo alla voce
+           overview già presente con history.forward(). Lì chiudiamo tutti i
+           riquadri e torniamo a Formazione, lasciando la Home subito dietro
+           per il Back successivo. */
         closeMobileMenu();
         mobileOverviewForwardResetPending = true;
         history.forward();
@@ -2566,57 +2810,44 @@
           && route.siteView === "overview"
         ) {
           mobileOverviewForwardResetPending = false;
-          mobileOverviewResetScrollInProgress = true;
-
           window.requestAnimationFrame(() => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            waitForScrollToSettle().then(() => {
-              mobileOverviewResetScrollInProgress = false;
-              mobileOverviewStartReadyForHome =
-                window.scrollY <= MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
-            });
+            resetMobileOverviewToStartFromBack({ readyForHome: true });
           });
-
-          syncMenuWithOpenCards();
           return;
         }
 
         if (route.siteView === "home") {
-          const overviewIsScrolled =
+          const overviewNeedsReset =
             document.body.classList.contains("mobile-content")
-            && window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
+            && (
+              window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
+              || sectionCards.some(card => card.classList.contains("is-open"))
+            );
 
           if (mobileOverviewStartReadyForHome) {
             mobileOverviewStartReadyForHome = false;
-            showHome({ updateHistory: false });
+            transitionMobileOverviewToHome({ updateHistory: false });
             return;
           }
 
-          if (overviewIsScrolled) {
+          if (overviewNeedsReset) {
             restoreMobileOverviewStartFromBack();
             return;
           }
 
-          showHome({ updateHistory: false });
+          transitionMobileOverviewToHome({ updateHistory: false });
           return;
         }
 
         if (route.siteView === "overview") {
-          /* 0323: ripristino del comportamento di chiusura mobile della 0310.
-             Se siamo già nella schermata Contenuti e un riquadro è aperto,
-             il ritorno allo stato overview deve usare la normale animazione
-             closeCard(), senza richiamare showContent(), che azzera subito
-             lo stato dei riquadri e forza window.scrollTo(0, 0). */
+          /* 0389: tornando dallo stato card alla panoramica Contenuti, il Back
+             non chiude più un solo riquadro lasciando l'utente nella posizione
+             corrente. Chiude tutti i riquadri e riporta dolcemente la pagina
+             all'inizio. Il Back successivo userà la stessa transizione verso
+             la Home adottata dal comando Home del menu hamburger. */
           if (document.body.classList.contains("mobile-content")) {
-            const openCard = sectionCards.find(card => card.classList.contains("is-open"));
-            if (openCard) {
-              closeCard(openCard);
-              syncMenuWithOpenCards();
-              return;
-            }
-
-            /* Siamo già nella panoramica Contenuti: nessun riposizionamento. */
-            syncMenuWithOpenCards();
+            mobileOverviewStartReadyForHome = false;
+            resetMobileOverviewToStartFromBack();
             return;
           }
 

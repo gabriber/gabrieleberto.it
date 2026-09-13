@@ -5227,3 +5227,36 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
     transform: translateY(-14px);
   }
 }
+
+/* ================================================================
+   VERSIONE MOBILE 0391
+   Rifinitura della sincronizzazione testo/bordo durante apertura e chiusura:
+   - solo mobile;
+   - durante il movimento del riquadro, gli ultimi 26 px del contenuto
+     vengono sfumati verso il bordo inferiore;
+   - in apertura il testo appena rivelato diventa quindi leggibile solo
+     dopo che il bordo ha iniziato a scendere;
+   - in chiusura il testo si attenua prima che il bordo lo raggiunga;
+   - geometrie, durate e desktop invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .editorial-section.is-mobile-opening .section-content,
+  body.mobile-content .editorial-section.is-mobile-closing .section-content {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 calc(100% - 26px),
+      rgba(0, 0, 0, .82) calc(100% - 19px),
+      rgba(0, 0, 0, .30) calc(100% - 8px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 calc(100% - 26px),
+      rgba(0, 0, 0, .82) calc(100% - 19px),
+      rgba(0, 0, 0, .30) calc(100% - 8px),
+      transparent 100%
+    );
+  }
+}
