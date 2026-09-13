@@ -241,7 +241,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0400">
+  <link rel="stylesheet" href="style.css?v=0401">
 </head>
 
 <body>
@@ -2405,8 +2405,33 @@
         showContent(null, { updateHistory: true, historyMode: "push" });
       });
 
-      headerBrand.addEventListener("click", event => {
+      headerBrand.addEventListener("click", async event => {
         event.preventDefault();
+
+        /* 0401: sul solo mobile il logo/nome "Gabriele Berto" mantiene
+           una semantica diversa dalla voce Home del menu. Dalla panoramica
+           Contenuti (anche con riquadri aperti e/o pagina scorsa) porta
+           direttamente alla vera Home con il crossfade già approvato, senza
+           prima normalizzare la pagina su Formazione. La gestione degli
+           articoli resta invariata per evitare effetti collaterali. */
+        const navState = window.SiteNavHistory.current();
+        if (
+          document.body.classList.contains("mobile-content")
+          && navState.siteView !== "article"
+        ) {
+          if (menuNavigationBusy) return;
+          menuNavigationBusy = true;
+          menuToggle.disabled = true;
+          try {
+            closeMobileMenu();
+            await transitionMobileOverviewToHome();
+          } finally {
+            menuToggle.disabled = false;
+            menuNavigationBusy = false;
+          }
+          return;
+        }
+
         requestHomeNavigation();
       });
 
