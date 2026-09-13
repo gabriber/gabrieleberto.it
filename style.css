@@ -5269,7 +5269,7 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
    - larghezza sincronizzata via JS sulla parola "Competenze" sia
      desktop sia mobile;
    - freccia desktop abbassata otticamente di 2 px;
-   - freccia mobile alzata otticamente di 2 px;
+   - freccia mobile alzata otticamente di 3 px;
    - nessun'altra geometria o comportamento modificato.
    ================================================================ */
 @media (min-width: 801px) {
@@ -5280,6 +5280,20 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
 
 @media (max-width: 800px) {
   .discover .arrow {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0400
+   Rifinitura chirurgica della freccia CTA "Scopri di più":
+   - solo mobile;
+   - dimensione aumentata di circa il 19% rispetto alla 0399;
+   - posizione verticale invariata rispetto alla 0399;
+   - desktop e ogni altro elemento invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  .discover .arrow {
+    font-size: 2.05em;
   }
 }
