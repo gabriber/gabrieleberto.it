@@ -241,7 +241,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0391">
+  <link rel="stylesheet" href="style.css?v=0397">
 </head>
 
 <body>
@@ -1288,6 +1288,7 @@
       let activeCard = null;
       let resizeFrame = null;
       let menuNavigationBusy = false;
+      let mobileHomeMenuOverviewBackPending = false;
 
       function enableMobileTechnicalEndSpace() {
         contentSection?.classList.add("mobile-technical-end-space");
@@ -2561,37 +2562,82 @@
           const destination = link.getAttribute("href");
 
           if (destination === "#intro") {
-            /* 0390: sequenza mobile Home completa, senza variazioni geometriche
-               durante il ritorno all'inizio dei Contenuti:
-               1) chiusura morbida del menu;
-               2) ritorno morbido della pagina all'inizio, lasciando ancora
-                  invariati tutti i riquadri eventualmente aperti;
-               3) soltanto quando Formazione è già in alto, chiusura simultanea
-                  e morbida di TUTTI i riquadri aperti;
-               4) transizione incrociata diretta verso la Home video già in moto. */
+            /* 0395: Home mobile diventa contestuale, senza cambiare le animazioni
+               già approvate. Se la panoramica Contenuti NON è nello stato iniziale,
+               il primo tap fa soltanto questo: chiude il menu, torna dolcemente
+               a Formazione lasciando invariati i riquadri durante lo scroll e,
+               una volta arrivato in alto, chiude tutti i riquadri. La vista resta
+               quindi nella panoramica iniziale. Solo un successivo tap su Home,
+               quando siamo già in alto e con tutti i riquadri chiusi, avvia la
+               transizione incrociata verso la vera Home con il video in movimento. */
             menuNavigationBusy = true;
             menuToggle.disabled = true;
 
             try {
+              const navState = window.SiteNavHistory.current();
+              const hasOpenCards = sectionCards.some(card =>
+                card.classList.contains("is-open")
+              );
+              const overviewNeedsNormalization =
+                document.body.classList.contains("mobile-content")
+                && navState.siteView !== "article"
+                && (
+                  window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
+                  || hasOpenCards
+                );
+
               closeMobileMenu();
               await wait(260);
 
-              /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
-                 anche l'eventuale riserva tecnica finché lo scroll non è finito,
-                 così la geometria della pagina non può provocare scatti o clamp. */
-              const needsTopScroll = window.scrollY > 2;
-              if (needsTopScroll) {
-                await scrollMobileOverviewToTopSmoothly();
-                await wait(90);
-              }
+              if (overviewNeedsNormalization) {
+                /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
+                   anche l'eventuale riserva tecnica finché lo scroll non è finito,
+                   così la geometria della pagina non può provocare scatti o clamp. */
+                if (window.scrollY > 2) {
+                  await scrollMobileOverviewToTopSmoothly();
+                  await wait(90);
+                }
 
-              /* Ora che l'utente vede già Formazione in alto possiamo chiudere
-                 i riquadri senza che la loro contrazione interferisca con lo scroll. */
-              contentSection?.classList.remove("mobile-technical-end-space");
-              const { closedCount, maxDuration } = closeAllCards({ animate: true });
-              if (closedCount > 0) {
-                await wait(maxDuration + 60);
-                refreshMobileHeights();
+                /* Soltanto quando Formazione è già in alto chiudiamo tutti i
+                   riquadri: il primo Home termina qui, nella panoramica iniziale. */
+                contentSection?.classList.remove("mobile-technical-end-space");
+                const { closedCount, maxDuration } = closeAllCards({ animate: true });
+                if (closedCount > 0) {
+                  await wait(maxDuration + 60);
+                  refreshMobileHeights();
+                }
+                mobileOverviewStartReadyForHome = false;
+
+                /* Se il riquadro aperto aveva creato la normale voce "card"
+                   nella cronologia SPA, allineiamo anche la cronologia alla
+                   panoramica che l'utente sta effettivamente vedendo. Il relativo
+                   popstate viene marcato come tecnico e non deve riattivare il
+                   reset globale del vero tasto Indietro. */
+                if (navState.siteView === "card") {
+                  if (navState.siteNavChain) {
+                    mobileHomeMenuOverviewBackPending = true;
+                    await new Promise(resolve => {
+                      let settled = false;
+                      const finish = () => {
+                        if (settled) return;
+                        settled = true;
+                        window.clearTimeout(timeoutId);
+                        resolve();
+                      };
+                      const timeoutId = window.setTimeout(() => {
+                        mobileHomeMenuOverviewBackPending = false;
+                        finish();
+                      }, 320);
+                      window.addEventListener("popstate", finish, { once: true });
+                      history.back();
+                    });
+                  } else {
+                    window.SiteNavHistory.replace("overview", "#contenuti", {
+                      siteNavChain: navState.siteNavChain
+                    });
+                  }
+                }
+                return;
               }
 
               await transitionMobileOverviewToHome();
@@ -2663,6 +2709,14 @@
         });
       });
 
+      /* 0394: la chiusura manuale di un singolo riquadro mobile non deve
+         essere interpretata come un Back del browser. Conserviamo comunque
+         la cronologia tornando allo stato overview precedente, ma il relativo
+         popstate viene riconosciuto e NON attiva il reset globale verso
+         Formazione. In questo modo si chiude solo il riquadro toccato e il
+         viewport resta esattamente dove si trova. */
+      let mobileManualCardCloseBackPending = false;
+
       sectionTriggers.forEach(trigger => {
         trigger.addEventListener("click", () => {
           const card = trigger.closest(".editorial-section");
@@ -2717,6 +2771,9 @@
               && navState.siteSection === card.id
               && navState.siteNavChain
             ) {
+              mobileManualCardCloseBackPending = true;
+              closeCard(card);
+              syncMenuWithOpenCards();
               history.back();
               return;
             }
@@ -2804,6 +2861,38 @@
         const route = window.SiteNavHistory.route(event.state);
 
         if (route.siteView === "article") return;
+
+        /* 0395: popstate tecnico prodotto dal primo Home mobile quando
+           normalizza una vista "card" alla panoramica iniziale. La UI è già
+           stata riportata a Formazione e tutti i riquadri sono già chiusi:
+           questo evento serve solo ad allineare la cronologia. */
+        if (
+          mobileHomeMenuOverviewBackPending
+          && route.siteView === "overview"
+        ) {
+          mobileHomeMenuOverviewBackPending = false;
+          mobileOverviewStartReadyForHome = false;
+          return;
+        }
+        if (mobileHomeMenuOverviewBackPending) {
+          mobileHomeMenuOverviewBackPending = false;
+        }
+
+        /* 0394: questo overview è stato raggiunto dalla freccia del riquadro,
+           non dal tasto Indietro del browser. Il riquadro è già in chiusura:
+           non scorrere, non chiudere gli altri riquadri e non normalizzare la
+           pagina verso Formazione. */
+        if (
+          mobileManualCardCloseBackPending
+          && route.siteView === "overview"
+        ) {
+          mobileManualCardCloseBackPending = false;
+          mobileOverviewStartReadyForHome = false;
+          return;
+        }
+        if (mobileManualCardCloseBackPending) {
+          mobileManualCardCloseBackPending = false;
+        }
 
         if (
           mobileOverviewForwardResetPending
@@ -5316,6 +5405,21 @@
 
           if (destination === "#intro") {
             event.preventDefault();
+
+            /* 0395: anche su desktop Home è contestuale. Se un riquadro è
+               ingrandito, il primo click richiude soltanto il focus e ripristina
+               la griglia iniziale. Dalla griglia già ripristinata, il click
+               successivo mantiene la logica esistente e torna alla vera Home. */
+            if (
+              desktopSelectedCard
+              && editorialShell?.classList.contains("is-grid-focus-mode")
+              && window.SiteNavHistory.current().siteView !== "article"
+            ) {
+              hideMenu({ guardPointer: false, clearSelection: false });
+              requestDesktopFocusClose();
+              return;
+            }
+
             requestHomeNavigation();
             return;
           }
@@ -6485,7 +6589,7 @@
     (() => {
       const mobileHomeQuery = window.matchMedia("(max-width: 800px)");
       const discoverButton = document.getElementById("discoverBtn");
-      const referenceLine = document.querySelector(".intro-title .gold-line:last-child");
+      const referenceLine = document.querySelector(".intro-title .white-line:first-child");
 
       if (!discoverButton || !referenceLine) return;
 
@@ -6494,18 +6598,13 @@
       const syncDiscoverWidth = () => {
         syncFrame = 0;
 
-        if (!mobileHomeQuery.matches) {
-          discoverButton.style.removeProperty("width");
-          return;
-        }
-
         const range = document.createRange();
         range.selectNodeContents(referenceLine);
         const referenceWidth = range.getBoundingClientRect().width;
         range.detach?.();
 
         if (referenceWidth > 0) {
-          discoverButton.style.width = `${Math.max(0, referenceWidth - 2)}px`;
+          discoverButton.style.width = `${Math.max(0, referenceWidth)}px`;
         }
       };
 
