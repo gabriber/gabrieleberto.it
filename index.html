@@ -241,7 +241,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0405">
+  <link rel="stylesheet" href="style.css?v=0407">
 </head>
 
 <body>
@@ -2758,7 +2758,22 @@
       let mobileManualCardCloseBackPending = false;
 
       sectionTriggers.forEach(trigger => {
-        trigger.addEventListener("click", () => {
+        trigger.addEventListener("click", event => {
+          /* 0406: su mobile apertura/chiusura manuale soltanto tramite
+             la freccia. Titolo, icona e spazi vuoti della fascia superiore
+             restano neutri. I click programmatici interni restano ammessi
+             per non alterare la navigazione degli Articoli; i click da
+             tastiera (detail === 0) restano accessibili. Il comando
+             sole/luna è un controllo autonomo esterno al section-trigger
+             e mantiene il proprio listener con stopPropagation(). */
+          if (
+            event.isTrusted
+            && event.detail > 0
+            && !event.target.closest(".section-chevron")
+          ) {
+            return;
+          }
+
           const card = trigger.closest(".editorial-section");
           if (!card) return;
 
@@ -6511,14 +6526,36 @@
         if (!activeArticleId) return;
 
         const target = event.target;
-        const clickedMobileControl = target.closest?.("#articoli .section-trigger");
+        const clickedArticleTrigger = target.closest?.("#articoli .section-trigger");
+        const clickedArticleHeaderReturn = target.closest?.(
+          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
+        );
+        const clickedArticleChevron = target.closest?.("#articoli .section-trigger > .section-chevron");
         const clickedDesktopControl = target.closest?.("#articoli .desktop-focus-close");
+        const keyboardTriggerActivation = Boolean(clickedArticleTrigger && event.detail === 0);
 
-        if (clickedMobileControl || clickedDesktopControl) {
+        /* 0407: quando un articolo è aperto, soltanto icona e titolo
+           "Articoli" acquistano temporaneamente la funzione di ritorno
+           all'indice, insieme ai controlli di ritorno già esistenti
+           (freccia mobile e freccia desktop). Il resto della fascia
+           superiore rimane neutro anche durante la lettura. */
+        if (
+          clickedArticleHeaderReturn
+          || clickedArticleChevron
+          || clickedDesktopControl
+          || keyboardTriggerActivation
+        ) {
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
           returnFromArticle();
+          return;
+        }
+
+        if (clickedArticleTrigger) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
           return;
         }
 

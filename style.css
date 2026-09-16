@@ -5338,3 +5338,32 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
   }
 }
 
+
+
+/* ================================================================
+   VERSIONE 0407
+   Ritorno contestuale dall'articolo all'indice "Articoli":
+   - titolo e icona Articoli diventano attivi soltanto mentre un
+     articolo è aperto;
+   - negli altri stati restano neutri come nella 0406;
+   - la fascia superiore restante rimane neutra;
+   - freccia mobile, controllo desktop e sole/luna restano autonomi.
+   ================================================================ */
+#articoli.is-article-reading .section-trigger > .card-icon,
+#articoli.is-article-reading .section-trigger > .section-head-copy {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 801px) {
+  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger {
+    pointer-events: auto;
+    cursor: default;
+  }
+
+  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger > .card-icon,
+  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger > .section-head-copy {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+}
