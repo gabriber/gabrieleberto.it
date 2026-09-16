@@ -96,15 +96,17 @@
   </script>
   <script>
     window.__DIRECT_ARTICLE_ID__ = "soglia-causale";
-    if (!window.location.hash) {
-      history.replaceState({
-        siteNavVersion: 1,
-        siteView: "article",
-        siteSection: "articoli",
-        siteArticle: "soglia-causale",
-        siteNavChain: false
-      }, "", window.location.pathname + "#articoli");
-    }
+    document.documentElement.classList.add("direct-article-preinit");
+    history.replaceState({
+      siteNavVersion: 1,
+      siteView: "article",
+      siteSection: "articoli",
+      siteArticle: "soglia-causale",
+      siteNavChain: false
+    }, "", window.location.pathname + window.location.search);
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("direct-article-preinit");
+    }, 2500);
   </script>
   <script>
     window.SiteArticleRoutes = Object.freeze({
@@ -115,7 +117,8 @@
   </script>
   <script>
     const initialHash = window.location.hash;
-    if (!initialHash || initialHash === "#intro") {
+    const initialDirectArticle = Boolean(window.__DIRECT_ARTICLE_ID__);
+    if ((!initialHash || initialHash === "#intro") && !initialDirectArticle) {
       document.documentElement.classList.add("intro-scroll-locked");
     }
 
@@ -126,7 +129,7 @@
     const initialMobileContentHash = initialHash === "#contenuti"
       || ["#formazione", "#settori", "#second-opinion", "#fiducia", "#articoli", "#contatti"].includes(initialHash);
 
-    const initialContentScreen = initialMobileContentHash;
+    const initialContentScreen = initialMobileContentHash || initialDirectArticle;
     if (window.matchMedia("(min-width: 801px)").matches) {
       document.documentElement.classList.add("desktop-screen-preinit");
       if (initialContentScreen) {
@@ -154,6 +157,15 @@
       ]);
 
       function inferRoute() {
+        if (window.__DIRECT_ARTICLE_ID__) {
+          return {
+            siteView: "article",
+            siteSection: "articoli",
+            siteArticle: window.__DIRECT_ARTICLE_ID__,
+            siteNavChain: false
+          };
+        }
+
         const hash = window.location.hash.replace(/^#/, "");
         if (sectionIds.has(hash)) {
           return { siteView: "card", siteSection: hash, siteNavChain: false };
@@ -242,6 +254,10 @@
   <!-- 0226: first-frame placeholder embedded in the document.
        No extra image request is needed before the video begins rendering. -->
   <style>
+    html.direct-article-preinit body {
+      visibility: hidden !important;
+    }
+
     .video-layer {
       background-image: url("data:image/jpeg;base64,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") !important;
       background-position: center center !important;
@@ -262,7 +278,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=0382">
+  <link rel="stylesheet" href="style.css?v=0409">
   <meta property="article:published_time" content="2026-09-04">
 </head>
 
@@ -296,10 +312,39 @@
           }
         };
 
+        /* 0409: le icone dei riquadri vengono precaricate soltanto dopo che
+           il video di sfondo ha realmente iniziato la riproduzione. Il lavoro
+           viene rimandato a un momento di inattività e conserva la priorità
+           bassa delle immagini, così il caricamento iniziale del video resta
+           prioritario sia su desktop sia su mobile. */
+        let deferredIconPreloadScheduled = false;
+
+        const scheduleDeferredIconPreloadAfterVideoStart = () => {
+          if (deferredIconPreloadScheduled || deferredIconsRequested) return;
+          deferredIconPreloadScheduled = true;
+
+          const preloadIcons = () => {
+            if (!deferredIconsRequested) {
+              window.loadDeferredCardIcons();
+            }
+          };
+
+          if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(preloadIcons, { timeout: 1800 });
+          } else {
+            window.setTimeout(preloadIcons, 900);
+          }
+        };
+
+        video.addEventListener("playing", scheduleDeferredIconPreloadAfterVideoStart, { once: true });
+
         const contentHashPattern =
           /^#(contenuti|profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/;
 
-        if (contentHashPattern.test(window.location.hash)) {
+        if (
+          window.__DIRECT_ARTICLE_ID__
+          || contentHashPattern.test(window.location.hash)
+        ) {
           window.loadDeferredCardIcons();
         }
 
@@ -400,7 +445,12 @@
 
         <button class="discover" id="discoverBtn" type="button" aria-label="Scopri di più">
           <span>Scopri di più</span>
-          <span class="arrow" aria-hidden="true">→</span>
+          <span class="arrow" aria-hidden="true">
+            <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+              <path d="M4 12H20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M13 5L20 12L13 19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
         </button>
       </div>
     </section>
@@ -1017,6 +1067,7 @@
       let activeCard = null;
       let resizeFrame = null;
       let menuNavigationBusy = false;
+      let mobileHomeMenuOverviewBackPending = false;
 
       function enableMobileTechnicalEndSpace() {
         contentSection?.classList.add("mobile-technical-end-space");
@@ -1358,6 +1409,65 @@
 
           window.requestAnimationFrame(check);
         });
+      }
+
+      async function scrollMobileOverviewToTopSmoothly() {
+        /* 0392: il smooth-scroll nativo usa una durata che non cresce in modo
+           sufficientemente proporzionale alla distanza. Con più riquadri aperti
+           il percorso verso Formazione diventa molto più lungo e la stessa
+           animazione viene quindi percepita come una corsa rapidissima.
+
+           Pilotiamo direttamente lo scroll con requestAnimationFrame: la durata
+           aumenta con la distanza, entro limiti ragionevoli, così il ritorno
+           mantiene una velocità visiva dolce sia con tutti i riquadri chiusi
+           sia con diversi riquadri aperti. Nessun riquadro cambia geometria
+           durante questa fase. */
+        const startY = Math.max(0, window.scrollY);
+        if (startY <= 2) {
+          window.scrollTo(0, 0);
+          return;
+        }
+
+        const viewportHeight = Math.max(1, getMobileViewportHeight());
+        const travelInViewports = startY / viewportHeight;
+        const duration = Math.round(
+          Math.max(760, Math.min(3600, 480 + (travelInViewports * 360)))
+        );
+        const rootStyle = document.documentElement.style;
+        const previousInlineScrollBehavior = rootStyle.scrollBehavior;
+        rootStyle.scrollBehavior = "auto";
+
+        try {
+          await new Promise(resolve => {
+            const startedAt = performance.now();
+
+            const step = now => {
+              const progress = Math.min(
+                1,
+                Math.max(0, (now - startedAt) / duration)
+              );
+              const eased = mobileCloseVisualEase(progress);
+              const nextY = startY * (1 - eased);
+
+              window.scrollTo(0, nextY);
+
+              if (progress < 1) {
+                window.requestAnimationFrame(step);
+              } else {
+                window.scrollTo(0, 0);
+                resolve();
+              }
+            };
+
+            window.requestAnimationFrame(step);
+          });
+        } finally {
+          if (previousInlineScrollBehavior) {
+            rootStyle.scrollBehavior = previousInlineScrollBehavior;
+          } else {
+            rootStyle.removeProperty("scroll-behavior");
+          }
+        }
       }
 
       function getBaseClosedContentHeight(card) {
@@ -1898,6 +2008,7 @@
       }
 
       function showHome({ updateHistory = true } = {}) {
+        window.SiteDiscoverWidth?.applyCached?.();
         closeMobileMenu();
         sectionCards.forEach(resetReadingTheme);
         clearMobileCloseScrollCompensation();
@@ -2074,8 +2185,33 @@
         showContent(null, { updateHistory: true, historyMode: "push" });
       });
 
-      headerBrand.addEventListener("click", event => {
+      headerBrand.addEventListener("click", async event => {
         event.preventDefault();
+
+        /* 0401: sul solo mobile il logo/nome "Gabriele Berto" mantiene
+           una semantica diversa dalla voce Home del menu. Dalla panoramica
+           Contenuti (anche con riquadri aperti e/o pagina scorsa) porta
+           direttamente alla vera Home con il crossfade già approvato, senza
+           prima normalizzare la pagina su Formazione. La gestione degli
+           articoli resta invariata per evitare effetti collaterali. */
+        const navState = window.SiteNavHistory.current();
+        if (
+          document.body.classList.contains("mobile-content")
+          && navState.siteView !== "article"
+        ) {
+          if (menuNavigationBusy) return;
+          menuNavigationBusy = true;
+          menuToggle.disabled = true;
+          try {
+            closeMobileMenu();
+            await transitionMobileOverviewToHome();
+          } finally {
+            menuToggle.disabled = false;
+            menuNavigationBusy = false;
+          }
+          return;
+        }
+
         requestHomeNavigation();
       });
 
@@ -2090,6 +2226,125 @@
       document.addEventListener("keydown", event => {
         if (event.key === "Escape") closeMobileMenu();
       });
+
+      async function transitionMobileOverviewToHome({ updateHistory = true } = {}) {
+        /* 0387: transizione diretta Contenuti -> Home senza fotogrammi neri.
+           La Home viene predisposta sotto la panoramica ancora visibile;
+           poi le due viste si incrociano per opacità. Solo a transizione
+           conclusa viene applicato lo stato mobile-home definitivo. */
+        const introSection = document.getElementById("intro");
+
+        if (!introSection || !contentSection) {
+          showHome({ updateHistory });
+          return;
+        }
+
+        const transitionDuration = 560;
+        const transitionEasing = "cubic-bezier(.22, .61, .36, 1)";
+
+        /* 0403: il CTA deve avere già la larghezza definitiva prima che
+           la Home inizi a diventare visibile. Riapplichiamo quindi subito
+           l'ultima misura valida della riga "Competenze". */
+        window.SiteDiscoverWidth?.applyCached?.();
+
+        const previousIntroStyle = {
+          display: introSection.style.display,
+          position: introSection.style.position,
+          inset: introSection.style.inset,
+          width: introSection.style.width,
+          height: introSection.style.height,
+          minHeight: introSection.style.minHeight,
+          zIndex: introSection.style.zIndex,
+          opacity: introSection.style.opacity,
+          pointerEvents: introSection.style.pointerEvents,
+          transition: introSection.style.transition
+        };
+        const previousContentStyle = {
+          position: contentSection.style.position,
+          zIndex: contentSection.style.zIndex,
+          opacity: contentSection.style.opacity,
+          pointerEvents: contentSection.style.pointerEvents,
+          transition: contentSection.style.transition
+        };
+        const previousHeaderStyle = {
+          opacity: siteHeader?.style.opacity || "",
+          pointerEvents: siteHeader?.style.pointerEvents || "",
+          transition: siteHeader?.style.transition || ""
+        };
+
+        Object.assign(introSection.style, {
+          display: "flex",
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100svh",
+          minHeight: "100svh",
+          zIndex: "4",
+          opacity: "0",
+          pointerEvents: "none",
+          transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+        });
+        /* Ora la Home è renderizzata ma ancora a opacity 0: possiamo
+           rimisurare "Competenze" senza che l'utente veda alcun assestamento. */
+        window.SiteDiscoverWidth?.syncNow?.();
+
+        Object.assign(contentSection.style, {
+          position: "relative",
+          zIndex: "6",
+          opacity: "1",
+          pointerEvents: "none",
+          transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+        });
+        if (siteHeader) {
+          Object.assign(siteHeader.style, {
+            opacity: "1",
+            pointerEvents: "none",
+            transition: `opacity ${transitionDuration}ms ${transitionEasing}`
+          });
+        }
+
+        /* 0388: il video deve essere già realmente in movimento PRIMA
+           che inizi il crossfade. Non usiamo startVideo() perché, finché
+           body mantiene mobile-content, quella funzione ignora volutamente
+           la richiesta. Avviamo quindi direttamente il video sotto la
+           panoramica ancora opaca e attendiamo un minimo avanzamento reale
+           della timeline prima di renderlo progressivamente visibile. */
+        try {
+          video.muted = true;
+          const videoStartTime = video.currentTime;
+          await video.play();
+          document.documentElement.classList.add("video-ok");
+          document.documentElement.classList.remove("video-blocked");
+
+          const motionWaitStartedAt = performance.now();
+          while (
+            !video.paused
+            && Math.abs(video.currentTime - videoStartTime) < .025
+            && performance.now() - motionWaitStartedAt < 180
+          ) {
+            await new Promise(resolve => window.requestAnimationFrame(resolve));
+          }
+        } catch (error) {
+          document.documentElement.classList.add("video-blocked");
+        }
+
+        await new Promise(resolve => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+          });
+        });
+
+        introSection.style.opacity = "1";
+        contentSection.style.opacity = "0";
+        if (siteHeader) siteHeader.style.opacity = "0";
+
+        await wait(transitionDuration + 40);
+        showHome({ updateHistory });
+
+        Object.assign(introSection.style, previousIntroStyle);
+        Object.assign(contentSection.style, previousContentStyle);
+        if (siteHeader) Object.assign(siteHeader.style, previousHeaderStyle);
+      }
 
       function shouldDeferTechnicalEndSpaceForBottomContacts(targetCard) {
         const contactsCard = document.getElementById("contatti");
@@ -2121,7 +2376,89 @@
           const destination = link.getAttribute("href");
 
           if (destination === "#intro") {
-            requestHomeNavigation();
+            /* 0395: Home mobile diventa contestuale, senza cambiare le animazioni
+               già approvate. Se la panoramica Contenuti NON è nello stato iniziale,
+               il primo tap fa soltanto questo: chiude il menu, torna dolcemente
+               a Formazione lasciando invariati i riquadri durante lo scroll e,
+               una volta arrivato in alto, chiude tutti i riquadri. La vista resta
+               quindi nella panoramica iniziale. Solo un successivo tap su Home,
+               quando siamo già in alto e con tutti i riquadri chiusi, avvia la
+               transizione incrociata verso la vera Home con il video in movimento. */
+            menuNavigationBusy = true;
+            menuToggle.disabled = true;
+
+            try {
+              const navState = window.SiteNavHistory.current();
+              const hasOpenCards = sectionCards.some(card =>
+                card.classList.contains("is-open")
+              );
+              const overviewNeedsNormalization =
+                document.body.classList.contains("mobile-content")
+                && navState.siteView !== "article"
+                && (
+                  window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
+                  || hasOpenCards
+                );
+
+              closeMobileMenu();
+              await wait(260);
+
+              if (overviewNeedsNormalization) {
+                /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
+                   anche l'eventuale riserva tecnica finché lo scroll non è finito,
+                   così la geometria della pagina non può provocare scatti o clamp. */
+                if (window.scrollY > 2) {
+                  await scrollMobileOverviewToTopSmoothly();
+                  await wait(90);
+                }
+
+                /* Soltanto quando Formazione è già in alto chiudiamo tutti i
+                   riquadri: il primo Home termina qui, nella panoramica iniziale. */
+                contentSection?.classList.remove("mobile-technical-end-space");
+                const { closedCount, maxDuration } = closeAllCards({ animate: true });
+                if (closedCount > 0) {
+                  await wait(maxDuration + 60);
+                  refreshMobileHeights();
+                }
+                mobileOverviewStartReadyForHome = false;
+
+                /* Se il riquadro aperto aveva creato la normale voce "card"
+                   nella cronologia SPA, allineiamo anche la cronologia alla
+                   panoramica che l'utente sta effettivamente vedendo. Il relativo
+                   popstate viene marcato come tecnico e non deve riattivare il
+                   reset globale del vero tasto Indietro. */
+                if (navState.siteView === "card") {
+                  if (navState.siteNavChain) {
+                    mobileHomeMenuOverviewBackPending = true;
+                    await new Promise(resolve => {
+                      let settled = false;
+                      const finish = () => {
+                        if (settled) return;
+                        settled = true;
+                        window.clearTimeout(timeoutId);
+                        resolve();
+                      };
+                      const timeoutId = window.setTimeout(() => {
+                        mobileHomeMenuOverviewBackPending = false;
+                        finish();
+                      }, 320);
+                      window.addEventListener("popstate", finish, { once: true });
+                      history.back();
+                    });
+                  } else {
+                    window.SiteNavHistory.replace("overview", "#contenuti", {
+                      siteNavChain: navState.siteNavChain
+                    });
+                  }
+                }
+                return;
+              }
+
+              await transitionMobileOverviewToHome();
+            } finally {
+              menuToggle.disabled = false;
+              menuNavigationBusy = false;
+            }
             return;
           }
 
@@ -2186,8 +2523,31 @@
         });
       });
 
+      /* 0394: la chiusura manuale di un singolo riquadro mobile non deve
+         essere interpretata come un Back del browser. Conserviamo comunque
+         la cronologia tornando allo stato overview precedente, ma il relativo
+         popstate viene riconosciuto e NON attiva il reset globale verso
+         Formazione. In questo modo si chiude solo il riquadro toccato e il
+         viewport resta esattamente dove si trova. */
+      let mobileManualCardCloseBackPending = false;
+
       sectionTriggers.forEach(trigger => {
-        trigger.addEventListener("click", () => {
+        trigger.addEventListener("click", event => {
+          /* 0406: su mobile apertura/chiusura manuale soltanto tramite
+             la freccia. Titolo, icona e spazi vuoti della fascia superiore
+             restano neutri. I click programmatici interni restano ammessi
+             per non alterare la navigazione degli Articoli; i click da
+             tastiera (detail === 0) restano accessibili. Il comando
+             sole/luna è un controllo autonomo esterno al section-trigger
+             e mantiene il proprio listener con stopPropagation(). */
+          if (
+            event.isTrusted
+            && event.detail > 0
+            && !event.target.closest(".section-chevron")
+          ) {
+            return;
+          }
+
           const card = trigger.closest(".editorial-section");
           if (!card) return;
 
@@ -2240,6 +2600,9 @@
               && navState.siteSection === card.id
               && navState.siteNavChain
             ) {
+              mobileManualCardCloseBackPending = true;
+              closeCard(card);
+              syncMenuWithOpenCards();
               history.back();
               return;
             }
@@ -2263,13 +2626,51 @@
       let mobileOverviewForwardResetPending = false;
       let mobileOverviewResetScrollInProgress = false;
       let mobileOverviewStartReadyForHome = false;
+      let mobileOverviewBackResetBusy = false;
+
+      async function resetMobileOverviewToStartFromBack({ readyForHome = false } = {}) {
+        /* 0390: il primo Back nella pagina Contenuti normalizza sempre la vista,
+           ma in due fasi nettamente separate: prima riporta il viewport all'inizio
+           lasciando invariati i riquadri; soltanto quando Formazione è già in alto
+           chiude morbidamente TUTTI i riquadri aperti. Il Back successivo può
+           quindi raggiungere la Home con la stessa transizione del comando Home. */
+        if (mobileOverviewBackResetBusy) return;
+        mobileOverviewBackResetBusy = true;
+        mobileOverviewResetScrollInProgress = true;
+        closeMobileMenu();
+
+        try {
+          /* Nessuna contrazione della pagina mentre stiamo tornando in alto. */
+          if (window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD) {
+            await scrollMobileOverviewToTopSmoothly();
+            await wait(90);
+          }
+
+          /* Solo a viewport stabilizzato in alto eliminiamo la riserva tecnica
+             e chiudiamo i riquadri. In questo modo il loro cambio di altezza non
+             può più produrre movimenti su/giù della pagina durante lo scroll. */
+          contentSection?.classList.remove("mobile-technical-end-space");
+          const { closedCount, maxDuration } = closeAllCards({ animate: true });
+          if (closedCount > 0) {
+            await wait(maxDuration + 60);
+            refreshMobileHeights();
+          }
+
+          syncMenuWithOpenCards();
+          mobileOverviewStartReadyForHome = readyForHome
+            && window.scrollY <= MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
+        } finally {
+          mobileOverviewResetScrollInProgress = false;
+          mobileOverviewBackResetBusy = false;
+        }
+      }
 
       function restoreMobileOverviewStartFromBack() {
-        /* 0377: il Back che intercetta Home mentre la panoramica Contenuti
-           è ancora scorsa non crea una nuova voce di cronologia. Torna invece
-           alla voce overview già presente con history.forward(), preservando
-           così la Home reale immediatamente dietro. Il Back successivo può
-           quindi raggiungere davvero la Home del sito, senza uscire dalla pagina. */
+        /* Se il Back ha già raggiunto la voce Home mentre la panoramica
+           Contenuti non è ancora nello stato iniziale, torniamo alla voce
+           overview già presente con history.forward(). Lì chiudiamo tutti i
+           riquadri e torniamo a Formazione, lasciando la Home subito dietro
+           per il Back successivo. */
         closeMobileMenu();
         mobileOverviewForwardResetPending = true;
         history.forward();
@@ -2290,62 +2691,81 @@
 
         if (route.siteView === "article") return;
 
+        /* 0395: popstate tecnico prodotto dal primo Home mobile quando
+           normalizza una vista "card" alla panoramica iniziale. La UI è già
+           stata riportata a Formazione e tutti i riquadri sono già chiusi:
+           questo evento serve solo ad allineare la cronologia. */
+        if (
+          mobileHomeMenuOverviewBackPending
+          && route.siteView === "overview"
+        ) {
+          mobileHomeMenuOverviewBackPending = false;
+          mobileOverviewStartReadyForHome = false;
+          return;
+        }
+        if (mobileHomeMenuOverviewBackPending) {
+          mobileHomeMenuOverviewBackPending = false;
+        }
+
+        /* 0394: questo overview è stato raggiunto dalla freccia del riquadro,
+           non dal tasto Indietro del browser. Il riquadro è già in chiusura:
+           non scorrere, non chiudere gli altri riquadri e non normalizzare la
+           pagina verso Formazione. */
+        if (
+          mobileManualCardCloseBackPending
+          && route.siteView === "overview"
+        ) {
+          mobileManualCardCloseBackPending = false;
+          mobileOverviewStartReadyForHome = false;
+          return;
+        }
+        if (mobileManualCardCloseBackPending) {
+          mobileManualCardCloseBackPending = false;
+        }
+
         if (
           mobileOverviewForwardResetPending
           && route.siteView === "overview"
         ) {
           mobileOverviewForwardResetPending = false;
-          mobileOverviewResetScrollInProgress = true;
-
           window.requestAnimationFrame(() => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            waitForScrollToSettle().then(() => {
-              mobileOverviewResetScrollInProgress = false;
-              mobileOverviewStartReadyForHome =
-                window.scrollY <= MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
-            });
+            resetMobileOverviewToStartFromBack({ readyForHome: true });
           });
-
-          syncMenuWithOpenCards();
           return;
         }
 
         if (route.siteView === "home") {
-          const overviewIsScrolled =
+          const overviewNeedsReset =
             document.body.classList.contains("mobile-content")
-            && window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD;
+            && (
+              window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
+              || sectionCards.some(card => card.classList.contains("is-open"))
+            );
 
           if (mobileOverviewStartReadyForHome) {
             mobileOverviewStartReadyForHome = false;
-            showHome({ updateHistory: false });
+            transitionMobileOverviewToHome({ updateHistory: false });
             return;
           }
 
-          if (overviewIsScrolled) {
+          if (overviewNeedsReset) {
             restoreMobileOverviewStartFromBack();
             return;
           }
 
-          showHome({ updateHistory: false });
+          transitionMobileOverviewToHome({ updateHistory: false });
           return;
         }
 
         if (route.siteView === "overview") {
-          /* 0323: ripristino del comportamento di chiusura mobile della 0310.
-             Se siamo già nella schermata Contenuti e un riquadro è aperto,
-             il ritorno allo stato overview deve usare la normale animazione
-             closeCard(), senza richiamare showContent(), che azzera subito
-             lo stato dei riquadri e forza window.scrollTo(0, 0). */
+          /* 0389: tornando dallo stato card alla panoramica Contenuti, il Back
+             non chiude più un solo riquadro lasciando l'utente nella posizione
+             corrente. Chiude tutti i riquadri e riporta dolcemente la pagina
+             all'inizio. Il Back successivo userà la stessa transizione verso
+             la Home adottata dal comando Home del menu hamburger. */
           if (document.body.classList.contains("mobile-content")) {
-            const openCard = sectionCards.find(card => card.classList.contains("is-open"));
-            if (openCard) {
-              closeCard(openCard);
-              syncMenuWithOpenCards();
-              return;
-            }
-
-            /* Siamo già nella panoramica Contenuti: nessun riposizionamento. */
-            syncMenuWithOpenCards();
+            mobileOverviewStartReadyForHome = false;
+            resetMobileOverviewToStartFromBack();
             return;
           }
 
@@ -2398,7 +2818,9 @@
       const reloadedInsideContent = mobilePageWasReloaded
         && (validSectionIds.has(requestedId) || requestedId === "contenuti");
 
-      if (reloadedInsideContent) {
+      if (window.__DIRECT_ARTICLE_ID__) {
+        showContent("articoli", { updateHistory: false });
+      } else if (reloadedInsideContent) {
         showContent(null, { updateHistory: true });
         revealResetMobileContent();
       } else if (validSectionIds.has(requestedId)) {
@@ -2440,6 +2862,7 @@
       let desktopGridBaseHeight = 0;
       let desktopFocusSourceRect = null;
       let desktopFocusAnimating = false;
+      let desktopFocusPhase = "idle";
       let desktopFocusTimer = null;
       let desktopTitleLayoutTimer = null;
       let desktopCompactPreviewTimer = null;
@@ -3121,21 +3544,7 @@
           closeButton.addEventListener("click", event => {
             event.preventDefault();
             event.stopPropagation();
-
-            const navState = window.SiteNavHistory.current();
-            if (
-              navState.siteView === "card"
-              && navState.siteSection === card.id
-              && navState.siteNavChain
-            ) {
-              history.back();
-              return;
-            }
-
-            closeDesktopFocus({
-              scroll: true,
-              updateHistory: true
-            });
+            requestDesktopFocusClose();
           });
 
           card.appendChild(closeButton);
@@ -3259,6 +3668,7 @@
       function resetDesktopGridSelection() {
         clearDesktopFocusTimer();
         desktopFocusAnimating = false;
+        desktopFocusPhase = "idle";
         desktopSelectedCard = null;
         desktopGridBaseHeight = 0;
         desktopFocusSourceRect = null;
@@ -3574,6 +3984,7 @@
         if (desktopSelectedCard !== card) return;
 
         desktopFocusAnimating = false;
+        desktopFocusPhase = "idle";
         desktopFocusTimer = null;
         editorialShell.classList.remove("is-grid-transitioning");
         editorialShell.classList.add("is-grid-focus-settled");
@@ -3596,7 +4007,8 @@
         card,
         {
           scroll = true,
-          updateHistory = true
+          updateHistory = true,
+          instant = false
         } = {}
       ) {
         if (!card || !editorialShell) return false;
@@ -3656,6 +4068,7 @@
         };
         desktopSelectedCard = card;
         desktopFocusAnimating = true;
+        desktopFocusPhase = "opening";
 
         createDesktopGridPlaceholder(card, cardRect, shellRect);
 
@@ -3691,12 +4104,31 @@
           }
         });
 
-        editorialShell.classList.add(
-          "is-grid-focus-mode",
-          "is-grid-transitioning"
-        );
+        editorialShell.classList.add("is-grid-focus-mode");
         contentSection.classList.add("is-focus-scroll");
 
+        if (instant) {
+          card.style.left = `${targetLeft}px`;
+          card.style.top = `${targetTop}px`;
+          card.style.width = `${targetWidth}px`;
+          card.style.height = `${targetHeight}px`;
+          editorialShell.style.height = `${targetShellHeight}px`;
+
+          desktopFocusAnimating = false;
+          desktopFocusPhase = "idle";
+          desktopFocusTimer = null;
+          editorialShell.classList.remove("is-grid-transitioning");
+          editorialShell.classList.add("is-grid-focus-settled");
+          updateEndScrollSpace();
+          schedulePointerCardUpdate();
+
+          if (updateHistory) {
+            window.SiteNavHistory.setCard(card.id, `#${card.id}`);
+          }
+          return true;
+        }
+
+        editorialShell.classList.add("is-grid-transitioning");
         void editorialShell.offsetHeight;
 
         editorialShell.style.transition = `height ${duration}ms ${easing}`;
@@ -3779,6 +4211,7 @@
         desktopGridBaseHeight = 0;
         desktopFocusSourceRect = null;
         desktopFocusAnimating = false;
+        desktopFocusPhase = "idle";
         desktopFocusResizePending = false;
 
         if (desktopFocusResizeFrame !== null) {
@@ -3790,29 +4223,98 @@
         schedulePointerCardUpdate();
       }
 
+      function freezeDesktopFocusOpeningAtCurrentGeometry() {
+        if (
+          !desktopSelectedCard
+          || !editorialShell
+          || !desktopFocusAnimating
+          || desktopFocusPhase !== "opening"
+        ) {
+          return false;
+        }
+
+        const card = desktopSelectedCard;
+        const cardStyle = window.getComputedStyle(card);
+        const shellStyle = window.getComputedStyle(editorialShell);
+        const frozenCard = {
+          left: cardStyle.left,
+          top: cardStyle.top,
+          width: cardStyle.width,
+          height: cardStyle.height
+        };
+        const frozenShellHeight = shellStyle.height;
+
+        clearDesktopFocusTimer();
+        card.style.transition = "none";
+        editorialShell.style.transition = "none";
+        card.style.left = frozenCard.left;
+        card.style.top = frozenCard.top;
+        card.style.width = frozenCard.width;
+        card.style.height = frozenCard.height;
+        editorialShell.style.height = frozenShellHeight;
+
+        /* Congela il fotogramma realmente visibile prima di invertire
+           immediatamente la transizione verso la griglia. */
+        void card.offsetHeight;
+        desktopFocusAnimating = false;
+        desktopFocusPhase = "idle";
+        return true;
+      }
+
       function requestDesktopFocusClose() {
         if (
           !desktopSelectedCard
-          || desktopFocusAnimating
           || !editorialShell?.classList.contains("is-grid-focus-mode")
         ) {
+          return false;
+        }
+
+        const interruptingOpening =
+          desktopFocusAnimating && desktopFocusPhase === "opening";
+
+        if (desktopFocusAnimating && !interruptingOpening) {
           return false;
         }
 
         const navState = window.SiteNavHistory.current();
 
         /* Il lettore di un singolo articolo mantiene la propria logica
-           di ritorno dedicata. Le nuove scorciatoie desktop riguardano
+           di ritorno dedicata. Le scorciatoie desktop riguardano
            esclusivamente il riquadro/sezione aperto nella vista Contenuti. */
         if (navState.siteView === "article") {
           return false;
         }
 
-        if (
+        const selectedId = desktopSelectedCard.id;
+        const shouldReturnThroughHistory =
           navState.siteView === "card"
-          && navState.siteSection === desktopSelectedCard.id
-          && navState.siteNavChain
-        ) {
+          && navState.siteSection === selectedId
+          && navState.siteNavChain;
+
+        if (interruptingOpening) {
+          const closePromise = closeDesktopFocus({
+            scroll: true,
+            updateHistory: !shouldReturnThroughHistory
+          });
+
+          if (shouldReturnThroughHistory) {
+            closePromise.then(closed => {
+              if (!closed) return;
+
+              const currentState = window.SiteNavHistory.current();
+              if (
+                currentState.siteView === "card"
+                && currentState.siteSection === selectedId
+              ) {
+                history.back();
+              }
+            });
+          }
+
+          return true;
+        }
+
+        if (shouldReturnThroughHistory) {
           history.back();
           return true;
         }
@@ -3836,7 +4338,13 @@
         }
 
         if (desktopFocusAnimating) {
-          return Promise.resolve(false);
+          if (desktopFocusPhase !== "opening") {
+            return Promise.resolve(false);
+          }
+
+          if (!freezeDesktopFocusOpeningAtCurrentGeometry()) {
+            return Promise.resolve(false);
+          }
         }
 
         const card = desktopSelectedCard;
@@ -3861,6 +4369,7 @@
         clearDesktopFocusTimer();
 
         desktopFocusAnimating = true;
+        desktopFocusPhase = "closing";
         editorialShell.classList.remove("is-grid-focus-settled");
         editorialShell.classList.add("is-grid-transitioning");
 
@@ -4154,6 +4663,10 @@
 
       function returnToHome({ updateHistory = true } = {}) {
         if (returningHome || pageMode === "home") return;
+
+        /* 0403: ripristina la larghezza già misurata del CTA prima che
+           la Home desktop torni visibile, evitando il frame più largo. */
+        window.SiteDiscoverWidth?.applyCached?.();
 
         returningHome = true;
         enteringContent = false;
@@ -4726,7 +5239,7 @@
         if (!hoverMenuMedia.matches) return;
         if (
           !desktopSelectedCard
-          || desktopFocusAnimating
+          || (desktopFocusAnimating && desktopFocusPhase !== "opening")
           || !editorialShell?.classList.contains("is-grid-focus-mode")
         ) {
           return;
@@ -4747,6 +5260,21 @@
 
           if (destination === "#intro") {
             event.preventDefault();
+
+            /* 0395: anche su desktop Home è contestuale. Se un riquadro è
+               ingrandito, il primo click richiude soltanto il focus e ripristina
+               la griglia iniziale. Dalla griglia già ripristinata, il click
+               successivo mantiene la logica esistente e torna alla vera Home. */
+            if (
+              desktopSelectedCard
+              && editorialShell?.classList.contains("is-grid-focus-mode")
+              && window.SiteNavHistory.current().siteView !== "article"
+            ) {
+              hideMenu({ guardPointer: false, clearSelection: false });
+              requestDesktopFocusClose();
+              return;
+            }
+
             requestHomeNavigation();
             return;
           }
@@ -4813,6 +5341,26 @@
           activateDesktopGridCard(card);
         });
       });
+
+      if (window.__DIRECT_ARTICLE_ID__) {
+        pageMode = "content";
+        enteringContent = false;
+        returningHome = false;
+        unlockContentTop(false);
+        setHomeScrollLock(false);
+        resetReturnHomeIntent();
+        document.body.classList.add("content-entered");
+        pauseVideo();
+
+        const directArticlesCard = document.getElementById("articoli");
+        if (directArticlesCard) {
+          openDesktopFocus(directArticlesCard, {
+            scroll: false,
+            updateHistory: false,
+            instant: true
+          });
+        }
+      }
 
     }
   </script>
@@ -5137,13 +5685,54 @@
         return layer;
       }
 
-      async function renderArticle(articleId, { pushHistory = true } = {}) {
+      async function renderArticle(
+        articleId,
+        { pushHistory = true, immediate = false } = {}
+      ) {
         const template = templates.get(articleId);
         if (!template || !intro || !articlesList || !reader) return;
 
         clearPendingReset();
         const sequenceId = ++articleOpenSequence;
         clearArticleCrossfade();
+
+        /* 0409: l'accesso diretto all'URL di un articolo nasce già nello
+           stato finale. Nessuna apertura del riquadro, scroll preparatorio o
+           dissolvenza intermedia viene eseguita prima di mostrare l'articolo. */
+        if (immediate) {
+          cancelArticleOpenScroll();
+          activeArticleId = articleId;
+          reader.replaceChildren(template.content.cloneNode(true));
+          reader.style.removeProperty("opacity");
+          intro.hidden = true;
+          articlesList.hidden = true;
+          reader.hidden = false;
+          articlesCard.classList.add("is-article-reading");
+          articlesCard.dataset.activeArticle = articleId;
+          updateArticleControlLabels();
+
+          if (pushHistory) {
+            window.SiteNavHistory.push(
+              "article",
+              (window.SiteArticleRoutes?.[articleId] || `${window.location.pathname}${window.location.search}#articoli`),
+              {
+                siteSection: "articoli",
+                siteArticle: articleId,
+                siteNavChain: window.SiteNavHistory.isManagedChain()
+              }
+            );
+          }
+
+          if (mobileQuery.matches) {
+            syncArticleGeometry({ scrollToTop: false });
+          } else {
+            applyDesktopArticleOverviewGeometryNow({
+              scrollToTop: false,
+              preserveScrollRange: false
+            });
+          }
+          return;
+        }
 
         /* 0329: su mobile l'eventuale recupero verso il basso avviene
            lentamente e con easing morbido mentre l'elenco resta invariato.
@@ -5231,7 +5820,15 @@
           );
         }
 
-        syncArticleGeometry({ scrollToTop: true });
+        /* 0409 desktop: geometria finale e dissolvenza partono nello stesso
+           ciclo di rendering. In precedenza la card veniva prima portata alla
+           nuova altezza e soltanto due frame dopo iniziava a comparire
+           l'articolo, creando l'impressione di una seconda apertura del
+           riquadro. */
+        applyDesktopArticleOverviewGeometryNow({
+          scrollToTop: true,
+          preserveScrollRange: false
+        });
 
         if (!outgoingLayer || typeof outgoingLayer.animate !== "function") {
           reader.style.removeProperty("opacity");
@@ -5239,14 +5836,6 @@
           return;
         }
 
-        /* Due frame completi garantiscono che il browser abbia realmente
-           disegnato il vecchio livello e il nuovo articolo a opacità zero
-           prima di iniziare la trasformazione visiva. */
-        await new Promise(resolve => {
-          window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(resolve);
-          });
-        });
         if (sequenceId !== articleOpenSequence) return;
 
         const timing = {
@@ -5790,18 +6379,57 @@
         });
       });
 
+      /* 0409 desktop: durante la lettura di un articolo il click con mouse
+         su icona o titolo "Articoli" conserva soltanto la funzione di ritorno
+         all'indice e non trasferisce il focus visivo al bottone sottostante.
+         Il cursore resta a manina, ma icona e titolo non subiscono alcun
+         artefatto grafico; la navigazione da tastiera resta invariata. */
+      document.addEventListener("mousedown", event => {
+        if (!activeArticleId || mobileQuery.matches || event.button !== 0) return;
+
+        const headerReturnTarget = event.target.closest?.(
+          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
+        );
+
+        if (headerReturnTarget) {
+          event.preventDefault();
+        }
+      }, true);
+
       document.addEventListener("click", event => {
         if (!activeArticleId) return;
 
         const target = event.target;
-        const clickedMobileControl = target.closest?.("#articoli .section-trigger");
+        const clickedArticleTrigger = target.closest?.("#articoli .section-trigger");
+        const clickedArticleHeaderReturn = target.closest?.(
+          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
+        );
+        const clickedArticleChevron = target.closest?.("#articoli .section-trigger > .section-chevron");
         const clickedDesktopControl = target.closest?.("#articoli .desktop-focus-close");
+        const keyboardTriggerActivation = Boolean(clickedArticleTrigger && event.detail === 0);
 
-        if (clickedMobileControl || clickedDesktopControl) {
+        /* 0407: quando un articolo è aperto, soltanto icona e titolo
+           "Articoli" acquistano temporaneamente la funzione di ritorno
+           all'indice, insieme ai controlli di ritorno già esistenti
+           (freccia mobile e freccia desktop). Il resto della fascia
+           superiore rimane neutro anche durante la lettura. */
+        if (
+          clickedArticleHeaderReturn
+          || clickedArticleChevron
+          || clickedDesktopControl
+          || keyboardTriggerActivation
+        ) {
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
           returnFromArticle();
+          return;
+        }
+
+        if (clickedArticleTrigger) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
           return;
         }
 
@@ -5877,37 +6505,34 @@
 
       async function initializeDirectArticleRoute() {
         const articleId = window.__DIRECT_ARTICLE_ID__;
-        if (!articleId || !templates.has(articleId)) return;
-
-        if (!mobileQuery.matches && !articlesCard.classList.contains("is-focus-card")) {
-          articlesCard.querySelector(".section-trigger")?.click();
-          const deadline = performance.now() + 2200;
-          while (
-            performance.now() < deadline
-            && !document.querySelector(".editorial-shell")?.classList.contains("is-grid-focus-settled")
-          ) {
-            await new Promise(resolve => window.setTimeout(resolve, 40));
-          }
+        if (!articleId || !templates.has(articleId)) {
+          document.documentElement.classList.remove("direct-article-preinit");
+          return;
         }
 
-        if (mobileQuery.matches && !articlesCard.classList.contains("is-open")) {
-          articlesCard.querySelector(".section-trigger")?.click();
-          await new Promise(resolve => window.setTimeout(resolve, 80));
-        }
+        /* Le due IIFE responsive precedenti hanno già predisposto, senza
+           animazioni, la card Articoli nello stato aperto/focalizzato. */
+        await renderArticle(articleId, {
+          pushHistory: false,
+          immediate: true
+        });
 
-        await renderArticle(articleId, { pushHistory: false });
         const cleanUrl = window.SiteArticleRoutes?.[articleId] || window.location.pathname;
         window.SiteNavHistory.replace("article", cleanUrl, {
           siteSection: "articoli",
           siteArticle: articleId,
           siteNavChain: false
         });
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            document.documentElement.classList.remove("direct-article-preinit");
+          });
+        });
       }
 
       if (window.__DIRECT_ARTICLE_ID__) {
-        window.addEventListener("load", () => {
-          window.setTimeout(initializeDirectArticleRoute, 0);
-        }, { once: true });
+        initializeDirectArticleRoute();
       }
     })();
   </script>
@@ -5916,19 +6541,30 @@
     (() => {
       const mobileHomeQuery = window.matchMedia("(max-width: 800px)");
       const discoverButton = document.getElementById("discoverBtn");
-      const referenceLine = document.querySelector(".intro-title .gold-line:last-child");
+      const referenceLine = document.querySelector(".intro-title .white-line:first-child");
 
       if (!discoverButton || !referenceLine) return;
 
       let syncFrame = 0;
+      const cachedWidths = {
+        mobile: 0,
+        desktop: 0
+      };
+
+      const currentWidthMode = () => mobileHomeQuery.matches ? "mobile" : "desktop";
+
+      const applyDiscoverWidth = (width) => {
+        if (!(width > 0)) return false;
+        discoverButton.style.width = `${Math.max(0, width)}px`;
+        return true;
+      };
+
+      const applyCachedDiscoverWidth = () => {
+        return applyDiscoverWidth(cachedWidths[currentWidthMode()]);
+      };
 
       const syncDiscoverWidth = () => {
         syncFrame = 0;
-
-        if (!mobileHomeQuery.matches) {
-          discoverButton.style.removeProperty("width");
-          return;
-        }
 
         const range = document.createRange();
         range.selectNodeContents(referenceLine);
@@ -5936,8 +6572,15 @@
         range.detach?.();
 
         if (referenceWidth > 0) {
-          discoverButton.style.width = `${Math.max(0, referenceWidth - 2)}px`;
+          cachedWidths[currentWidthMode()] = referenceWidth;
+          applyDiscoverWidth(referenceWidth);
+          return true;
         }
+
+        /* Se la Home è nascosta (es. mentre siamo nei Contenuti), non
+           sostituiamo la misura valida con zero: conserviamo e riapplichiamo
+           l'ultima larghezza corretta al prossimo ritorno. */
+        return applyCachedDiscoverWidth();
       };
 
       const scheduleDiscoverWidthSync = () => {
@@ -5945,6 +6588,12 @@
           cancelAnimationFrame(syncFrame);
         }
         syncFrame = requestAnimationFrame(syncDiscoverWidth);
+      };
+
+      window.SiteDiscoverWidth = {
+        applyCached: applyCachedDiscoverWidth,
+        syncNow: syncDiscoverWidth,
+        schedule: scheduleDiscoverWidthSync
       };
 
       mobileHomeQuery.addEventListener?.("change", scheduleDiscoverWidthSync);
