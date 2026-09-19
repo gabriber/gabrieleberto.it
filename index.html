@@ -5748,11 +5748,8 @@
             ? "Torna all’elenco degli articoli"
             : "Apri o chiudi la sezione Articoli";
           mobileTrigger.setAttribute("aria-label", label);
-          if (inArticle) {
-            mobileTrigger.setAttribute("title", label);
-          } else {
-            mobileTrigger.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sulla testata Articoli. */
+          mobileTrigger.removeAttribute("title");
         }
 
         if (desktopClose) {
@@ -5760,11 +5757,8 @@
             ? "Torna all’elenco degli articoli"
             : "Chiudi la sezione aperta";
           desktopClose.setAttribute("aria-label", label);
-          if (inArticle) {
-            desktopClose.setAttribute("title", label);
-          } else {
-            desktopClose.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sul controllo di ritorno. */
+          desktopClose.removeAttribute("title");
         }
       }
 
@@ -6160,6 +6154,93 @@
         return layer;
       }
 
+      function createDesktopArticleHeaderOverlay() {
+        const icon = articlesCard.querySelector(".section-trigger > .card-icon");
+        const headCopy = articlesCard.querySelector(".section-trigger > .section-head-copy");
+        if (!icon || !headCopy) return null;
+
+        /* 0420: icona e titolo NON vengono clonati. Durante i soli 920 ms del
+           ritorno all'indice spostiamo gli elementi REALI in un layer fisso,
+           esattamente nelle coordinate che avevano un istante prima. Due
+           segnaposto invisibili mantengono intatta la griglia della testata.
+           In questo modo non esiste alcun passaggio clone -> DOM reale e non
+           può verificarsi il micro-scattino di 1 px visto nella 0419. */
+        const overlay = document.createElement("div");
+        overlay.className = "article-header-live-overlay";
+        overlay.setAttribute("aria-hidden", "true");
+        Object.assign(overlay.style, {
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          overflow: "visible",
+          pointerEvents: "none",
+          zIndex: "2147483000"
+        });
+        document.body.append(overlay);
+
+        const records = [icon, headCopy].map(source => {
+          const rect = source.getBoundingClientRect();
+          const parent = source.parentNode;
+          const placeholder = source.cloneNode(true);
+          placeholder.setAttribute("aria-hidden", "true");
+          placeholder.style.setProperty("visibility", "hidden", "important");
+          placeholder.style.setProperty("pointer-events", "none", "important");
+          parent.insertBefore(placeholder, source);
+
+          const sourceNodes = [source, ...source.querySelectorAll("*")];
+          const originalStyles = sourceNodes.map(node => node.getAttribute("style"));
+          const frozenStyles = sourceNodes.map(node => {
+            const computed = window.getComputedStyle(node);
+            return Array.from(computed).map(property => [
+              property,
+              computed.getPropertyValue(property),
+              computed.getPropertyPriority(property)
+            ]);
+          });
+
+          overlay.append(source);
+          sourceNodes.forEach((node, index) => {
+            frozenStyles[index].forEach(([property, value, priority]) => {
+              node.style.setProperty(property, value, priority);
+            });
+          });
+
+          source.style.setProperty("position", "fixed", "important");
+          source.style.setProperty("left", `${rect.left}px`, "important");
+          source.style.setProperty("top", `${rect.top}px`, "important");
+          source.style.setProperty("width", `${rect.width}px`, "important");
+          source.style.setProperty("height", `${rect.height}px`, "important");
+          source.style.setProperty("margin", "0", "important");
+          source.style.setProperty("transform", "none", "important");
+          source.style.setProperty("visibility", "visible", "important");
+          source.style.setProperty("pointer-events", "none", "important");
+          source.style.setProperty("z-index", "1", "important");
+
+          return { source, placeholder, sourceNodes, originalStyles };
+        });
+
+        let restored = false;
+        return {
+          host: overlay,
+          restore() {
+            if (restored) return;
+            restored = true;
+
+            records.forEach(({ source, placeholder, sourceNodes, originalStyles }) => {
+              placeholder.parentNode?.insertBefore(source, placeholder);
+              placeholder.remove();
+              sourceNodes.forEach((node, index) => {
+                const original = originalStyles[index];
+                if (original === null) node.removeAttribute("style");
+                else node.setAttribute("style", original);
+              });
+            });
+            overlay.remove();
+          }
+        };
+      }
+
       function createDesktopArticleCardSnapshot(role) {
         if (!editorialShell) return null;
 
@@ -6382,7 +6463,9 @@
            scrollato, preserviamo soltanto il range di scroll con spazio
            tecnico invisibile sotto il contenuto. Non si anima mai height. */
         const outgoingCard = createDesktopArticleCardSnapshot("outgoing");
+        const headerOverlay = outgoingCard ? createDesktopArticleHeaderOverlay() : null;
         if (!outgoingCard || typeof outgoingCard.host.animate !== "function") {
+          headerOverlay?.restore();
           activeArticleId = null;
           articlesCard.classList.remove("is-article-reading");
           delete articlesCard.dataset.activeArticle;
@@ -6447,6 +6530,7 @@
 
         desktopArticleReturnCleanup = () => {
           document.querySelectorAll(".article-card-crossfade-host").forEach(node => node.remove());
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
         };
 
@@ -6497,6 +6581,7 @@
         });
         if (sequenceId !== articleOpenSequence) {
           outgoingCard.host.remove();
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
           desktopArticleReturnCleanup = null;
           return;
@@ -6530,6 +6615,7 @@
 
         if (reader) reader.replaceChildren();
         outgoingCard.host.remove();
+        headerOverlay?.restore();
         desktopArticleReturnCleanup = null;
         desktopArticleCrossfadeAnimations = [];
 
