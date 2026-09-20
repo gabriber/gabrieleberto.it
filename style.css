@@ -5341,29 +5341,682 @@ body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-ric
 
 
 /* ================================================================
-   VERSIONE 0407
-   Ritorno contestuale dall'articolo all'indice "Articoli":
-   - titolo e icona Articoli diventano attivi soltanto mentre un
-     articolo è aperto;
-   - negli altri stati restano neutri come nella 0406;
-   - la fascia superiore restante rimane neutra;
-   - freccia mobile, controllo desktop e sole/luna restano autonomi.
+   VERSIONE DESKTOP 0421
+   Icone dei riquadri nella griglia Contenuti:
+   - esclusivamente su PC e con i riquadri nella vista compatta;
+   - nessuna ombra, glow, filtro o trasformazione autonoma sull'icona;
+   - l'icona segue soltanto il movimento del riquadro padre durante l'hover;
+   - vista focus/aperta e mobile invariati.
    ================================================================ */
-#articoli.is-article-reading .section-trigger > .card-icon,
-#articoli.is-article-reading .section-trigger > .section-head-copy {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
 @media (min-width: 801px) {
-  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger {
-    pointer-events: auto;
-    cursor: default;
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card) .card-icon {
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
   }
 
-  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger > .card-icon,
-  body.desktop-grid-layout #articoli.is-focus-card.is-article-reading .section-trigger > .section-head-copy {
-    pointer-events: auto;
-    cursor: pointer;
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card) .card-icon img {
+    filter: none !important;
+    transform: none !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE DESKTOP 0422
+   Griglia Contenuti, riquadri chiusi:
+   - l'icona deve conservare esattamente la stessa resa visiva in hover;
+   - il riquadro mantiene bordo/glow e lieve sollevamento;
+   - background e backdrop-filter del riquadro NON cambiano in hover,
+     così le trasparenze dell'icona non vengono alterate dal fondo.
+   - solo PC, solo vista compatta; focus/aperto e mobile invariati.
+   ================================================================ */
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card).is-pointer-over,
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card).is-section-active.is-pointer-over {
+    background: linear-gradient(145deg, rgba(24,3,7,.72), rgba(8,1,2,.62)) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(1.04) !important;
+    backdrop-filter: blur(12px) saturate(1.04) !important;
+  }
+
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card) .card-icon,
+  body.desktop-grid-layout .editorial-shell
+  .glass-card.editorial-section:not(.is-focus-card) .card-icon img {
+    filter: none !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0432
+   Sfondo dei riquadri Contenuti invariato durante apertura/chiusura.
+   - esclusivamente mobile <= 800 px;
+   - il fondo resta identico a quello del riquadro chiuso;
+   - bordo, glow, ombre, animazioni, geometria e modalità chiara invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .editorial-shell
+  .glass-card.editorial-section.is-section-active,
+  body.mobile-content .editorial-shell
+  .glass-card.editorial-section.is-open,
+  body.mobile-content .editorial-shell
+  .glass-card.editorial-section.is-mobile-opening,
+  body.mobile-content .editorial-shell
+  .glass-card.editorial-section.is-mobile-closing,
+  body.mobile-content .editorial-shell
+  .glass-card.editorial-section.is-closing:not(.is-menu-batch-closing) {
+    background: linear-gradient(145deg, rgba(23,3,6,.78), rgba(7,0,2,.68)) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0434
+   Articoli: icona e titolo restano sempre elementi passivi anche
+   durante la lettura di un singolo articolo. Il ritorno all'elenco
+   resta affidato esclusivamente ai controlli dedicati.
+   ================================================================ */
+
+/* ================================================================
+   VERSIONE MOBILE 0440
+   Prova chirurgica sulla base 0434.
+   Superficie chiara con opacita' 60% esclusivamente su mobile.
+   Desktop e ogni altro comportamento restano invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .reading-light-surface {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(248, 241, 230, .60),
+        rgba(239, 228, 211, .60)
+      ) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0441
+   Micro-rifinitura cromatica dei soli titoli in modalita' chiara.
+   - solo su mobile;
+   - solo in reading light;
+   - sfondo chiaro 0440 invariato;
+   - desktop e tutto il resto invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .editorial-section.is-reading-light .section-title {
+    color: #5a1a23 !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0442
+   Rifinitura cromatica del chevron in modalita' chiara.
+   - solo su mobile;
+   - solo in reading light;
+   - cerchio e freccia ricondotti al granata del titolo 0441;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .editorial-section.is-reading-light .section-chevron {
+    border-color: rgba(90, 26, 35, .62) !important;
+  }
+
+  body.mobile-content .editorial-section.is-reading-light .section-chevron::before {
+    border-right-color: rgba(90, 26, 35, .92) !important;
+    border-bottom-color: rgba(90, 26, 35, .92) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0444
+   Rifinitura cromatica dei titoli nella sezione Articoli in modalita' chiara.
+   - solo su mobile;
+   - titoli dell'elenco articoli e titolo dell'articolo aperto;
+   - stesso granata #5a1a23 del titolo del riquadro Articoli;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content #articoli.is-reading-light .article-entry-title,
+  body.mobile-content #articoli.is-reading-light .site-article-title {
+    color: #5a1a23 !important;
+  }
+}
+
+
+/* ================================================================
+   VERSIONE MOBILE 0445
+   Uniformazione cromatica della modalita' chiara mobile.
+   - granata profondo #5a1a23 per titoli riquadri;
+   - chevron coordinato;
+   - titoli elenco articoli e articolo aperto coordinati;
+   - titoli di capitolo e sottocapitolo degli articoli coordinati;
+   - desktop e ogni altro comportamento invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content #articoli.is-reading-light .site-article-body .section-heading {
+    color: #5a1a23 !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0446
+   Comando globale sole/luna nell'header, desktop e mobile.
+   - sole: rende chiari tutti i riquadri;
+   - luna: rende scuri tutti i riquadri;
+   - nello stato misto conserva l'ultima icona globale;
+   - se tutti i riquadri convergono allo stesso stato tramite i comandi
+     individuali, l'icona globale si sincronizza automaticamente;
+   - la scelta del singolo riquadro resta indipendente;
+   - lo stato del riquadro non viene piu' azzerato alla sola chiusura.
+   ================================================================ */
+.header-reading-theme-toggle {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 243, 221, .88);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color .18s ease, opacity .18s ease;
+}
+
+.content-entered .header-reading-theme-toggle,
+body.mobile-content .header-reading-theme-toggle {
+  pointer-events: auto;
+}
+
+.header-reading-theme-toggle:hover {
+  color: var(--oro-light);
+}
+
+.header-reading-theme-toggle:focus-visible {
+  outline: 2px solid rgba(243,216,140,.72);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.header-reading-theme-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  line-height: 0;
+}
+
+.header-reading-theme-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-reading-theme-icon-moon {
+  display: none;
+  width: 26px;
+  height: 26px;
+}
+
+.header-reading-theme-toggle.shows-moon .header-reading-theme-icon-sun {
+  display: none;
+}
+
+.header-reading-theme-toggle.shows-moon .header-reading-theme-icon-moon {
+  display: block;
+}
+
+.site-header .menu-toggle {
+  margin-left: 0;
+}
+
+@media (max-width: 800px) {
+  .header-reading-theme-toggle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .header-reading-theme-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .header-reading-theme-icon-moon {
+    width: 23px;
+    height: 23px;
+  }
+
+  .header-name {
+    max-width: calc(100vw - 180px);
+  }
+}
+
+@media (max-width: 380px) {
+  .header-reading-theme-toggle {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header-reading-theme-icon {
+    width: 23px;
+    height: 23px;
+  }
+
+  .header-reading-theme-icon-moon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .header-name {
+    max-width: calc(100vw - 172px);
+  }
+}
+
+/* ================================================================
+   VERSIONE 0447
+   Rifinitura chirurgica del comando globale sole/luna nell'header.
+   - distanza dall'hamburger ricondotta proporzionalmente a quella tra
+     sole/luna e comando di chiusura dei riquadri;
+   - sole e luna globali sempre bianchi su sfondo trasparente;
+   - nessuna variazione cromatica in hover, active o cambio stato;
+   - logica globale 0446 e tutto il resto invariati.
+   ================================================================ */
+.header-reading-theme-toggle,
+.header-reading-theme-toggle:hover,
+.header-reading-theme-toggle:active,
+.header-reading-theme-toggle.shows-moon {
+  color: #ffffff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (min-width: 1551px) {
+  .header-reading-theme-toggle {
+    margin-right: -18px;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1550px) {
+  .header-reading-theme-toggle {
+    margin-right: -17px;
+  }
+}
+
+@media (max-width: 800px) {
+  .header-reading-theme-toggle {
+    margin-right: -12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-reading-theme-toggle {
+    margin-right: -12px;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0448
+   Correzione della spaziatura progressiva dei capoversi in modalita' chiara.
+   - solo mobile;
+   - la transizione cromatica della modalita' chiara non sovrascrive piu'
+     la transizione margin-bottom gia' usata da apertura/chiusura;
+   - ripristinata la stessa formazione/chiusura morbida degli spazi fra
+     i capoversi gia' presente in modalita' scura;
+   - desktop e tutto il resto invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .editorial-section.is-reading-light
+  .section-richtext > p:not(:last-child) {
+    transition:
+      margin-bottom var(--mobile-section-duration, 820ms)
+      var(--mobile-section-easing, cubic-bezier(.4, 0, .2, 1)),
+      color .18s ease;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0449
+   Semplificazione della modalita' di lettura e rifinitura hamburger.
+   - sole/luna esclusivamente globale nell'header;
+   - nessun comando sole/luna nei singoli riquadri;
+   - bordo circolare hamburger sempre bianco;
+   - tre linee hamburger sempre bianche;
+   - sfondo hamburger sempre trasparente;
+   - desktop e mobile.
+   ================================================================ */
+.site-header .menu-toggle,
+.site-header .menu-toggle:hover,
+.site-header .menu-toggle:active,
+.site-header .menu-toggle[aria-expanded="true"] {
+  border-color: #ffffff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.site-header .menu-toggle span,
+.site-header .menu-toggle:hover span,
+.site-header .menu-toggle:active span,
+.site-header .menu-toggle[aria-expanded="true"] span {
+  background: #ffffff !important;
+}
+
+/* ================================================================
+   VERSIONE 0450
+   Modalita' chiara generale coerente su desktop e mobile.
+   - palette chiara desktop uniformata al granata #5a1a23 gia'
+     approvato su mobile;
+   - titoli dei riquadri, titoli elenco articoli, titolo articolo,
+     capitoli/sottocapitoli e label titolative coordinati;
+   - chevron chiaro coordinato anche su desktop;
+   - menu hamburger chiaro quando e' attiva la modalita' generale chiara;
+   - voci del menu nello stesso granata su PC e mobile;
+   - dissolvenza morbida del fondo chiaro del menu;
+   - header, sole/luna e hamburger invariati e sempre bianchi.
+   ================================================================ */
+
+/* Palette chiara comune a desktop e mobile. */
+.editorial-section.is-reading-light .section-title,
+#articoli.is-reading-light .article-entry-title,
+#articoli.is-reading-light .site-article-title,
+#articoli.is-reading-light .site-article-body .section-heading,
+.editorial-section.is-reading-light .contact-lines .contact-label {
+  color: #5a1a23 !important;
+}
+
+.editorial-section.is-reading-light .section-chevron {
+  border-color: rgba(90, 26, 35, .62) !important;
+}
+
+.editorial-section.is-reading-light .section-chevron::before {
+  border-right-color: rgba(90, 26, 35, .92) !important;
+  border-bottom-color: rgba(90, 26, 35, .92) !important;
+}
+
+.editorial-section.is-reading-light .article-entry {
+  border-bottom-color: rgba(90, 26, 35, .18);
+}
+
+.editorial-section.is-reading-light .articles-list {
+  border-top-color: rgba(90, 26, 35, .22);
+}
+
+/* Il menu conserva la base scura; il velo chiaro viene dissolto sopra
+   di essa per evitare un cambio brusco di fondo. */
+.glass-menu {
+  isolation: isolate;
+  transition:
+    opacity .25s ease,
+    transform .25s ease,
+    border-color .24s cubic-bezier(.16, 1, .3, 1),
+    box-shadow .24s cubic-bezier(.16, 1, .3, 1);
+}
+
+.glass-menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(248, 241, 230, .96),
+      rgba(239, 228, 211, .94)
+    );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .24s cubic-bezier(.16, 1, .3, 1);
+}
+
+.glass-menu a {
+  position: relative;
+  z-index: 1;
+}
+
+body.is-global-reading-light .glass-menu {
+  border-color: rgba(90, 26, 35, .30);
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, .24),
+    inset 0 1px 0 rgba(255, 255, 255, .42);
+}
+
+body.is-global-reading-light .glass-menu::before {
+  opacity: 1;
+}
+
+body.is-global-reading-light .glass-menu a {
+  color: #5a1a23 !important;
+  border-bottom-color: rgba(90, 26, 35, .16);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.is-global-reading-light .glass-menu a:hover {
+    color: #411119 !important;
+    background: rgba(90, 26, 35, .07);
+  }
+}
+
+body.is-global-reading-light .glass-menu a.is-current {
+  color: #5a1a23 !important;
+  background: linear-gradient(
+    90deg,
+    rgba(90, 26, 35, .12),
+    rgba(90, 26, 35, .035)
+  );
+  box-shadow: inset 3px 0 0 rgba(90, 26, 35, .58);
+}
+
+body.is-global-reading-light .glass-menu a:active {
+  color: #411119 !important;
+  background: rgba(90, 26, 35, .11);
+}
+
+.glass-menu a {
+  transition:
+    color .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+/* ================================================================
+   VERSIONE 0451
+   Rifiniture modalita' chiara desktop/menu.
+   - X di chiusura desktop coordinata al granata #5a1a23;
+   - menu chiaro con peso 650;
+   - eliminata la fascia di sfondo al solo hover del menu chiaro;
+   - stato corrente/attivo invariato;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (min-width: 801px) {
+  body.desktop-grid-layout .is-focus-card.is-reading-light .desktop-focus-close,
+  body.desktop-grid-layout .editorial-section.is-reading-light .desktop-detail-close {
+    border-color: rgba(90, 26, 35, .67) !important;
+  }
+
+  body.desktop-grid-layout .is-focus-card.is-reading-light .desktop-focus-close::before,
+  body.desktop-grid-layout .is-focus-card.is-reading-light .desktop-focus-close::after,
+  body.desktop-grid-layout .editorial-section.is-reading-light .desktop-detail-close::before,
+  body.desktop-grid-layout .editorial-section.is-reading-light .desktop-detail-close::after {
+    background: #5a1a23 !important;
+  }
+}
+
+body.is-global-reading-light .glass-menu a {
+  font-weight: 650;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.is-global-reading-light .glass-menu a:hover:not(.is-current) {
+    background: transparent !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0452
+   Rifiniture chirurgiche menu.
+   - mobile, modalita' chiara: velo del menu portato a 0.82;
+   - desktop: lieve sollevamento di 3 px della singola voce in hover;
+   - stesso hover nel menu chiaro e scuro;
+   - mobile privo di effetti hover aggiuntivi;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.is-global-reading-light .glass-menu::before {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(248, 241, 230, .82),
+        rgba(239, 228, 211, .82)
+      );
+  }
+}
+
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  .glass-menu a {
+    transform: translateY(0);
+    transition:
+      color .18s ease,
+      background .18s ease,
+      border-color .18s ease,
+      transform .20s cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .glass-menu a:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* ================================================================
+   VERSIONE 0453
+   Rifiniture chirurgiche menu.
+   - mobile, modalita' chiara: velo del menu portato a 0.70;
+   - desktop: sollevamento ridotto da 3 px a 2 px;
+   - si muove soltanto il testo della voce, non il relativo separatore;
+   - stesso comportamento nel menu chiaro e scuro;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.is-global-reading-light .glass-menu::before {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(248, 241, 230, .70),
+        rgba(239, 228, 211, .70)
+      );
+  }
+}
+
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  .glass-menu a,
+  .glass-menu a:hover {
+    transform: none;
+  }
+
+  .glass-menu a .menu-label {
+    display: inline-block;
+    transform: translateY(0);
+    transition: transform .20s cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .glass-menu a:hover .menu-label {
+    transform: translateY(-2px);
+  }
+}
+
+/* ================================================================
+   VERSIONE 0454
+   Hover menu desktop ripetibile.
+   - il movimento torna a 3 px verso l'alto;
+   - si muove esclusivamente il testo, mai il separatore;
+   - il semplice :hover CSS viene neutralizzato: il movimento e' gestito
+     esplicitamente da pointerenter/pointerleave per ripetersi a ogni passaggio;
+   - menu mobile chiaro invariato a 0.70;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  .glass-menu a .menu-label,
+  .glass-menu a:hover .menu-label {
+    transform: translateY(0);
+    transition: transform .20s cubic-bezier(.16, 1, .3, 1);
+  }
+}
+
+/* ================================================================
+   VERSIONE 0457
+   Correzione chirurgica: freccia ritorno articolo in modalita' chiara PC.
+   La regola 0451 colorava con background pieno il ::before della
+   desktop-focus-close; durante la lettura articolo quel pseudo-elemento
+   e' invece una freccia costruita con i soli bordi, quindi il background
+   pieno la trasformava visivamente in un rombo/quadrato.
+   ================================================================ */
+@media (min-width: 801px) {
+  body.desktop-grid-layout
+  #articoli.is-reading-light.is-article-reading
+  .desktop-focus-close::before {
+    background: transparent !important;
+    border: 0 !important;
+    border-right: 2.5px solid #5a1a23 !important;
+    border-bottom: 2.5px solid #5a1a23 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: translate(-50%, -50%) rotate(135deg) !important;
+  }
+
+  body.desktop-grid-layout
+  #articoli.is-reading-light.is-article-reading
+  .desktop-focus-close::after {
+    display: none !important;
+    background: transparent !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0459
+   Hover desktop dei soli titoli nell'elenco Articoli.
+   - solo PC con puntatore fine;
+   - il solo titolo sale di 2 px;
+   - ritorno morbido all'uscita del puntatore;
+   - separatori, meta e contenitore restano fermi;
+   - valido sia in modalita' scura sia chiara.
+   ================================================================ */
+@media (min-width: 801px) and (hover: hover) and (pointer: fine) {
+  body.desktop-grid-layout #articoli .article-entry-title {
+    transition:
+      color .18s ease,
+      transform .18s cubic-bezier(.4, 0, .2, 1);
+    transform: translateY(0);
+  }
+
+  body.desktop-grid-layout #articoli .article-entry:hover .article-entry-title {
+    transform: translateY(-2px);
+  }
+}
+
+/* ================================================================
+   VERSIONE 0461
+   Micro-rifinitura sfondo chiaro riquadri mobile.
+   - solo mobile;
+   - solo modalita' chiara;
+   - opacita' superficie chiara da 0.60 a 0.65;
+   - tutto il resto invariato.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .reading-light-surface {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(248, 241, 230, .65),
+        rgba(239, 228, 211, .65)
+      ) !important;
   }
 }

@@ -386,19 +386,33 @@
       </span>
     </a>
 
+    <button class="header-reading-theme-toggle" id="globalReadingThemeToggle" type="button" aria-label="Rendi chiari tutti i riquadri" title="Rendi chiari tutti i riquadri" aria-pressed="false">
+      <span class="header-reading-theme-icon header-reading-theme-icon-sun" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.1"></circle>
+          <path d="M12 3.4v1.8M12 18.8v1.8M3.4 12h1.8M18.8 12h1.8M6 6l1.25 1.25M16.75 16.75L18 18M18 6l-1.25 1.25M7.25 16.75L6 18"></path>
+        </svg>
+      </span>
+      <span class="header-reading-theme-icon header-reading-theme-icon-moon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+        </svg>
+      </span>
+    </button>
+
     <button class="menu-toggle" id="menuToggle" type="button" aria-label="Apri menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   </header>
 
   <nav class="glass-menu" id="glassMenu" aria-label="Navigazione principale">
-    <a href="#intro">Home</a>
-    <a href="#formazione">Formazione</a>
-    <a href="#settori">Settori</a>
-    <a href="#second-opinion">Second opinion</a>
-    <a href="#fiducia">Fiducia</a>
-    <a href="#articoli">Articoli</a>
-    <a href="#contatti">Contatti</a>
+    <a href="#intro"><span class="menu-label">Home</span></a>
+    <a href="#formazione"><span class="menu-label">Formazione</span></a>
+    <a href="#settori"><span class="menu-label">Settori</span></a>
+    <a href="#second-opinion"><span class="menu-label">Second opinion</span></a>
+    <a href="#fiducia"><span class="menu-label">Fiducia</span></a>
+    <a href="#articoli"><span class="menu-label">Articoli</span></a>
+    <a href="#contatti"><span class="menu-label">Contatti</span></a>
   </nav>
 
   <main>
@@ -1081,32 +1095,85 @@
   <script>
     const mobileLayoutMedia = window.matchMedia("(max-width: 800px)");
 
-    /* 0268: modalità di lettura chiara temporanea per il solo riquadro aperto.
-       La preferenza non viene memorizzata e viene sempre azzerata alla chiusura. */
+    /* 0449: modalità di lettura chiara/scura esclusivamente globale.
+       Il comando nell'header applica lo stesso stato a tutti i riquadri;
+       i comandi sole/luna individuali sono stati eliminati. */
     const readingThemeCards = Array.from(document.querySelectorAll(".editorial-section"));
+    const globalReadingThemeToggle = document.getElementById("globalReadingThemeToggle");
+    let globalReadingThemeShowsMoon = false;
 
-    function updateReadingThemeControl(card) {
-      const toggle = card?.querySelector(".reading-theme-toggle");
-      if (!toggle) return;
+    function updateGlobalReadingThemeControl() {
+      if (!globalReadingThemeToggle) return;
 
-      const isLight = card.classList.contains("is-reading-light");
-      const label = isLight
-        ? "Passa alla modalità di lettura scura"
-        : "Passa alla modalità di lettura chiara";
+      const label = globalReadingThemeShowsMoon
+        ? "Rendi scuri tutti i riquadri"
+        : "Rendi chiari tutti i riquadri";
 
-      toggle.setAttribute("aria-label", label);
-      toggle.setAttribute("title", label);
-      toggle.setAttribute("aria-pressed", String(isLight));
+      globalReadingThemeToggle.classList.toggle(
+        "shows-moon",
+        globalReadingThemeShowsMoon
+      );
+      globalReadingThemeToggle.setAttribute("aria-label", label);
+      globalReadingThemeToggle.setAttribute("title", label);
+      globalReadingThemeToggle.setAttribute(
+        "aria-pressed",
+        String(globalReadingThemeShowsMoon)
+      );
+
+      /* 0450: la modalita' chiara e' ora uno stato generale anche per
+         il menu e per la palette desktop. */
+      document.body.classList.toggle(
+        "is-global-reading-light",
+        globalReadingThemeShowsMoon
+      );
     }
 
-    function setReadingTheme(card, isLight) {
+    function syncGlobalReadingThemeControl() {
+      if (!readingThemeCards.length) {
+        updateGlobalReadingThemeControl();
+        return;
+      }
+
+      const lightCount = readingThemeCards.reduce(
+        (count, card) => count + (card.classList.contains("is-reading-light") ? 1 : 0),
+        0
+      );
+
+      if (lightCount === readingThemeCards.length) {
+        globalReadingThemeShowsMoon = true;
+      } else if (lightCount === 0) {
+        globalReadingThemeShowsMoon = false;
+      }
+
+      /* Nello stato misto il comando conserva l'ultima icona mostrata. */
+      updateGlobalReadingThemeControl();
+    }
+
+    function setReadingTheme(card, isLight, { syncGlobal = true } = {}) {
       if (!card) return;
       card.classList.toggle("is-reading-light", Boolean(isLight));
-      updateReadingThemeControl(card);
+      if (syncGlobal) syncGlobalReadingThemeControl();
     }
 
-    function resetReadingTheme(card) {
-      setReadingTheme(card, false);
+    function resetReadingTheme(card, { syncGlobal = true } = {}) {
+      setReadingTheme(card, false, { syncGlobal });
+    }
+
+    if (globalReadingThemeToggle) {
+      globalReadingThemeToggle.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const targetLight = !globalReadingThemeShowsMoon;
+        readingThemeCards.forEach(card => {
+          setReadingTheme(card, targetLight, { syncGlobal: false });
+        });
+
+        globalReadingThemeShowsMoon = targetLight;
+        updateGlobalReadingThemeControl();
+      });
+
+      updateGlobalReadingThemeControl();
     }
 
     /* 0284: rifinitura della chiusura desktop dalla modalità chiara.
@@ -1218,34 +1285,6 @@
         surface.setAttribute("aria-hidden", "true");
         card.prepend(surface);
       }
-
-      if (card.querySelector(".reading-theme-toggle")) return;
-
-      const toggle = document.createElement("button");
-      toggle.className = "reading-theme-toggle";
-      toggle.type = "button";
-      toggle.innerHTML = `
-        <span class="reading-theme-icon reading-theme-icon-sun" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <circle cx="12" cy="12" r="3.1"></circle>
-            <path d="M12 3.4v1.8M12 18.8v1.8M3.4 12h1.8M18.8 12h1.8M6 6l1.25 1.25M16.75 16.75L18 18M18 6l-1.25 1.25M7.25 16.75L6 18"></path>
-          </svg>
-        </span>
-        <span class="reading-theme-icon reading-theme-icon-moon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path class="reading-moon-path-mobile" d="M18.55 14.8A7.85 7.85 0 0 1 9.2 5.45a7.95 7.95 0 1 0 9.35 9.35Z"></path>
-            <path class="reading-moon-path-desktop" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
-          </svg>
-        </span>`;
-
-      toggle.addEventListener("click", event => {
-        event.preventDefault();
-        event.stopPropagation();
-        setReadingTheme(card, !card.classList.contains("is-reading-light"));
-      });
-
-      card.appendChild(toggle);
-      updateReadingThemeControl(card);
     });
 
     mobileLayoutMedia.addEventListener("change", () => {
@@ -2119,10 +2158,6 @@
         const inner = card.querySelector(".section-content-inner");
         if (!content || !inner) return;
 
-        if (!isOpen) {
-          resetReadingTheme(card);
-        }
-
         hideMobileEllipsis(card);
 
         /* 0230: durante la sola apertura mobile viene ripristinato
@@ -2279,7 +2314,8 @@
       function showHome({ updateHistory = true } = {}) {
         window.SiteDiscoverWidth?.applyCached?.();
         closeMobileMenu();
-        sectionCards.forEach(resetReadingTheme);
+        sectionCards.forEach(card => resetReadingTheme(card, { syncGlobal: false }));
+        syncGlobalReadingThemeControl();
         clearMobileCloseScrollCompensation();
         contentSection?.classList.remove("mobile-technical-end-space");
         syncMenuWithOpenCards();
@@ -4618,18 +4654,10 @@
 
         const card = desktopSelectedCard;
         const sourceRect = desktopFocusSourceRect;
-        const closeFromReadingLight = card.classList.contains("is-reading-light");
 
         if (!sourceRect) {
-          resetReadingTheme(card);
           finishDesktopFocusClose(card);
           return Promise.resolve(true);
-        }
-
-        if (closeFromReadingLight) {
-          fadeReadingSurfaceDuringDesktopClose(card);
-        } else {
-          resetReadingTheme(card);
         }
 
         clearPointerCard(false);
@@ -4832,7 +4860,7 @@
         clearPointerCard(true);
 
         sectionCards.forEach(card => {
-          resetReadingTheme(card);
+          resetReadingTheme(card, { syncGlobal: false });
 
           const animationState = sectionAnimationStates.get(card);
 
@@ -4875,6 +4903,8 @@
             content.style.removeProperty("height");
           }
         });
+
+        syncGlobalReadingThemeControl();
 
         if (document.body.classList.contains("desktop-grid-layout")) {
           resetDesktopGridSelection();
@@ -5748,11 +5778,8 @@
             ? "Torna all’elenco degli articoli"
             : "Apri o chiudi la sezione Articoli";
           mobileTrigger.setAttribute("aria-label", label);
-          if (inArticle) {
-            mobileTrigger.setAttribute("title", label);
-          } else {
-            mobileTrigger.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sulla testata Articoli. */
+          mobileTrigger.removeAttribute("title");
         }
 
         if (desktopClose) {
@@ -5760,11 +5787,8 @@
             ? "Torna all’elenco degli articoli"
             : "Chiudi la sezione aperta";
           desktopClose.setAttribute("aria-label", label);
-          if (inArticle) {
-            desktopClose.setAttribute("title", label);
-          } else {
-            desktopClose.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sul controllo di ritorno. */
+          desktopClose.removeAttribute("title");
         }
       }
 
@@ -6160,6 +6184,93 @@
         return layer;
       }
 
+      function createDesktopArticleHeaderOverlay() {
+        const icon = articlesCard.querySelector(".section-trigger > .card-icon");
+        const headCopy = articlesCard.querySelector(".section-trigger > .section-head-copy");
+        if (!icon || !headCopy) return null;
+
+        /* 0420: icona e titolo NON vengono clonati. Durante i soli 920 ms del
+           ritorno all'indice spostiamo gli elementi REALI in un layer fisso,
+           esattamente nelle coordinate che avevano un istante prima. Due
+           segnaposto invisibili mantengono intatta la griglia della testata.
+           In questo modo non esiste alcun passaggio clone -> DOM reale e non
+           può verificarsi il micro-scattino di 1 px visto nella 0419. */
+        const overlay = document.createElement("div");
+        overlay.className = "article-header-live-overlay";
+        overlay.setAttribute("aria-hidden", "true");
+        Object.assign(overlay.style, {
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          overflow: "visible",
+          pointerEvents: "none",
+          zIndex: "2147483000"
+        });
+        document.body.append(overlay);
+
+        const records = [icon, headCopy].map(source => {
+          const rect = source.getBoundingClientRect();
+          const parent = source.parentNode;
+          const placeholder = source.cloneNode(true);
+          placeholder.setAttribute("aria-hidden", "true");
+          placeholder.style.setProperty("visibility", "hidden", "important");
+          placeholder.style.setProperty("pointer-events", "none", "important");
+          parent.insertBefore(placeholder, source);
+
+          const sourceNodes = [source, ...source.querySelectorAll("*")];
+          const originalStyles = sourceNodes.map(node => node.getAttribute("style"));
+          const frozenStyles = sourceNodes.map(node => {
+            const computed = window.getComputedStyle(node);
+            return Array.from(computed).map(property => [
+              property,
+              computed.getPropertyValue(property),
+              computed.getPropertyPriority(property)
+            ]);
+          });
+
+          overlay.append(source);
+          sourceNodes.forEach((node, index) => {
+            frozenStyles[index].forEach(([property, value, priority]) => {
+              node.style.setProperty(property, value, priority);
+            });
+          });
+
+          source.style.setProperty("position", "fixed", "important");
+          source.style.setProperty("left", `${rect.left}px`, "important");
+          source.style.setProperty("top", `${rect.top}px`, "important");
+          source.style.setProperty("width", `${rect.width}px`, "important");
+          source.style.setProperty("height", `${rect.height}px`, "important");
+          source.style.setProperty("margin", "0", "important");
+          source.style.setProperty("transform", "none", "important");
+          source.style.setProperty("visibility", "visible", "important");
+          source.style.setProperty("pointer-events", "none", "important");
+          source.style.setProperty("z-index", "1", "important");
+
+          return { source, placeholder, sourceNodes, originalStyles };
+        });
+
+        let restored = false;
+        return {
+          host: overlay,
+          restore() {
+            if (restored) return;
+            restored = true;
+
+            records.forEach(({ source, placeholder, sourceNodes, originalStyles }) => {
+              placeholder.parentNode?.insertBefore(source, placeholder);
+              placeholder.remove();
+              sourceNodes.forEach((node, index) => {
+                const original = originalStyles[index];
+                if (original === null) node.removeAttribute("style");
+                else node.setAttribute("style", original);
+              });
+            });
+            overlay.remove();
+          }
+        };
+      }
+
       function createDesktopArticleCardSnapshot(role) {
         if (!editorialShell) return null;
 
@@ -6382,7 +6493,9 @@
            scrollato, preserviamo soltanto il range di scroll con spazio
            tecnico invisibile sotto il contenuto. Non si anima mai height. */
         const outgoingCard = createDesktopArticleCardSnapshot("outgoing");
+        const headerOverlay = outgoingCard ? createDesktopArticleHeaderOverlay() : null;
         if (!outgoingCard || typeof outgoingCard.host.animate !== "function") {
+          headerOverlay?.restore();
           activeArticleId = null;
           articlesCard.classList.remove("is-article-reading");
           delete articlesCard.dataset.activeArticle;
@@ -6447,6 +6560,7 @@
 
         desktopArticleReturnCleanup = () => {
           document.querySelectorAll(".article-card-crossfade-host").forEach(node => node.remove());
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
         };
 
@@ -6497,6 +6611,7 @@
         });
         if (sequenceId !== articleOpenSequence) {
           outgoingCard.host.remove();
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
           desktopArticleReturnCleanup = null;
           return;
@@ -6530,6 +6645,7 @@
 
         if (reader) reader.replaceChildren();
         outgoingCard.host.remove();
+        headerOverlay?.restore();
         desktopArticleReturnCleanup = null;
         desktopArticleCrossfadeAnimations = [];
 
@@ -6554,12 +6670,225 @@
       }
 
 
-      function restoreArticleOverview({ updateHistory = false, scrollToTop = true } = {}) {
+      function createMobileArticleCardSnapshot() {
+        const cardRect = articlesCard.getBoundingClientRect();
+        if (!cardRect.width || !cardRect.height) return null;
+
+        /* 0460: sul ritorno mobile articolo -> elenco non si contrae più
+           visivamente la card grande. Ne conserviamo per 440 ms una copia
+           esattamente nella posizione occupata sullo schermo, mentre il DOM
+           reale passa subito alla geometria finale dell'elenco sottostante.
+           La copia viene poi dissolta: il bordo inferiore vecchio scompare
+           progressivamente invece di saltare verso l'alto. */
+        const host = document.createElement("div");
+        host.className = "editorial-shell article-card-crossfade-host";
+        host.dataset.articleCardSnapshot = "mobile-outgoing";
+        host.setAttribute("aria-hidden", "true");
+        Object.assign(host.style, {
+          position: "fixed",
+          left: `${cardRect.left}px`,
+          top: `${cardRect.top}px`,
+          width: `${cardRect.width}px`,
+          height: `${cardRect.height}px`,
+          margin: "0",
+          padding: "0",
+          border: "0",
+          borderRadius: "0",
+          background: "transparent",
+          boxShadow: "none",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          display: "block",
+          overflow: "visible",
+          opacity: "1",
+          pointerEvents: "none",
+          zIndex: "2147482500"
+        });
+
+        const snapshot = articlesCard.cloneNode(true);
+        snapshot.dataset.articleCardSnapshotInner = "mobile-outgoing";
+        snapshot.setAttribute("aria-hidden", "true");
+        snapshot.querySelectorAll("template").forEach(node => node.remove());
+        snapshot.querySelectorAll("button, a, input, select, textarea").forEach(node => {
+          node.setAttribute("tabindex", "-1");
+        });
+
+        snapshot.style.setProperty("position", "absolute", "important");
+        snapshot.style.setProperty("left", "0", "important");
+        snapshot.style.setProperty("top", "0", "important");
+        snapshot.style.setProperty("width", "100%", "important");
+        snapshot.style.setProperty("height", "100%", "important");
+        snapshot.style.setProperty("margin", "0", "important");
+        snapshot.style.setProperty("transform", "none", "important");
+        snapshot.style.setProperty("transition", "none", "important");
+        snapshot.style.setProperty("visibility", "visible", "important");
+        snapshot.style.setProperty("pointer-events", "none", "important");
+
+        host.append(snapshot);
+        document.body.append(host);
+        return { host, card: snapshot };
+      }
+
+      async function restoreArticleOverviewMobileCrossfade({ updateHistory = false } = {}) {
         clearPendingReset();
 
-        /* 0333: solo il ritorno esplicito all'elenco su desktop usa il
-           crossfade inverso. I reset tecnici (scrollToTop:false) e tutto
-           il comportamento mobile restano identici alla 0332. */
+        const sequenceId = ++articleOpenSequence;
+        cancelArticleOpenScroll();
+        clearArticleCrossfade();
+
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const crossfadeMs = reduceMotion ? 0 : 440;
+        const content = articlesCard.querySelector(".section-content");
+        const outgoingCard = createMobileArticleCardSnapshot();
+
+        const previousContentHeight = content?.style.height || "";
+        const previousContentTransition = content?.style.transition || "";
+        const previousPointerEvents = articlesCard.style.pointerEvents || "";
+
+        const restoreMobileTechnicalState = () => {
+          if (content) {
+            if (previousContentTransition) {
+              content.style.transition = previousContentTransition;
+            } else {
+              content.style.removeProperty("transition");
+            }
+
+            if (previousContentHeight) {
+              content.style.height = previousContentHeight;
+            } else {
+              content.style.removeProperty("height");
+            }
+          }
+
+          if (previousPointerEvents) {
+            articlesCard.style.pointerEvents = previousPointerEvents;
+          } else {
+            articlesCard.style.removeProperty("pointer-events");
+          }
+        };
+
+        desktopArticleReturnCleanup = () => {
+          outgoingCard?.host.remove();
+          restoreMobileTechnicalState();
+        };
+
+        /* Il DOM reale assume immediatamente lo stato elenco, ma resta sotto
+           la copia dell'articolo uscente. Non viene quindi mostrata alcuna
+           contrazione del bordo: il riquadro finale è già pronto dietro. */
+        if (content) {
+          content.style.transition = "none";
+          content.style.height = "auto";
+        }
+        articlesCard.style.pointerEvents = "none";
+
+        activeArticleId = null;
+        articlesCard.classList.remove("is-article-reading");
+        delete articlesCard.dataset.activeArticle;
+
+        if (intro) {
+          intro.hidden = false;
+          intro.style.removeProperty("opacity");
+        }
+        if (articlesList) {
+          articlesList.hidden = false;
+          articlesList.style.removeProperty("opacity");
+        }
+        if (reader) {
+          reader.hidden = true;
+        }
+
+        updateArticleControlLabels();
+
+        if (updateHistory && currentArticleStateIsOwned()) {
+          window.SiteNavHistory.replace(
+            "card",
+            `${window.location.pathname}${window.location.search}#articoli`,
+            {
+              siteSection: "articoli",
+              siteNavChain: window.SiteNavHistory.isManagedChain()
+            }
+          );
+        }
+
+        /* Forza la geometria finale prima che inizi la dissolvenza; la copia
+           fissa mantiene invece immobile sullo schermo la geometria grande. */
+        void articlesCard.offsetHeight;
+
+        if (
+          !outgoingCard
+          || crossfadeMs === 0
+          || typeof outgoingCard.host.animate !== "function"
+        ) {
+          if (reader) reader.replaceChildren();
+          outgoingCard?.host.remove();
+          desktopArticleReturnCleanup = null;
+          restoreMobileTechnicalState();
+          syncArticleGeometry({ scrollToTop: false });
+          updateEndScrollSpace();
+          return;
+        }
+
+        await new Promise(resolve => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+          });
+        });
+
+        if (sequenceId !== articleOpenSequence) {
+          if (desktopArticleReturnCleanup) {
+            const cleanup = desktopArticleReturnCleanup;
+            desktopArticleReturnCleanup = null;
+            cleanup();
+          }
+          return;
+        }
+
+        const outgoingAnimation = outgoingCard.host.animate(
+          [
+            { opacity: 1, offset: 0 },
+            { opacity: .92, offset: .16 },
+            { opacity: 0, offset: 1 }
+          ],
+          {
+            duration: crossfadeMs,
+            easing: "cubic-bezier(.4, 0, .2, 1)",
+            fill: "forwards"
+          }
+        );
+
+        desktopArticleCrossfadeAnimations = [outgoingAnimation];
+        await Promise.allSettled([outgoingAnimation.finished]);
+
+        if (sequenceId !== articleOpenSequence) {
+          if (desktopArticleReturnCleanup) {
+            const cleanup = desktopArticleReturnCleanup;
+            desktopArticleReturnCleanup = null;
+            cleanup();
+          }
+          return;
+        }
+
+        if (reader) reader.replaceChildren();
+        outgoingCard.host.remove();
+        desktopArticleCrossfadeAnimations = [];
+        desktopArticleReturnCleanup = null;
+        restoreMobileTechnicalState();
+        syncArticleGeometry({ scrollToTop: false });
+        updateEndScrollSpace();
+      }
+
+      function restoreArticleOverview({ updateHistory = false, scrollToTop = true, animateReturn = false } = {}) {
+        clearPendingReset();
+
+        /* 0443: anche il ritorno esplicito mobile articolo -> elenco usa
+           ora una dissolvenza inversa, con gli stessi 440 ms e lo stesso
+           easing dell'andata. I reset tecnici restano invece immediati. */
+        if (mobileQuery.matches && animateReturn && activeArticleId) {
+          return restoreArticleOverviewMobileCrossfade({ updateHistory });
+        }
+
+        /* Il ritorno esplicito all'elenco su desktop conserva la dissolvenza
+           inversa gia' approvata nelle versioni precedenti. */
         if (!mobileQuery.matches && scrollToTop && activeArticleId) {
           restoreArticleOverviewDesktopCrossfade({ updateHistory, scrollToTop });
           return;
@@ -6606,7 +6935,11 @@
         if (!activeArticleId) return;
 
         if (window.__DIRECT_ARTICLE_ID__) {
-          restoreArticleOverview({ updateHistory: false, scrollToTop: true });
+          restoreArticleOverview({
+            updateHistory: false,
+            scrollToTop: true,
+            animateReturn: true
+          });
           window.__DIRECT_ARTICLE_ID__ = null;
           window.SiteNavHistory.replace("card", "/#articoli", {
             siteSection: "articoli",
@@ -6620,7 +6953,11 @@
           return;
         }
 
-        restoreArticleOverview({ updateHistory: false, scrollToTop: true });
+        restoreArticleOverview({
+          updateHistory: false,
+          scrollToTop: true,
+          animateReturn: true
+        });
       }
 
       function scheduleInternalResetAfterCardLeaves() {
@@ -6648,43 +6985,21 @@
         });
       });
 
-      /* 0409 desktop: durante la lettura di un articolo il click con mouse
-         su icona o titolo "Articoli" conserva soltanto la funzione di ritorno
-         all'indice e non trasferisce il focus visivo al bottone sottostante.
-         Il cursore resta a manina, ma icona e titolo non subiscono alcun
-         artefatto grafico; la navigazione da tastiera resta invariata. */
-      document.addEventListener("mousedown", event => {
-        if (!activeArticleId || mobileQuery.matches || event.button !== 0) return;
-
-        const headerReturnTarget = event.target.closest?.(
-          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
-        );
-
-        if (headerReturnTarget) {
-          event.preventDefault();
-        }
-      }, true);
-
       document.addEventListener("click", event => {
         if (!activeArticleId) return;
 
         const target = event.target;
         const clickedArticleTrigger = target.closest?.("#articoli .section-trigger");
-        const clickedArticleHeaderReturn = target.closest?.(
-          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
-        );
         const clickedArticleChevron = target.closest?.("#articoli .section-trigger > .section-chevron");
         const clickedDesktopControl = target.closest?.("#articoli .desktop-focus-close");
         const keyboardTriggerActivation = Boolean(clickedArticleTrigger && event.detail === 0);
 
-        /* 0407: quando un articolo è aperto, soltanto icona e titolo
-           "Articoli" acquistano temporaneamente la funzione di ritorno
-           all'indice, insieme ai controlli di ritorno già esistenti
-           (freccia mobile e freccia desktop). Il resto della fascia
-           superiore rimane neutro anche durante la lettura. */
+        /* 0434: durante la lettura di un articolo, icona e titolo
+           "Articoli" restano sempre neutri. Il ritorno all'elenco è
+           affidato soltanto ai controlli dedicati già esistenti
+           (freccia mobile, controllo desktop e attivazione da tastiera). */
         if (
-          clickedArticleHeaderReturn
-          || clickedArticleChevron
+          clickedArticleChevron
           || clickedDesktopControl
           || keyboardTriggerActivation
         ) {
@@ -6713,7 +7028,7 @@
         }
       }, true);
 
-      window.addEventListener("popstate", event => {
+      window.addEventListener("popstate", async event => {
         const state = event.state;
         const requestedArticle = state?.siteView === "article"
           ? state.siteArticle
@@ -6730,9 +7045,10 @@
 
         const preservedMobileScrollY = mobileQuery.matches ? window.scrollY : null;
 
-        restoreArticleOverview({
+        await restoreArticleOverview({
           updateHistory: false,
-          scrollToTop: !mobileQuery.matches
+          scrollToTop: !mobileQuery.matches,
+          animateReturn: true
         });
 
         if (preservedMobileScrollY !== null) {
@@ -6883,6 +7199,42 @@
 
       scheduleDiscoverWidthSync();
       window.addEventListener("load", scheduleDiscoverWidthSync, { once: true });
+    })();
+  </script>
+
+  <script>
+    (() => {
+      const desktopHoverQuery = window.matchMedia(
+        "(min-width: 801px) and (hover: hover) and (pointer: fine)"
+      );
+      const menuLinks = Array.from(document.querySelectorAll("#glassMenu a"));
+
+      if (!menuLinks.length) return;
+
+      const resetMenuLabels = () => {
+        menuLinks.forEach((link) => {
+          const label = link.querySelector(".menu-label");
+          if (label) label.style.transform = "translateY(0)";
+        });
+      };
+
+      menuLinks.forEach((link) => {
+        const label = link.querySelector(".menu-label");
+        if (!label) return;
+
+        link.addEventListener("pointerenter", () => {
+          if (!desktopHoverQuery.matches) return;
+          label.style.transform = "translateY(-2px)";
+        });
+
+        link.addEventListener("pointerleave", () => {
+          if (!desktopHoverQuery.matches) return;
+          label.style.transform = "translateY(0)";
+        });
+      });
+
+      desktopHoverQuery.addEventListener?.("change", resetMenuLabels);
+      document.getElementById("glassMenu")?.addEventListener("pointerleave", resetMenuLabels);
     })();
   </script>
 
