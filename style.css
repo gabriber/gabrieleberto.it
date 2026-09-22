@@ -6020,3 +6020,130 @@ body.is-global-reading-light .glass-menu a {
       ) !important;
   }
 }
+
+/* ================================================================
+   VERSIONE MOBILE 0462
+   Rifinitura cromatica della modalita' chiara mobile.
+   - opacita' superficie invariata a 0.65;
+   - fondo piu' bianco/avorio e meno beige;
+   - testo normale piu' nitido e contrastato;
+   - titoli granata, desktop e comportamento invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .reading-light-surface {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255, 252, 248, .65),
+        rgba(250, 246, 240, .65)
+      ) !important;
+  }
+
+  body.mobile-content .editorial-section.is-reading-light .section-richtext p,
+  body.mobile-content .editorial-section.is-reading-light .section-richtext li,
+  body.mobile-content .editorial-section.is-reading-light .section-mobile-ellipsis,
+  body.mobile-content #articoli.is-reading-light .site-article,
+  body.mobile-content #articoli.is-reading-light .site-article-body p {
+    color: rgba(28, 24, 22, .95) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE MOBILE 0463
+   Ulteriore schiarita cromatica della modalita' chiara mobile.
+   - riquadri: opacita' invariata a 0.65;
+   - menu: opacita' invariata a 0.70;
+   - entrambi portati verso un bianco/avorio piu' luminoso;
+   - testo, titoli, desktop, animazioni e logica invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content .reading-light-surface {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255, 255, 255, .65),
+        rgba(255, 253, 250, .65)
+      ) !important;
+  }
+
+  body.is-global-reading-light .glass-menu::before {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255, 255, 255, .70),
+        rgba(255, 253, 250, .70)
+      ) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0464
+   Correzione fluidita' testo in modalita' chiara desktop.
+   - solo PC;
+   - conserva la transizione del margin-bottom del primo capoverso;
+   - mantiene contemporaneamente la transizione cromatica;
+   - mobile e tutto il resto invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-light
+  .section-richtext > p:first-child {
+    transition:
+      margin-bottom .15s ease,
+      color .18s ease !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0465
+   Correzione chirurgica chiusura desktop in modalita' chiara.
+   - durante gli ultimi istanti della chiusura, il clone compatto delle
+     prime righe usa la stessa palette scura del testo su fondo chiaro;
+   - evita la temporanea scomparsa percettiva delle prime righe;
+   - geometria, tempi, animazioni, mobile e modalita' scura invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  body.desktop-grid-layout
+  .is-focus-card.is-reading-light
+  .desktop-compact-preview-clone {
+    color: rgba(39, 32, 27, .90) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0466
+   Rifinitura cromatica del menu chiaro su PC.
+   - solo desktop;
+   - stesso livello di opacita' del menu chiaro attuale;
+   - eliminata la dominante rosata;
+   - fondo portato a un grigio-avorio neutro.
+   - mobile invariato.
+   ================================================================ */
+@media (min-width: 801px) {
+  body.is-global-reading-light .glass-menu::before {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(247, 247, 244, .96),
+        rgba(240, 240, 236, .94)
+      ) !important;
+  }
+}
+
+/* ================================================================
+   VERSIONE 0467
+   Uniformazione cromatica della modalita' chiara su PC.
+   - solo desktop;
+   - fondo chiaro dei riquadri identico al menu chiaro 0466;
+   - mobile, testi, bordi, ombre, animazioni e logica invariati.
+   ================================================================ */
+@media (min-width: 801px) {
+  .editorial-section .reading-light-surface {
+    background:
+      linear-gradient(
+        145deg,
+        rgba(247, 247, 244, .96),
+        rgba(240, 240, 236, .94)
+      ) !important;
+  }
+}

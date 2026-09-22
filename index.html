@@ -3896,6 +3896,7 @@
           "width",
           "height",
           "transition",
+          "box-shadow",
           "z-index",
           "visibility"
         ].forEach(property => {
@@ -4670,6 +4671,21 @@
         editorialShell.classList.remove("is-grid-focus-settled");
         editorialShell.classList.add("is-grid-transitioning");
 
+        /* 0473 — desktop, modalita' chiara:
+           l'ombra del riquadro deve sparire nello stesso istante in cui
+           parte la chiusura. Disattiviamo temporaneamente ogni transition
+           prima di azzerare il box-shadow, forziamo il commit grafico e
+           solo dopo riattiviamo le transition geometriche. */
+        const clearLightFocusShadowImmediately =
+          document.body.classList.contains("desktop-grid-layout")
+          && card.classList.contains("is-reading-light");
+
+        if (clearLightFocusShadowImmediately) {
+          card.style.transition = "none";
+          card.style.boxShadow = "none";
+          void card.offsetHeight;
+        }
+
         if (scroll) {
           scrollDesktopGridToAnchor("smooth");
         }
@@ -4713,15 +4729,20 @@
           }, Math.max(0, duration - previewSwapDuration));
         }
 
-        card.style.transition = [
+        const closingTransitions = [
           `left ${duration}ms ${easing}`,
           `top ${duration}ms ${easing}`,
           `width ${duration}ms ${easing}`,
           `height ${duration}ms ${easing}`,
           `background ${Math.min(duration, 700)}ms ${easing}`,
-          `border-color ${Math.min(duration, 700)}ms ${easing}`,
-          `box-shadow ${Math.min(duration, 700)}ms ${easing}`
-        ].join(", ");
+          `border-color ${Math.min(duration, 700)}ms ${easing}`
+        ];
+
+        if (!clearLightFocusShadowImmediately) {
+          closingTransitions.push(`box-shadow ${Math.min(duration, 700)}ms ${easing}`);
+        }
+
+        card.style.transition = closingTransitions.join(", ");
         editorialShell.style.transition = `height ${duration}ms ${easing}`;
 
         void editorialShell.offsetHeight;
