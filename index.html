@@ -1809,10 +1809,7 @@
            superiore al padding già previsto. La riga mostrata resta quella
            determinata dal 17:10 originario: nessun elemento interno viene
            spostato o ridimensionato. */
-        if (
-          window.matchMedia("(min-width: 801px)").matches
-          || isFirefoxNarrowMobileContent()
-        ) {
+        if (window.matchMedia("(min-width: 801px)").matches) {
           return baseClosedContentHeight;
         }
 
@@ -1883,17 +1880,19 @@
 
         if (lastVisibleBottom === null) return baseClosedContentHeight;
 
-        const currentBottomGap =
-          (contentRect.top + baseClosedContentHeight) - lastVisibleBottom;
+        /* 0475: il 17:10 resta soltanto il riferimento per determinare
+           quali righe appartengono all'anteprima. L'altezza finale del
+           riquadro chiuso viene invece ricavata dalla posizione reale
+           dell'ultima riga visibile sul dispositivo, imponendo 16 CSS px
+           esatti fra il fondo di quella riga e il fondo del contenitore.
+           L'interlinea e la posizione delle righe non vengono modificate. */
+        const targetBottomGap = 16;
+        const adaptiveHeight =
+          (lastVisibleBottom - contentRect.top) + targetBottomGap;
 
-        /* Mezzo pixel di tolleranza evita micro-variazioni dovute agli
-           arrotondamenti sub-pixel quando il margine è già adeguato. */
-        if (currentBottomGap >= minimumBottomGap - .5) {
-          return baseClosedContentHeight;
-        }
-
-        const missingBottomGap = minimumBottomGap - currentBottomGap;
-        return Math.round(baseClosedContentHeight + Math.ceil(missingBottomGap));
+        /* Manteniamo i sub-pixel: il browser puo' cosi' centrare il target
+           di 16 CSS px con la massima precisione consentita dal dispositivo. */
+        return Math.max(92, Number(adaptiveHeight.toFixed(3)));
       }
 
       function hideMobileEllipsis(card) {

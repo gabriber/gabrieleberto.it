@@ -6147,3 +6147,19 @@ body.is-global-reading-light .glass-menu a {
       ) !important;
   }
 }
+
+
+/* ================================================================
+   VERSIONE MOBILE SPERIMENTALE 0474
+   Geometria chiusa adattiva alle metriche reali del dispositivo.
+   - il 17:10 resta il riferimento logico per il numero di righe mostrate;
+   - l'altezza esterna non viene piu' forzata dal rapporto fisso;
+   - lo spazio sotto l'ultima riga viene normalizzato via JavaScript;
+   - desktop, riquadri aperti, animazioni e grafica invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  body.mobile-content
+  .editorial-shell .glass-card.editorial-section:not(.is-open):not(.is-mobile-opening):not(.is-mobile-closing) {
+    aspect-ratio: auto !important;
+  }
+}
