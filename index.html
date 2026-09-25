@@ -288,31 +288,93 @@
           }
         };
 
-        /* 0409: le icone dei riquadri vengono precaricate soltanto dopo che
-           il video di sfondo ha realmente iniziato la riproduzione. Il lavoro
-           viene rimandato a un momento di inattività e conserva la priorità
-           bassa delle immagini, così il caricamento iniziale del video resta
-           prioritario sia su desktop sia su mobile. */
-        let deferredIconPreloadScheduled = false;
+        /* 0477: il video resta prioritario. Dopo l'effettivo avvio della
+           riproduzione, le icone vengono richieste appena esiste un margine
+           di circa 1,5 s gia' bufferizzato davanti al punto corrente.
+           Non viene piu' introdotta un'attesa artificiale: appena il buffer e'
+           sufficiente parte il caricamento a priorita' bassa gia' dichiarato
+           sugli <img>, cosi' le icone hanno piu' probabilita' di essere pronte
+           prima dell'ingresso nella pagina Contenuti. */
+        const ICON_BUFFER_AHEAD_TARGET = 1.5;
+        const iconBufferEvents = [
+          "progress",
+          "timeupdate",
+          "canplay",
+          "canplaythrough",
+          "durationchange",
+          "loadedmetadata"
+        ];
+        let iconBufferWatchActive = false;
 
-        const scheduleDeferredIconPreloadAfterVideoStart = () => {
-          if (deferredIconPreloadScheduled || deferredIconsRequested) return;
-          deferredIconPreloadScheduled = true;
+        const stopWatchingIconBuffer = () => {
+          if (!iconBufferWatchActive) return;
+          iconBufferWatchActive = false;
+          iconBufferEvents.forEach(eventName => {
+            video.removeEventListener(eventName, maybeLoadIconsAfterSafeVideoBuffer);
+          });
+        };
 
-          const preloadIcons = () => {
-            if (!deferredIconsRequested) {
-              window.loadDeferredCardIcons();
+        const maybeLoadIconsAfterSafeVideoBuffer = () => {
+          if (deferredIconsRequested) {
+            stopWatchingIconBuffer();
+            return;
+          }
+
+          if (video.buffered.length === 0) return;
+
+          const currentTime = Number.isFinite(video.currentTime)
+            ? video.currentTime
+            : 0;
+
+          let bufferedAhead = 0;
+          let fullyBuffered = false;
+
+          for (let index = 0; index < video.buffered.length; index += 1) {
+            const start = video.buffered.start(index);
+            const end = video.buffered.end(index);
+
+            if (
+              currentTime >= start - .05
+              && currentTime <= end + .05
+            ) {
+              bufferedAhead = Math.max(bufferedAhead, end - currentTime);
             }
-          };
 
-          if ("requestIdleCallback" in window) {
-            window.requestIdleCallback(preloadIcons, { timeout: 1800 });
-          } else {
-            window.setTimeout(preloadIcons, 900);
+            if (
+              Number.isFinite(video.duration)
+              && video.duration > 0
+              && start <= .05
+              && end >= video.duration - .05
+            ) {
+              fullyBuffered = true;
+            }
+          }
+
+          if (
+            fullyBuffered
+            || bufferedAhead >= ICON_BUFFER_AHEAD_TARGET
+          ) {
+            stopWatchingIconBuffer();
+            window.loadDeferredCardIcons();
           }
         };
 
-        video.addEventListener("playing", scheduleDeferredIconPreloadAfterVideoStart, { once: true });
+        const startWatchingIconBufferAfterVideoStart = () => {
+          if (iconBufferWatchActive || deferredIconsRequested) return;
+          iconBufferWatchActive = true;
+
+          iconBufferEvents.forEach(eventName => {
+            video.addEventListener(eventName, maybeLoadIconsAfterSafeVideoBuffer);
+          });
+
+          maybeLoadIconsAfterSafeVideoBuffer();
+        };
+
+        video.addEventListener(
+          "playing",
+          startWatchingIconBufferAfterVideoStart,
+          { once: true }
+        );
 
         const contentHashPattern =
           /^#(contenuti|profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/;
@@ -333,38 +395,6 @@
             window.loadDeferredCardIcons();
           }
         }, true);
-
-        const stopWatchingVideoBuffer = () => {
-          ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
-            .forEach(eventName => {
-              video.removeEventListener(eventName, maybeLoadIconsAfterFullBuffer);
-            });
-        };
-
-        const maybeLoadIconsAfterFullBuffer = () => {
-          if (
-            !Number.isFinite(video.duration)
-            || video.duration <= 0
-            || video.buffered.length === 0
-          ) {
-            return;
-          }
-
-          let bufferedEnd = 0;
-          for (let index = 0; index < video.buffered.length; index += 1) {
-            bufferedEnd = Math.max(bufferedEnd, video.buffered.end(index));
-          }
-
-          if (bufferedEnd >= video.duration - .05) {
-            stopWatchingVideoBuffer();
-            window.loadDeferredCardIcons();
-          }
-        };
-
-        ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
-          .forEach(eventName => {
-            video.addEventListener(eventName, maybeLoadIconsAfterFullBuffer);
-          });
 
         source.src = useMobileHero
           ? "hero-video-mobile.mp4"
@@ -2313,7 +2343,9 @@
       function showHome({ updateHistory = true } = {}) {
         window.SiteDiscoverWidth?.applyCached?.();
         closeMobileMenu();
-        sectionCards.forEach(card => resetReadingTheme(card, { syncGlobal: false }));
+        /* 0478: tornando alla Home conserviamo la scelta chiaro/scuro
+           effettuata nei Contenuti, così al successivo ingresso viene
+           riproposta esattamente la stessa modalità di lettura. */
         syncGlobalReadingThemeControl();
         clearMobileCloseScrollCompensation();
         contentSection?.classList.remove("mobile-technical-end-space");
@@ -2680,84 +2712,16 @@
           const destination = link.getAttribute("href");
 
           if (destination === "#intro") {
-            /* 0395: Home mobile diventa contestuale, senza cambiare le animazioni
-               già approvate. Se la panoramica Contenuti NON è nello stato iniziale,
-               il primo tap fa soltanto questo: chiude il menu, torna dolcemente
-               a Formazione lasciando invariati i riquadri durante lo scroll e,
-               una volta arrivato in alto, chiude tutti i riquadri. La vista resta
-               quindi nella panoramica iniziale. Solo un successivo tap su Home,
-               quando siamo già in alto e con tutti i riquadri chiusi, avvia la
-               transizione incrociata verso la vera Home con il video in movimento. */
+            /* 0478: Home torna ad avere un solo significato anche su mobile.
+               Da qualunque posizione dei Contenuti porta direttamente alla vera
+               Home del sito, senza prima normalizzare scroll o riquadri. La
+               logica del tasto Indietro resta separata e invariata. */
             menuNavigationBusy = true;
             menuToggle.disabled = true;
 
             try {
-              const navState = window.SiteNavHistory.current();
-              const hasOpenCards = sectionCards.some(card =>
-                card.classList.contains("is-open")
-              );
-              const overviewNeedsNormalization =
-                document.body.classList.contains("mobile-content")
-                && navState.siteView !== "article"
-                && (
-                  window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
-                  || hasOpenCards
-                );
-
               closeMobileMenu();
               await wait(260);
-
-              if (overviewNeedsNormalization) {
-                /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
-                   anche l'eventuale riserva tecnica finché lo scroll non è finito,
-                   così la geometria della pagina non può provocare scatti o clamp. */
-                if (window.scrollY > 2) {
-                  await scrollMobileOverviewToTopSmoothly();
-                  await wait(90);
-                }
-
-                /* Soltanto quando Formazione è già in alto chiudiamo tutti i
-                   riquadri: il primo Home termina qui, nella panoramica iniziale. */
-                contentSection?.classList.remove("mobile-technical-end-space");
-                const { closedCount, maxDuration } = closeAllCards({ animate: true });
-                if (closedCount > 0) {
-                  await wait(maxDuration + 60);
-                  refreshMobileHeights();
-                }
-                mobileOverviewStartReadyForHome = false;
-
-                /* Se il riquadro aperto aveva creato la normale voce "card"
-                   nella cronologia SPA, allineiamo anche la cronologia alla
-                   panoramica che l'utente sta effettivamente vedendo. Il relativo
-                   popstate viene marcato come tecnico e non deve riattivare il
-                   reset globale del vero tasto Indietro. */
-                if (navState.siteView === "card") {
-                  if (navState.siteNavChain) {
-                    mobileHomeMenuOverviewBackPending = true;
-                    await new Promise(resolve => {
-                      let settled = false;
-                      const finish = () => {
-                        if (settled) return;
-                        settled = true;
-                        window.clearTimeout(timeoutId);
-                        resolve();
-                      };
-                      const timeoutId = window.setTimeout(() => {
-                        mobileHomeMenuOverviewBackPending = false;
-                        finish();
-                      }, 320);
-                      window.addEventListener("popstate", finish, { once: true });
-                      history.back();
-                    });
-                  } else {
-                    window.SiteNavHistory.replace("overview", "#contenuti", {
-                      siteNavChain: navState.siteNavChain
-                    });
-                  }
-                }
-                return;
-              }
-
               await transitionMobileOverviewToHome();
             } finally {
               menuToggle.disabled = false;
@@ -4880,8 +4844,8 @@
         clearPointerCard(true);
 
         sectionCards.forEach(card => {
-          resetReadingTheme(card, { syncGlobal: false });
-
+          /* 0478: il ritorno alla Home non azzera più la modalità chiaro/scuro.
+             La scelta resta associata ai Contenuti e viene ritrovata al rientro. */
           const animationState = sectionAnimationStates.get(card);
 
           if (animationState) {
@@ -5580,20 +5544,9 @@
           if (destination === "#intro") {
             event.preventDefault();
 
-            /* 0395: anche su desktop Home è contestuale. Se un riquadro è
-               ingrandito, il primo click richiude soltanto il focus e ripristina
-               la griglia iniziale. Dalla griglia già ripristinata, il click
-               successivo mantiene la logica esistente e torna alla vera Home. */
-            if (
-              desktopSelectedCard
-              && editorialShell?.classList.contains("is-grid-focus-mode")
-              && window.SiteNavHistory.current().siteView !== "article"
-            ) {
-              hideMenu({ guardPointer: false, clearSelection: false });
-              requestDesktopFocusClose();
-              return;
-            }
-
+            /* 0478: anche su desktop Home porta sempre direttamente alla vera
+               Home del sito. La chiusura contestuale del riquadro resta affidata
+               ai relativi comandi e la logica del tasto Indietro non cambia. */
             requestHomeNavigation();
             return;
           }
