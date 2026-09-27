@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="msapplication-navbutton-color" content="#000000">
   <title>Gabriele Berto | Incidenti stradali e infortuni sul lavoro</title>
-  <meta name="description" content="Gabriele Berto, abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali, infortuni sul lavoro e responsabilità.">
+  <meta name="description" content="Sito ufficiale di Gabriele Berto, abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.">
   <link rel="canonical" href="https://www.gabrieleberto.it/">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 
@@ -20,8 +20,8 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="it_IT">
   <meta property="og:site_name" content="Gabriele Berto">
-  <meta property="og:title" content="Gabriele Berto | Competenze tecniche e giuridiche">
-  <meta property="og:description" content="Abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.">
+  <meta property="og:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
+  <meta property="og:description" content="Sito ufficiale di Gabriele Berto, abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.">
   <meta property="og:url" content="https://www.gabrieleberto.it/">
   <meta property="og:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
   <meta property="og:image:width" content="1200">
@@ -29,8 +29,8 @@
   <meta property="og:image:type" content="image/png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Gabriele Berto | Competenze tecniche e giuridiche">
-  <meta name="twitter:description" content="Abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.">
+  <meta name="twitter:title" content="Gabriele Berto | Incidenti stradali e infortuni sul lavoro">
+  <meta name="twitter:description" content="Sito ufficiale di Gabriele Berto, abogado e dottore magistrale in ingegneria meccanica. Analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.">
   <meta name="twitter:image" content="https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png">
 
   <script type="application/ld+json">
@@ -42,13 +42,21 @@
       "@id": "https://www.gabrieleberto.it/#website",
       "url": "https://www.gabrieleberto.it/",
       "name": "Gabriele Berto",
+      "publisher": {
+        "@id": "https://www.gabrieleberto.it/#gabriele-berto"
+      },
       "inLanguage": "it-IT"
     },
     {
       "@type": "Person",
       "@id": "https://www.gabrieleberto.it/#gabriele-berto",
       "name": "Gabriele Berto",
+      "givenName": "Gabriele",
+      "familyName": "Berto",
       "url": "https://www.gabrieleberto.it/",
+      "mainEntityOfPage": {
+        "@id": "https://www.gabrieleberto.it/#profile"
+      },
       "image": "https://www.gabrieleberto.it/anteprima_social_gabriele_berto_1200x630.png",
       "jobTitle": "Abogado",
       "description": "Abogado e dottore magistrale in ingegneria meccanica, attivo nell’analisi tecnico-giuridica di incidenti stradali e infortuni sul lavoro.",
@@ -67,8 +75,8 @@
       ]
     },
     {
-      "@type": "WebPage",
-      "@id": "https://www.gabrieleberto.it/#webpage",
+      "@type": "ProfilePage",
+      "@id": "https://www.gabrieleberto.it/#profile",
       "url": "https://www.gabrieleberto.it/",
       "name": "Gabriele Berto | Incidenti stradali e infortuni sul lavoro",
       "isPartOf": {
@@ -78,6 +86,9 @@
         "@id": "https://www.gabrieleberto.it/#gabriele-berto"
       },
       "mainEntity": {
+        "@id": "https://www.gabrieleberto.it/#gabriele-berto"
+      },
+      "author": {
         "@id": "https://www.gabrieleberto.it/#gabriele-berto"
       },
       "inLanguage": "it-IT"
@@ -3003,37 +3014,34 @@
         }
 
         if (route.siteView === "home") {
-          const overviewNeedsReset =
-            document.body.classList.contains("mobile-content")
-            && (
-              window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
-              || sectionCards.some(card => card.classList.contains("is-open"))
-            );
-
-          if (mobileOverviewStartReadyForHome) {
-            mobileOverviewStartReadyForHome = false;
-            transitionMobileOverviewToHome({ updateHistory: false });
-            return;
-          }
-
-          if (overviewNeedsReset) {
-            restoreMobileOverviewStartFromBack();
-            return;
-          }
-
+          /* 0479: sul mobile il Back che raggiunge la Home non normalizza più
+             preventivamente la panoramica Contenuti. Anche con pagina scorsa
+             o riquadri aperti usa direttamente la transizione morbida già
+             approvata Contenuti -> Home. */
+          mobileOverviewStartReadyForHome = false;
           transitionMobileOverviewToHome({ updateHistory: false });
           return;
         }
 
         if (route.siteView === "overview") {
-          /* 0389: tornando dallo stato card alla panoramica Contenuti, il Back
-             non chiude più un solo riquadro lasciando l'utente nella posizione
-             corrente. Chiude tutti i riquadri e riporta dolcemente la pagina
-             all'inizio. Il Back successivo userà la stessa transizione verso
-             la Home adottata dal comando Home del menu hamburger. */
-          if (document.body.classList.contains("mobile-content")) {
+          /* 0479: se il Back del browser proviene da un normale riquadro
+             aperto, lo stato overview intermedio resta soltanto tecnico:
+             non viene mostrato e retrocediamo subito alla Home. La chiusura
+             manuale tramite freccia è già intercettata sopra da
+             mobileManualCardCloseBackPending e continua a restare nei
+             Contenuti. Il primo Back da un articolo aperto resta invece
+             invariato perché conduce allo stato card Articoli. */
+          const hasOpenCard = sectionCards.some(card =>
+            card.classList.contains("is-open")
+          );
+
+          if (
+            document.body.classList.contains("mobile-content")
+            && hasOpenCard
+            && route.siteNavChain
+          ) {
             mobileOverviewStartReadyForHome = false;
-            resetMobileOverviewToStartFromBack();
+            history.back();
             return;
           }
 
