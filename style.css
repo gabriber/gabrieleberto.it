@@ -6163,3 +6163,32 @@ body.is-global-reading-light .glass-menu a {
     aspect-ratio: auto !important;
   }
 }
+
+
+/* ================================================================
+   VERSIONE 0481
+   Uniformazione percettiva dei movimenti mobile.
+   - base: 0479 stabile (0480 scartata);
+   - menu hamburger: apertura/chiusura più dolce e progressiva;
+   - trasformazione delle tre linee hamburger/X coordinata al pannello;
+   - soltanto mobile; desktop e resto della grafica invariati.
+   ================================================================ */
+@media (max-width: 800px) {
+  .glass-menu {
+    transition:
+      opacity .42s cubic-bezier(.4, 0, .2, 1),
+      transform .42s cubic-bezier(.4, 0, .2, 1),
+      border-color .36s cubic-bezier(.4, 0, .2, 1),
+      box-shadow .36s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .glass-menu::before {
+    transition: opacity .38s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .menu-toggle span {
+    transition:
+      transform .36s cubic-bezier(.4, 0, .2, 1),
+      opacity .28s ease;
+  }
+}

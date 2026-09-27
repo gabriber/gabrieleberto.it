@@ -388,7 +388,7 @@
         );
 
         const contentHashPattern =
-          /^#(contenuti|profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/;
+          /^#(contenuti|formazione|settori|second-opinion|fiducia|articoli|contatti)$/;
 
         if (
           window.__DIRECT_ARTICLE_ID__
@@ -1819,6 +1819,12 @@
         }
       }
 
+      /* 0483: distanza visiva unica fra l'ultima riga di testo e il bordo
+         inferiore dei riquadri mobile, sia chiusi sia aperti. Il valore e'
+         misurato in CSS px sulla geometria realmente composta dal browser,
+         così il criterio resta identico su Android, iPhone e altre larghezze. */
+      const MOBILE_CARD_TEXT_BOTTOM_GAP = 16;
+
       function getBaseClosedContentHeight(card) {
         const trigger = card.querySelector(".section-trigger");
         if (!trigger) return 0;
@@ -1927,9 +1933,8 @@
            dell'ultima riga visibile sul dispositivo, imponendo 16 CSS px
            esatti fra il fondo di quella riga e il fondo del contenitore.
            L'interlinea e la posizione delle righe non vengono modificate. */
-        const targetBottomGap = 16;
         const adaptiveHeight =
-          (lastVisibleBottom - contentRect.top) + targetBottomGap;
+          (lastVisibleBottom - contentRect.top) + MOBILE_CARD_TEXT_BOTTOM_GAP;
 
         /* Manteniamo i sub-pixel: il browser puo' cosi' centrare il target
            di 16 CSS px con la massima precisione consentita dal dispositivo. */
@@ -2063,11 +2068,88 @@
         ellipsis.classList.add("is-visible");
       }
 
+      function getMobileLastRenderedTextBottom(root) {
+        if (!root) return null;
+
+        let lastBottom = null;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+
+          for (const rect of range.getClientRects()) {
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            lastBottom = lastBottom === null
+              ? rect.bottom
+              : Math.max(lastBottom, rect.bottom);
+          }
+
+          node = walker.nextNode();
+        }
+
+        return lastBottom;
+      }
+
+      function calibrateMobileOpenBottomGap(card, inner) {
+        if (!card || !inner) return;
+
+        const richtext = card.querySelector(".section-richtext");
+        if (!richtext) return;
+
+        /* Ogni calibrazione riparte dal padding previsto dal CSS per quello
+           specifico dispositivo: nessuna correzione viene accumulata fra
+           aperture, resize o cambi di orientamento. */
+        richtext.style.removeProperty("padding-bottom");
+        void inner.offsetHeight;
+
+        for (let pass = 0; pass < 2; pass += 1) {
+          const lastTextBottom = getMobileLastRenderedTextBottom(richtext);
+          if (lastTextBottom === null) return;
+
+          const richtextRect = richtext.getBoundingClientRect();
+          const richtextStyle = window.getComputedStyle(richtext);
+          const currentPaddingBottom =
+            parseFloat(richtextStyle.paddingBottom) || 0;
+          const currentGap = richtextRect.bottom - lastTextBottom;
+          const correction =
+            MOBILE_CARD_TEXT_BOTTOM_GAP - currentGap;
+          const adjustedPadding = Math.max(
+            0,
+            currentPaddingBottom + correction
+          );
+
+          richtext.style.paddingBottom =
+            `${Number(adjustedPadding.toFixed(3))}px`;
+          void inner.offsetHeight;
+
+          if (Math.abs(correction) <= .25) break;
+        }
+      }
+
       function measureMobileOpenContentHeight(card, inner) {
         if (!card || !inner) return 0;
 
         card.classList.add("is-mobile-open-measuring");
+
+        /* 0483: l'altezza aperta viene misurata soltanto dopo avere portato
+           la distanza fra ultima riga realmente renderizzata e fondo del
+           riquadro allo stesso target di 16 CSS px già usato da chiuso.
+           Testo, interlinea e spaziatura fra capoversi restano invariati. */
+        calibrateMobileOpenBottomGap(card, inner);
         const measuredHeight = inner.scrollHeight;
+
         card.classList.remove("is-mobile-open-measuring");
 
         /* 0220 - reset tecnico dello spazio tra i capoversi.
@@ -2283,6 +2365,8 @@
           card.classList.remove("is-mobile-opening", "is-mobile-closing");
 
           if (!card.classList.contains("is-open")) {
+            card.querySelector(".section-richtext")
+              ?.style.removeProperty("padding-bottom");
             updateMobileEllipsis(card);
           }
 
@@ -2313,8 +2397,100 @@
       }
 
       async function scrollCardBelowHeaderAndWait(card) {
-        scrollCardBelowHeader(card, "smooth");
-        await waitForScrollToSettle();
+        /* 0481: il riferimento visivo torna alla morbidezza osservata sulla
+           0479 nello ZenFone 6 dell'utente. Non deleghiamo più lo scroll al
+           browser (che differisce fra Android e Safari), ma usiamo per tutti
+           i dispositivi lo stesso profilo progressivo già collaudato nelle
+           animazioni mobili del sito: durata crescente con la distanza e
+           smoothstep quintico, con partenza e arrivo molto morbidi. */
+        const headerHeight = siteHeader.getBoundingClientRect().height || 76;
+        const startY = Math.max(0, window.scrollY);
+        const targetY = Math.max(
+          0,
+          startY + card.getBoundingClientRect().top - headerHeight - 11
+        );
+        const delta = targetY - startY;
+        const distance = Math.abs(delta);
+
+        if (distance <= 1) {
+          window.scrollTo(0, targetY);
+          return;
+        }
+
+        const viewportHeight = Math.max(1, getMobileViewportHeight());
+        const travelInViewports = distance / viewportHeight;
+
+        /* Più lento della 0480 e volutamente progressivo: per uno spostamento
+           di circa una viewport siamo attorno a 840 ms; per distanze maggiori
+           la durata cresce senza trasformare lo scroll in una corsa. */
+        const duration = Math.round(
+          Math.max(680, Math.min(1600, 520 + (travelInViewports * 320)))
+        );
+
+        const rootStyle = document.documentElement.style;
+        const bodyStyle = document.body.style;
+        const previousRootBehavior = rootStyle.getPropertyValue("scroll-behavior");
+        const previousRootPriority = rootStyle.getPropertyPriority("scroll-behavior");
+        const previousBodyBehavior = bodyStyle.getPropertyValue("scroll-behavior");
+        const previousBodyPriority = bodyStyle.getPropertyPriority("scroll-behavior");
+
+        rootStyle.setProperty("scroll-behavior", "auto", "important");
+        bodyStyle.setProperty("scroll-behavior", "auto", "important");
+
+        try {
+          await new Promise(resolve => {
+            let startedAt = null;
+
+            const step = now => {
+              /* Il primo frame mantiene esattamente la posizione corrente:
+                 evita qualunque piccolo salto iniziale fra motori diversi. */
+              if (startedAt === null) {
+                startedAt = now;
+                window.scrollTo(0, startY);
+                window.requestAnimationFrame(step);
+                return;
+              }
+
+              const progress = Math.min(
+                1,
+                Math.max(0, (now - startedAt) / duration)
+              );
+              const eased = mobileCloseVisualEase(progress);
+
+              window.scrollTo(0, startY + (delta * eased));
+
+              if (progress < 1) {
+                window.requestAnimationFrame(step);
+                return;
+              }
+
+              window.scrollTo(0, targetY);
+              resolve();
+            };
+
+            window.requestAnimationFrame(step);
+          });
+        } finally {
+          if (previousRootBehavior) {
+            rootStyle.setProperty(
+              "scroll-behavior",
+              previousRootBehavior,
+              previousRootPriority
+            );
+          } else {
+            rootStyle.removeProperty("scroll-behavior");
+          }
+
+          if (previousBodyBehavior) {
+            bodyStyle.setProperty(
+              "scroll-behavior",
+              previousBodyBehavior,
+              previousBodyPriority
+            );
+          } else {
+            bodyStyle.removeProperty("scroll-behavior");
+          }
+        }
       }
 
       function openOnly(card, { animate = true, scroll = true } = {}) {
@@ -2416,6 +2592,12 @@
         targetId = null,
         { updateHistory = true, historyMode = "replace" } = {}
       ) {
+        /* 0482: nei Contenuti le icone non devono mai dipendere dal buffer
+           del video o dal particolare hash con cui la pagina e' stata
+           ricaricata. Appena i Contenuti vengono mostrati, richiediamo
+           immediatamente tutte le icone differite. */
+        window.loadDeferredCardIcons?.();
+
         pauseVideo();
         document.body.classList.add("mobile-intro-complete");
 
@@ -2511,11 +2693,25 @@
       function refreshMobileHeights() {
         sectionCards.forEach(card => {
           const content = card.querySelector(".section-content");
+          const inner = card.querySelector(".section-content-inner");
           if (!content) return;
+
           content.style.transition = "none";
-          content.style.height = card.classList.contains("is-open")
-            ? "auto"
-            : `${getClosedContentHeight(card)}px`;
+
+          if (card.classList.contains("is-open")) {
+            /* 0483: vale anche per reload diretto, resize e orientamento.
+               La distanza inferiore viene ricalcolata sulla composizione
+               effettiva del testo del dispositivo corrente. */
+            if (inner) {
+              calibrateMobileOpenBottomGap(card, inner);
+            }
+            content.style.height = "auto";
+          } else {
+            card.querySelector(".section-richtext")
+              ?.style.removeProperty("padding-bottom");
+            content.style.height = `${getClosedContentHeight(card)}px`;
+          }
+
           content.style.removeProperty("transition");
           hideMobileEllipsis(card);
         });
@@ -2526,6 +2722,12 @@
           }
         });
       }
+
+      /* 0484: API tecnica minima usata soltanto dal lettore Articoli per
+         ripristinare, al ritorno all'elenco, la calibrazione mobile 0483. */
+      window.SiteMobileCardGeometry = Object.freeze({
+        refresh: refreshMobileHeights
+      });
 
       discoverButton.classList.add("is-ready");
       discoverButton.addEventListener("click", () => {
@@ -4913,6 +5115,11 @@
       function enterContent({ updateHistory = true, historyMode = "replace" } = {}) {
         if (enteringContent || returningHome || pageMode === "content") return;
 
+        /* 0482: stessa garanzia del mobile. Se i Contenuti stanno entrando
+           a schermo, le icone vengono richieste subito e non aspettano piu'
+           l'eventuale evento "playing" del video della Home. */
+        window.loadDeferredCardIcons?.();
+
         pauseVideo();
         enteringContent = true;
         pageMode = "content";
@@ -5667,10 +5874,175 @@
       let pendingResetTimer = null;
       let articleGeometryFrame = 0;
 
+      /* 0484: stesso target geometrico della 0483 per il fondo dei singoli
+         articoli mobile. La misura avviene sulla riga realmente renderizzata. */
+      const MOBILE_ARTICLE_TEXT_BOTTOM_GAP = 16;
+      let articleBottomGapState = null;
+
       function clearPendingReset() {
         if (pendingResetTimer === null) return;
         window.clearTimeout(pendingResetTimer);
         pendingResetTimer = null;
+      }
+
+      function getLastArticleTextBottom(root) {
+        if (!root) return null;
+
+        let lastBottom = null;
+        let lastTextNode = null;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+
+          for (const rect of range.getClientRects()) {
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            if (lastBottom === null || rect.bottom > lastBottom) {
+              lastBottom = rect.bottom;
+              lastTextNode = node;
+            }
+          }
+
+          node = walker.nextNode();
+        }
+
+        return lastBottom === null
+          ? null
+          : { bottom: lastBottom, node: lastTextNode };
+      }
+
+      function restoreMobileArticleBottomGap() {
+        if (!articleBottomGapState) return;
+
+        const {
+          richtext,
+          richtextPaddingValue,
+          richtextPaddingPriority,
+          adjustedMargins
+        } = articleBottomGapState;
+
+        if (richtext) {
+          if (richtextPaddingValue) {
+            richtext.style.setProperty(
+              "padding-bottom",
+              richtextPaddingValue,
+              richtextPaddingPriority
+            );
+          } else {
+            richtext.style.removeProperty("padding-bottom");
+          }
+        }
+
+        adjustedMargins.forEach(({ element, value, priority }) => {
+          if (!element?.isConnected) return;
+          if (value) {
+            element.style.setProperty("margin-bottom", value, priority);
+          } else {
+            element.style.removeProperty("margin-bottom");
+          }
+        });
+
+        articleBottomGapState = null;
+      }
+
+      function calibrateMobileArticleBottomGap() {
+        if (!mobileQuery.matches || !activeArticleId || reader?.hidden) return;
+
+        const richtext = articlesCard.querySelector(".section-richtext");
+        const body = reader?.querySelector(".site-article-body");
+        if (!richtext || !body) return;
+
+        if (!articleBottomGapState) {
+          articleBottomGapState = {
+            richtext,
+            richtextPaddingValue:
+              richtext.style.getPropertyValue("padding-bottom"),
+            richtextPaddingPriority:
+              richtext.style.getPropertyPriority("padding-bottom"),
+            adjustedMargins: []
+          };
+        }
+
+        /* Riparte sempre dallo stato tipografico originale dell'articolo. */
+        articleBottomGapState.adjustedMargins.forEach(
+          ({ element, value, priority }) => {
+            if (!element?.isConnected) return;
+            if (value) {
+              element.style.setProperty("margin-bottom", value, priority);
+            } else {
+              element.style.removeProperty("margin-bottom");
+            }
+          }
+        );
+        articleBottomGapState.adjustedMargins = [];
+
+        const initialLast = getLastArticleTextBottom(body);
+        if (!initialLast?.node) return;
+
+        /* L'ultimo paragrafo degli articoli porta un margine inferiore
+           tipografico (1.32em), che nello stato finale diventa spazio vuoto
+           sotto l'ultima riga. Lo azzeriamo soltanto lungo la catena finale:
+           nessuna distanza FRA paragrafi viene modificata. */
+        let element = initialLast.node.parentElement;
+        while (element && element !== body) {
+          const computed = window.getComputedStyle(element);
+          const marginBottom = parseFloat(computed.marginBottom) || 0;
+
+          if (marginBottom > 0) {
+            articleBottomGapState.adjustedMargins.push({
+              element,
+              value: element.style.getPropertyValue("margin-bottom"),
+              priority: element.style.getPropertyPriority("margin-bottom")
+            });
+            element.style.setProperty("margin-bottom", "0px", "important");
+          }
+
+          element = element.parentElement;
+        }
+
+        /* Dopo aver eliminato il solo margine terminale, il fondo viene
+           calibrato con la stessa misura reale della 0483: 16 CSS px fra
+           ultima riga renderizzata e bordo inferiore. */
+        richtext.style.setProperty("padding-bottom", "0px", "important");
+        void reader.offsetHeight;
+
+        for (let pass = 0; pass < 2; pass += 1) {
+          const last = getLastArticleTextBottom(body);
+          if (!last) return;
+
+          const richtextRect = richtext.getBoundingClientRect();
+          const currentStyle = window.getComputedStyle(richtext);
+          const currentPadding =
+            parseFloat(currentStyle.paddingBottom) || 0;
+          const currentGap = richtextRect.bottom - last.bottom;
+          const correction =
+            MOBILE_ARTICLE_TEXT_BOTTOM_GAP - currentGap;
+          const adjustedPadding = Math.max(
+            0,
+            currentPadding + correction
+          );
+
+          richtext.style.setProperty(
+            "padding-bottom",
+            `${Number(adjustedPadding.toFixed(3))}px`,
+            "important"
+          );
+          void reader.offsetHeight;
+
+          if (Math.abs(correction) <= .25) break;
+        }
       }
 
       function currentArticleStateIsOwned() {
@@ -5689,6 +6061,10 @@
             const content = articlesCard.querySelector(".section-content");
             if (content && articlesCard.classList.contains("is-open")) {
               content.style.height = "auto";
+            }
+
+            if (activeArticleId) {
+              calibrateMobileArticleBottomGap();
             }
 
             if (scrollToTop) {
@@ -6766,6 +7142,9 @@
         articlesCard.classList.remove("is-article-reading");
         delete articlesCard.dataset.activeArticle;
 
+        restoreMobileArticleBottomGap();
+        window.SiteMobileCardGeometry?.refresh?.();
+
         if (intro) {
           intro.hidden = false;
           intro.style.removeProperty("opacity");
@@ -6882,6 +7261,9 @@
         activeArticleId = null;
         articlesCard.classList.remove("is-article-reading");
         delete articlesCard.dataset.activeArticle;
+
+        restoreMobileArticleBottomGap();
+        window.SiteMobileCardGeometry?.refresh?.();
 
         if (reader) {
           reader.hidden = true;
