@@ -7442,6 +7442,30 @@
 
         if (!activeArticleId) return;
 
+        /* 0490: primo ritorno da un articolo aperto direttamente.
+           Siamo gia' arrivati allo stato reale "card Articoli". Prima di
+           mostrare l'elenco trasformiamo quella voce sottostante in Home e
+           ricreiamo sopra di essa la card Articoli. Nessun popstate aggiuntivo
+           viene generato da replaceState/pushState, quindi il crossfade
+           articolo -> elenco resta quello ordinario. Al Back successivo la
+           destinazione e' Home. */
+        if (
+          mobileQuery.matches
+          && window.__DIRECT_ARTICLE_REBASE_PENDING__
+          && state?.siteView === "card"
+          && state?.siteSection === "articoli"
+        ) {
+          window.__DIRECT_ARTICLE_REBASE_PENDING__ = false;
+
+          window.SiteNavHistory.replace("home", "/#intro", {
+            siteNavChain: true
+          });
+          window.SiteNavHistory.push("card", "/#articoli", {
+            siteSection: "articoli",
+            siteNavChain: true
+          });
+        }
+
         const preservedMobileScrollY = mobileQuery.matches ? window.scrollY : null;
 
         await restoreArticleOverview({
@@ -7504,23 +7528,20 @@
         const cleanUrl = window.SiteArticleRoutes?.[articleId] || window.location.pathname;
 
         if (mobileQuery.matches) {
-          /* 0489: dopo il bootstrap invisibile, un articolo raggiunto da un
-             link esterno deve diventare indistinguibile da un articolo aperto
-             navigando normalmente nel sito. Ricostruiamo quindi la stessa
-             catena Home -> panoramica -> Articoli -> articolo, mantenendo
-             l'URL finale dell'articolo. In questo modo:
-             - primo Back: elenco Articoli;
-             - secondo Back: Home (l'overview tecnico viene saltato dalla
-               logica mobile già approvata);
-             - menu hamburger: usa esattamente collapseArticleToCard() e le
-               animazioni ordinarie della navigazione interna. */
-          window.SiteNavHistory.replace("home", "/#intro", {
-            siteNavChain: true
-          });
-          window.SiteNavHistory.push("overview", "/#contenuti", {
-            siteNavChain: true
-          });
-          window.SiteNavHistory.push("card", "/#articoli", {
+          /* 0490: NON costruiamo piu' a caricamento la catena artificiale
+             Home -> overview -> Articoli -> articolo della 0489. Sui browser
+             mobili le voci pushState create automaticamente prima di una vera
+             interazione possono essere saltate dal Back e portare direttamente
+             alla Home.
+
+             Usiamo invece la voce di cronologia reale con cui il visitatore e'
+             entrato nel sito come stato "card Articoli", quindi aggiungiamo
+             soltanto lo stato corrente "article". Il primo Back ha cosi'
+             SEMPRE come destinazione reale l'elenco Articoli. Quando quel Back
+             avviene, il gestore popstate qui sotto ricostruisce la Home dietro
+             alla card senza modificare la UI: il Back successivo porta quindi
+             alla Home, esattamente come nella navigazione interna. */
+          window.SiteNavHistory.replace("card", "/#articoli", {
             siteSection: "articoli",
             siteNavChain: true
           });
@@ -7530,8 +7551,10 @@
             siteNavChain: true
           });
 
-          /* Da questo istante non esiste più uno stato speciale "direct":
-             il sito prosegue come se l'articolo fosse stato aperto
+          window.__DIRECT_ARTICLE_REBASE_PENDING__ = true;
+
+          /* Terminato il bootstrap, i comandi dell'articolo e il menu devono
+             seguire gli stessi rami ordinari usati da un articolo aperto
              dall'elenco interno. */
           window.__DIRECT_ARTICLE_ID__ = null;
         } else {
