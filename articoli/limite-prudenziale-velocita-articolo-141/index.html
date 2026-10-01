@@ -104,9 +104,6 @@
       siteArticle: "limite-prudenziale",
       siteNavChain: false
     }, "", window.location.pathname + window.location.search);
-    window.setTimeout(() => {
-      document.documentElement.classList.remove("direct-article-preinit");
-    }, 2500);
   </script>
   <script>
     window.SiteArticleRoutes = Object.freeze({
@@ -254,6 +251,10 @@
   <!-- 0226: first-frame placeholder embedded in the document.
        No extra image request is needed before the video begins rendering. -->
   <style>
+    html.direct-article-preinit {
+      scroll-behavior: auto !important;
+    }
+
     html.direct-article-preinit body {
       visibility: hidden !important;
     }
@@ -312,34 +313,96 @@
           }
         };
 
-        /* 0409: le icone dei riquadri vengono precaricate soltanto dopo che
-           il video di sfondo ha realmente iniziato la riproduzione. Il lavoro
-           viene rimandato a un momento di inattività e conserva la priorità
-           bassa delle immagini, così il caricamento iniziale del video resta
-           prioritario sia su desktop sia su mobile. */
-        let deferredIconPreloadScheduled = false;
+        /* 0477: il video resta prioritario. Dopo l'effettivo avvio della
+           riproduzione, le icone vengono richieste appena esiste un margine
+           di circa 1,5 s gia' bufferizzato davanti al punto corrente.
+           Non viene piu' introdotta un'attesa artificiale: appena il buffer e'
+           sufficiente parte il caricamento a priorita' bassa gia' dichiarato
+           sugli <img>, cosi' le icone hanno piu' probabilita' di essere pronte
+           prima dell'ingresso nella pagina Contenuti. */
+        const ICON_BUFFER_AHEAD_TARGET = 1.5;
+        const iconBufferEvents = [
+          "progress",
+          "timeupdate",
+          "canplay",
+          "canplaythrough",
+          "durationchange",
+          "loadedmetadata"
+        ];
+        let iconBufferWatchActive = false;
 
-        const scheduleDeferredIconPreloadAfterVideoStart = () => {
-          if (deferredIconPreloadScheduled || deferredIconsRequested) return;
-          deferredIconPreloadScheduled = true;
+        const stopWatchingIconBuffer = () => {
+          if (!iconBufferWatchActive) return;
+          iconBufferWatchActive = false;
+          iconBufferEvents.forEach(eventName => {
+            video.removeEventListener(eventName, maybeLoadIconsAfterSafeVideoBuffer);
+          });
+        };
 
-          const preloadIcons = () => {
-            if (!deferredIconsRequested) {
-              window.loadDeferredCardIcons();
+        const maybeLoadIconsAfterSafeVideoBuffer = () => {
+          if (deferredIconsRequested) {
+            stopWatchingIconBuffer();
+            return;
+          }
+
+          if (video.buffered.length === 0) return;
+
+          const currentTime = Number.isFinite(video.currentTime)
+            ? video.currentTime
+            : 0;
+
+          let bufferedAhead = 0;
+          let fullyBuffered = false;
+
+          for (let index = 0; index < video.buffered.length; index += 1) {
+            const start = video.buffered.start(index);
+            const end = video.buffered.end(index);
+
+            if (
+              currentTime >= start - .05
+              && currentTime <= end + .05
+            ) {
+              bufferedAhead = Math.max(bufferedAhead, end - currentTime);
             }
-          };
 
-          if ("requestIdleCallback" in window) {
-            window.requestIdleCallback(preloadIcons, { timeout: 1800 });
-          } else {
-            window.setTimeout(preloadIcons, 900);
+            if (
+              Number.isFinite(video.duration)
+              && video.duration > 0
+              && start <= .05
+              && end >= video.duration - .05
+            ) {
+              fullyBuffered = true;
+            }
+          }
+
+          if (
+            fullyBuffered
+            || bufferedAhead >= ICON_BUFFER_AHEAD_TARGET
+          ) {
+            stopWatchingIconBuffer();
+            window.loadDeferredCardIcons();
           }
         };
 
-        video.addEventListener("playing", scheduleDeferredIconPreloadAfterVideoStart, { once: true });
+        const startWatchingIconBufferAfterVideoStart = () => {
+          if (iconBufferWatchActive || deferredIconsRequested) return;
+          iconBufferWatchActive = true;
+
+          iconBufferEvents.forEach(eventName => {
+            video.addEventListener(eventName, maybeLoadIconsAfterSafeVideoBuffer);
+          });
+
+          maybeLoadIconsAfterSafeVideoBuffer();
+        };
+
+        video.addEventListener(
+          "playing",
+          startWatchingIconBufferAfterVideoStart,
+          { once: true }
+        );
 
         const contentHashPattern =
-          /^#(contenuti|profilo|ambito|seconda-valutazione|rapporto-diretto|consigli|contatti)$/;
+          /^#(contenuti|formazione|settori|second-opinion|fiducia|articoli|contatti)$/;
 
         if (
           window.__DIRECT_ARTICLE_ID__
@@ -357,38 +420,6 @@
             window.loadDeferredCardIcons();
           }
         }, true);
-
-        const stopWatchingVideoBuffer = () => {
-          ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
-            .forEach(eventName => {
-              video.removeEventListener(eventName, maybeLoadIconsAfterFullBuffer);
-            });
-        };
-
-        const maybeLoadIconsAfterFullBuffer = () => {
-          if (
-            !Number.isFinite(video.duration)
-            || video.duration <= 0
-            || video.buffered.length === 0
-          ) {
-            return;
-          }
-
-          let bufferedEnd = 0;
-          for (let index = 0; index < video.buffered.length; index += 1) {
-            bufferedEnd = Math.max(bufferedEnd, video.buffered.end(index));
-          }
-
-          if (bufferedEnd >= video.duration - .05) {
-            stopWatchingVideoBuffer();
-            window.loadDeferredCardIcons();
-          }
-        };
-
-        ["loadedmetadata", "durationchange", "progress", "canplaythrough", "suspend"]
-          .forEach(eventName => {
-            video.addEventListener(eventName, maybeLoadIconsAfterFullBuffer);
-          });
 
         source.src = useMobileHero
           ? "hero-video-mobile.mp4"
@@ -410,19 +441,33 @@
       </span>
     </a>
 
+    <button class="header-reading-theme-toggle" id="globalReadingThemeToggle" type="button" aria-label="Rendi chiari tutti i riquadri" title="Rendi chiari tutti i riquadri" aria-pressed="false">
+      <span class="header-reading-theme-icon header-reading-theme-icon-sun" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.1"></circle>
+          <path d="M12 3.4v1.8M12 18.8v1.8M3.4 12h1.8M18.8 12h1.8M6 6l1.25 1.25M16.75 16.75L18 18M18 6l-1.25 1.25M7.25 16.75L6 18"></path>
+        </svg>
+      </span>
+      <span class="header-reading-theme-icon header-reading-theme-icon-moon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+        </svg>
+      </span>
+    </button>
+
     <button class="menu-toggle" id="menuToggle" type="button" aria-label="Apri menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   </header>
 
   <nav class="glass-menu" id="glassMenu" aria-label="Navigazione principale">
-    <a href="#intro">Home</a>
-    <a href="#formazione">Formazione</a>
-    <a href="#settori">Settori</a>
-    <a href="#second-opinion">Second opinion</a>
-    <a href="#fiducia">Fiducia</a>
-    <a href="#articoli">Articoli</a>
-    <a href="#contatti">Contatti</a>
+    <a href="#intro"><span class="menu-label">Home</span></a>
+    <a href="#formazione"><span class="menu-label">Formazione</span></a>
+    <a href="#settori"><span class="menu-label">Settori</span></a>
+    <a href="#second-opinion"><span class="menu-label">Second opinion</span></a>
+    <a href="#fiducia"><span class="menu-label">Fiducia</span></a>
+    <a href="#articoli"><span class="menu-label">Articoli</span></a>
+    <a href="#contatti"><span class="menu-label">Contatti</span></a>
   </nav>
 
   <main>
@@ -648,7 +693,407 @@
   </article>
 </template>
 
+<template class="article-template" data-article-template="soglia-causale">
+  <article class="site-article" data-article="soglia-causale">
+    <h1 class="site-article-title">La soglia causale di evitabilità negli incidenti stradali</h1>
+    <div class="site-article-byline">
+      <div class="site-article-meta">
+        <time datetime="2026-09-04">4 settembre 2026</time>
+        <span class="site-article-meta-sep" aria-hidden="true">·</span>
+        <span>33 minuti di lettura</span>
+      </div>
+    </div>
+    <img class="site-article-hero" src="/articoli/immagini/soglia-causale.webp" alt="Illustrazione della soglia causale di evitabilità, della percezione del pericolo e dell’urto" width="1448" height="1100">
+    <div class="site-article-body">
+<h2 class="section-heading numbered">1. Dall’inevitabilità reattiva al problema causale</h2>
+<p>Nella ricostruzione degli incidenti stradali, la valutazione dell’evitabilità assume normalmente come riferimento iniziale l’istante in cui il pericolo diviene percepibile dal conducente la cui condotta è oggetto di esame. Da quel momento si verifica se l’evento sarebbe comunque accaduto qualora il conducente avesse tenuto la condotta conforme alla regola cautelare.</p>
+<p>Quando l’analisi riguarda il ruolo causale della velocità, alla velocità effettivamente tenuta viene sostituita la velocità conforme, ossia quella che, sulla base di una valutazione ex ante delle condizioni concrete della circolazione, il conducente avrebbe dovuto mantenere.</p>
+<p>La velocità conforme può coincidere con il limite numerico vigente, quando non ricorrono ulteriori circostanze che impongono una maggiore moderazione della marcia, oppure può essere rappresentata da una velocità prudenziale inferiore al limite, quando le caratteristiche della strada, le condizioni di visibilità, il traffico, le condizioni meteorologiche o altre circostanze concretamente conoscibili ex ante rendono esigibile una velocità più contenuta, in particolare ai sensi dell’art. 141 c.d.s.</p>
+<p>La velocità conforme non rappresenta pertanto un valore determinato a posteriori in funzione della velocità del veicolo in esame che avrebbe consentito di evitare l’evento, ma deve essere individuata autonomamente, sulla base del quadro fattuale disponibile prima dell’incidente e secondo una valutazione rigorosamente ex ante.</p>
+<p>Individuata la velocità conforme, l’analisi ordinaria considera il tempo di percezione e reazione tₚᵣ e verifica se, a partire dalla posizione occupata dal veicolo nel momento di percezione del pericolo, l’evento non si sarebbe verificato qualora il conducente avesse mantenuto quella velocità. La verifica può essere svolta secondo il criterio dell’evitabilità spaziale, accertando se il veicolo si sarebbe arrestato prima del punto d’urto, oppure secondo quello dell’evitabilità temporale, accertando se il ritardo nell’arrivo al punto di conflitto avrebbe consentito all’altro utente di liberare la fascia d’ingombro del mezzo in esame.</p>
+<p>Fin qui, l’analisi risponde a una domanda precisa: dal momento in cui il pericolo diviene percepibile, l’incidente si sarebbe comunque verificato anche se il conducente avesse mantenuto la velocità conforme?</p>
+<p>Se la risposta è positiva, l’analisi classica conclude che l’incidente era inevitabile anche alla velocità conforme. Il problema nasce quando da questo risultato si fa discendere che anche la velocità non conforme mantenuta nella fase immediatamente antecedente sia causalmente irrilevante. È quest’ultimo passaggio che non è necessariamente corretto.</p>
+<p>La ragione è che l’istante in cui il pericolo diviene percepibile coincide spesso con una configurazione spazio-temporale nella quale l’evento è ormai inevitabile proprio a causa della velocità non conforme mantenuta nella fase immediatamente precedente. In una simile situazione, la distanza e il tempo disponibili possono risultare insufficienti non per una circostanza indipendente dalla condotta del conducente, ma perché quella stessa condotta ha portato il veicolo a trovarsi in una posizione più avanzata rispetto a quella che avrebbe occupato mantenendo la velocità conforme.</p>
+<p>Si verifica così una situazione paradossale: l’inevitabilità accertata nella fase terminale della sequenza viene utilizzata per escludere il ruolo causale della medesima condotta che ha contribuito proprio a determinare quella situazione di inevitabilità.</p>
+<p>La corretta delimitazione del giudizio di evitabilità assume quindi rilievo non soltanto sul piano teorico, ma anche sul piano applicativo, poiché concentrare l’analisi sulla sola fase terminale della sequenza può incidere in modo decisivo sull’accertamento della responsabilità e, in ambito civile, sul riconoscimento e sulla misura del risarcimento.</p>
+<p>Il metodo della soglia causale di evitabilità (SCE) nasce dall’esigenza di verificare proprio il rapporto tra l’inevitabilità accertata nella fase terminale e la velocità mantenuta nella fase immediatamente antecedente. L’obiettivo è stabilire se l’inevitabilità accertata a partire dal momento di percezione del pericolo costituisca un dato indipendente da quella velocità oppure rappresenti già l’effetto finale di una condotta non conforme causalmente rilevante.</p>
+<h2 class="section-heading numbered">2. Inevitabilità reattiva terminale ed evitabilità causale antecedente</h2>
+<p>L’inevitabilità accertata a partire dal momento di percezione del pericolo viene qui definita inevitabilità reattiva terminale. In quella configurazione, il conducente non dispone più di margini sufficienti, in termini di spazio e di tempo, per impedire l’evento attraverso una normale reazione, anche attribuendogli in quel momento la velocità conforme. Questo risultato non dimostra, tuttavia, l’irrilevanza causale della velocità non conforme mantenuta nella fase antecedente.</p>
+<p>Quando, estendendo la verifica alla fase immediatamente antecedente, il mantenimento della velocità conforme avrebbe impedito l’evento, si parla invece di evitabilità causale antecedente.</p>
+<p>Il momento di percezione del pericolo non coincide necessariamente con l’origine della situazione causalmente rilevante. In alcuni casi, il rischio che conduce all’evento è già stato determinato dalla precedente condotta in termini di velocità, quando proprio quella condotta ha portato il veicolo in una configurazione spazio-temporale dalla quale il successivo pericolo non è più fronteggiabile.</p>
+<p>La conduzione di un veicolo è infatti soggetta a un dovere cautelare continuo, che impone di adeguare costantemente la velocità alle condizioni concrete della circolazione. L’esigibilità di una condotta prudente non nasce quindi soltanto nel momento in cui si manifesta uno specifico pericolo, ma può essere già presente nella fase antecedente.</p>
+<p>In questi casi, la sequenza causale deve essere ricostruita in termini diversi. La velocità non conforme mantenuta nella fase immediatamente antecedente determina una posizione del veicolo più avanzata rispetto a quella che avrebbe occupato mantenendo la velocità conforme; ne deriva una riduzione dei margini disponibili e l’ingresso in una situazione di inevitabilità reattiva già prima che il pericolo divenga percepibile. Seguono quindi la percezione, la reazione e l’urto.</p>
+<p>In questa prospettiva, la percezione del pericolo nella fase terminale non rappresenta necessariamente l’origine causale dell’evento, ma il momento nel quale diventano evidenti gli effetti di una situazione di rischio già determinata dalla condotta antecedente.</p>
+<p>In questi casi, l’inevitabilità terminale non dimostra quindi l’assenza di efficacia causale della precedente velocità non conforme, ma ne costituisce l’esito finale.</p>
+<p>La domanda da formulare diventa allora diversa: qual è la configurazione spazio-temporale più prossima all’urto, individuata procedendo a ritroso lungo la sequenza, a partire dalla quale il mantenimento della velocità conforme avrebbe impedito l’evento, fermi restando il successivo momento di percezione del pericolo, il tempo di percezione e reazione e le altre condizioni della sequenza, salvo le modificazioni che derivano necessariamente dalla diversa velocità?</p>
+<p>La configurazione così individuata costituisce la soglia causale di evitabilità. Nel seguito, in assenza di possibili equivoci, sarà indicata semplicemente come soglia.</p>
+<h2 class="section-heading numbered">3. Le coordinate spazio-temporali della soglia causale</h2>
+<p>La soglia viene individuata attraverso due coordinate riferite direttamente all’urto: la distanza di soglia dₛₒ e il tempo di soglia tₛₒ.</p>
+<p>Quando la soglia è determinata secondo il criterio dell’evitabilità spaziale viene indicata come SCEₛ; quando è determinata secondo il criterio dell’evitabilità temporale, come SCEₜ.</p>
+<p>La distanza di soglia dₛₒ è la distanza del veicolo dal punto d’urto, misurata lungo la sua traiettoria, in corrispondenza della soglia.</p>
+<p>Il tempo di soglia tₛₒ è l’intervallo temporale compreso tra la soglia e l’istante dell’urto.</p>
+<p>Entrambe le coordinate sono quindi riferite direttamente all’urto.</p>
+<p>L’istante di percezione del pericolo rimane essenziale per ricostruire la successiva reazione del conducente, ma non costituisce necessariamente il limite iniziale dell’analisi causale.</p>
+<p>La soglia individua anzitutto un dato cinematico, rappresentato dalla configurazione spazio-temporale più prossima all’urto a partire dalla quale il mantenimento della velocità conforme avrebbe impedito l’evento concreto. La sua determinazione, da sola, non consente ancora di affermare che quella velocità fosse giuridicamente dovuta già in quel momento.</p>
+<p>Una volta individuata la soglia, occorre quindi verificare se, in corrispondenza di quella stessa configurazione spazio-temporale, la velocità conforme utilizzata nel calcolo fosse già concretamente e giuridicamente esigibile ex ante.</p>
+<h2 class="section-heading numbered">4. Un esempio: il pedone nascosto da un furgone parcheggiato</h2>
+<p>L’esempio che segue ha esclusiva funzione illustrativa del metodo. I valori numerici e le assunzioni cinematiche adottati non costituiscono parametri di riferimento per i casi reali, nei quali ogni dato deve essere determinato autonomamente sulla base degli elementi disponibili nel caso concreto.</p>
+<p>Si consideri un incidente che avviene lungo un tratto di strada soggetto al limite di 50 km/h, mentre un’autovettura procede alla velocità di 90 km/h. Ai fini dell’esempio, si assume che, nelle condizioni concrete considerate, la velocità conforme coincida con il limite di 50 km/h. La velocità effettiva e quella conforme corrispondono dunque rispettivamente a 25 m/s e a circa 13,89 m/s.</p>
+<p>Un pedone inizia ad attraversare la carreggiata, da destra a sinistra rispetto al verso di marcia della vettura, provenendo da dietro un furgone parcheggiato che ne impedisce completamente l’avvistamento al conducente fino al momento in cui il pedone emerge dalla sua sagoma.</p>
+<p>Dopo essere emerso dalla sagoma del furgone, il pedone percorre 1 metro sulla carreggiata e viene colpito dallo spigolo anteriore destro della vettura.</p>
+<p>Si assumono inoltre la velocità costante del pedone pari a 1,5 m/s, la larghezza dell’autovettura pari a 1,8 m, il tempo di percezione e reazione tₚᵣ pari a 1 s e, per la successiva fase di frenata, una decelerazione costante pari a 7 m/s².</p>
+<p>In una ricostruzione reale, i parametri devono essere determinati sulla base degli elementi disponibili nel caso concreto e la distanza di arresto va calcolata mediante il modello tecnicamente appropriato, considerando, ove necessario, anche la fase di stabilizzazione della frenata e gli ulteriori parametri normalmente utilizzati nella ricostruzione.</p>
+<p>Poiché il pedone percorre 1 metro alla velocità di 1,5 m/s prima di essere colpito, il tempo intercorrente tra la sua comparsa oltre la sagoma del furgone e l’urto è pari a circa 0,67 s (1 / 1,5 ≈ 0,67 s).</p>
+<p>Nello stesso intervallo di tempo l’autovettura, procedendo alla velocità effettiva di 90 km/h, percorre circa 16,7 m [25 × (1 / 1,5) ≈ 16,7 m].</p>
+<p>Nel momento della percezione del pericolo, l’autovettura si trova quindi a circa 16,7 m dal punto d’urto.</p>
+<h2 class="section-heading numbered">5. L’analisi classica: evitabilità spaziale</h2>
+<p>Secondo il criterio dell’evitabilità spaziale, l’analisi classica sostituisce alla velocità effettiva di 90 km/h quella conforme di 50 km/h, assumendo come configurazione iniziale quella corrispondente al momento della percezione del pericolo, quando l’autovettura si trova a circa 16,7 m dal punto d’urto.</p>
+<p>Alla velocità di 50 km/h, corrispondente a circa 13,89 m/s, durante il tempo di percezione e reazione tₚᵣ pari a 1 s l’autovettura percorre circa 13,9 m (13,89 × 1 ≈ 13,9 m).</p>
+<p>Assumendo per la successiva fase di frenata una decelerazione costante pari a 7 m/s², la distanza di frenata risulta pari a circa 13,8 m [13,89² / (2 × 7) ≈ 13,8 m].</p>
+<p>La distanza complessivamente necessaria all’arresto è quindi pari a circa 27,7 m [13,89 + 13,89² / (2 × 7) ≈ 27,7 m], mentre la distanza disponibile nel momento della percezione del pericolo è di soli 16,7 m.</p>
+<p>Poiché la distanza necessaria all’arresto è ampiamente superiore a quella disponibile, l’arresto prima del punto d’urto risulta impossibile.</p>
+<p>L’esito dell’analisi dell’evitabilità spaziale è pertanto univoco: alla velocità conforme di 50 km/h, lo spazio disponibile nel momento della percezione del pericolo non consente l’arresto dell’autovettura prima del punto d’urto.</p>
+<h2 class="section-heading numbered">6. L’analisi classica: evitabilità temporale</h2>
+<p>L’evitabilità dell’investimento può essere verificata anche secondo il criterio classico dell’evitabilità temporale, accertando se la riduzione della velocità del veicolo avrebbe determinato un ritardo nel raggiungimento del punto di conflitto sufficiente a consentire al pedone di liberare completamente la fascia d’ingombro dell’autovettura.</p>
+<p>Nell’esempio in esame, il pedone viene colpito dallo spigolo anteriore destro del veicolo dopo avere percorso 1 m dalla sagoma del furgone. Per liberare completamente la fascia d’ingombro dell’autovettura sopraggiungente, il pedone deve quindi percorrere almeno l’intera larghezza dell’autovettura, assunta pari a 1,8 m. Di conseguenza, la distanza complessivamente necessaria risulta pari a 2,8 m (1 + 1,8 = 2,8 m).</p>
+<p>Alla velocità costante di 1,5 m/s, il pedone necessita di circa 1,87 s per percorrere tale distanza (2,8 / 1,5 ≈ 1,87 s).</p>
+<p>Occorre pertanto verificare se, sostituendo alla velocità effettiva quella conforme di 50 km/h nel momento della percezione del pericolo, l’autovettura raggiungerebbe il punto di conflitto prima o dopo tale intervallo.</p>
+<p>Durante il tempo di percezione e reazione tₚᵣ pari a 1 s, l’autovettura percorre circa 13,9 m. Dei circa 16,7 m inizialmente disponibili ne rimangono quindi circa 2,8 m.</p>
+<p>Applicando al tratto residuo l’equazione del moto uniformemente decelerato, con velocità iniziale pari a circa 13,89 m/s e decelerazione costante pari a 7 m/s², l’autovettura raggiunge il punto di conflitto dopo ulteriori circa 0,21 s. Il tempo complessivo trascorso da quel momento risulta pertanto pari a circa 1,21 s.</p>
+<p>Nello stesso intervallo il pedone percorre circa 1,8 m (1,5 × 1,21 ≈ 1,8 m), mentre per liberare completamente la fascia d’ingombro del mezzo ne sarebbero necessari 2,8 m.</p>
+<p>Anche secondo il criterio classico dell’evitabilità temporale, pertanto, l’investimento risulta inevitabile.</p>
+<p>La conclusione dell’analisi classica è netta: assumendo come riferimento iniziale il momento della percezione del pericolo, l’incidente risulta inevitabile anche sostituendo alla velocità effettiva di 90 km/h quella conforme di 50 km/h, sia secondo il criterio dell’evitabilità spaziale, per impossibilità di arresto prima del punto d’urto, sia secondo quello dell’evitabilità temporale, per insufficienza del tempo necessario al pedone per liberare la fascia d’ingombro del veicolo.</p>
+<p>La conclusione è corretta rispetto al punto di partenza assunto dall’analisi classica, ossia il momento della percezione del pericolo. Resta però da verificare se, per valutare il ruolo causale della velocità, quell’istante costituisca davvero il corretto punto di partenza o se l’analisi debba comprendere anche la fase immediatamente antecedente.</p>
+<h2 class="section-heading numbered">7. La soglia causale di evitabilità spaziale</h2>
+<p>Alla velocità conforme di 50 km/h, l’autovettura necessita di circa 27,7 m per arrestarsi prima del punto d’urto, mentre, nel momento di percezione del pericolo, dispone di soli 16,7 m. Il margine spaziale mancante è quindi pari a circa 11,0 m (27,7 − 16,7 ≈ 11,0 m).</p>
+<p>La differenza tra la velocità effettiva di 90 km/h, pari a 25 m/s, e quella conforme di 50 km/h, pari a circa 13,89 m/s, è di circa 11,11 m/s (25 − 13,89 ≈ 11,11 m/s).</p>
+<p>Assumendo, nell’esempio, che l’autovettura abbia mantenuto la velocità costante di 90 km/h anche nei brevi istanti antecedenti al momento di percezione del pericolo, anticipando di un secondo il mantenimento della velocità conforme la posizione controfattuale dell’autovettura risulta arretrata di circa 11,11 m rispetto a quella effettiva. Per ottenere il margine aggiuntivo di 11,0 m necessario all’arresto è pertanto sufficiente anticipare il mantenimento della velocità conforme di circa 0,99 s (11,0 / 11,11 ≈ 0,99 s).</p>
+<p>Sul piano cinematico, sarebbe stato quindi sufficiente che l’autovettura procedesse alla velocità conforme di 50 km/h già da circa 0,99 s prima del momento di percezione del pericolo perché, in quel momento, si trovasse a una distanza sufficiente a consentire la normale percezione e reazione del conducente e il successivo arresto prima del punto d’urto.</p>
+<p>Poiché il momento di percezione del pericolo si colloca circa 0,67 s prima dell’urto, il tempo di soglia risulta pari a circa 1,66 s prima dell’urto (tₛₒ = 0,67 + 0,99 ≈ 1,66 s).</p>
+<p>Nella sequenza effettiva ipotizzata, caratterizzata da una velocità costante di 90 km/h nell’intervallo considerato, a tale istante corrisponde una distanza dal punto d’urto di circa 41,4 m (dₛₒ = 25 × 1,66 ≈ 41,4 m).</p>
+<p>La soglia causale di evitabilità spaziale, indicata come SCEₛ, si colloca pertanto circa 1,66 s prima dell’urto, quando l’autovettura si trova a circa 41,4 m dal punto d’urto.</p>
+<p>Il risultato mostra che è sufficiente anticipare il mantenimento della velocità conforme di circa 0,99 s rispetto al momento di percezione del pericolo perché un investimento inevitabile secondo l’analisi classica dell’evitabilità spaziale divenga evitabile mediante arresto.</p>
+<h2 class="section-heading numbered">8. La soglia causale di evitabilità temporale</h2>
+<p>Il medesimo procedimento può essere applicato al criterio dell’evitabilità temporale, verificando quanto debba essere anticipato il mantenimento della velocità conforme affinché il conseguente ritardo nell’arrivo dell’autovettura al punto di conflitto consenta al pedone di liberare completamente la fascia d’ingombro.</p>
+<p>Come già calcolato, alla velocità costante di 1,5 m/s il pedone necessita di circa 1,87 s per percorrere i 2,8 m necessari a liberare completamente la fascia d’ingombro dell’autovettura. Nell’esempio, tale intervallo decorre dal momento in cui il pedone emerge dalla sagoma del furgone, coincidente con il momento di percezione del pericolo.</p>
+<p>Affinché l’investimento venga evitato secondo il criterio temporale, l’autovettura non deve raggiungere il punto di conflitto prima che sia trascorso tale intervallo. Alla velocità conforme di 50 km/h, considerando 1 s di percezione e reazione e la successiva frenata con decelerazione costante pari a 7 m/s², in 1,87 s l’autovettura percorre circa 23,3 m [13,89 + (13,89 × 0,87 − 0,5 × 7 × 0,87²) ≈ 23,3 m].</p>
+<p>Nel momento di percezione del pericolo, nella sequenza effettiva l’autovettura si trova invece a circa 16,7 m dal punto d’urto. È pertanto necessario un margine aggiuntivo di circa 6,6 m (23,3 − 16,7 ≈ 6,6 m).</p>
+<p>Poiché la differenza tra la velocità effettiva di 90 km/h e quella conforme di 50 km/h è pari a circa 11,11 m/s, il margine necessario si ottiene anticipando il mantenimento della velocità conforme di circa 0,60 s rispetto al momento di percezione del pericolo (calcolando sui valori non arrotondati, ≈ 0,60 s).</p>
+<p>La soglia causale di evitabilità temporale, indicata come SCEₜ, si colloca quindi circa 0,60 s prima del momento di percezione del pericolo. Calcolando sui valori non arrotondati, il corrispondente tempo di soglia rispetto all’urto è pari a circa 1,26 s.</p>
+<p>Nella sequenza effettiva ipotizzata, caratterizzata dalla velocità costante di 90 km/h nell’intervallo considerato, a tale istante corrisponde una distanza dal punto d’urto di circa 31,6 m.</p>
+<p>La SCEₜ si colloca pertanto circa 1,26 s prima dell’urto, quando l’autovettura si trova a circa 31,6 m dal punto d’urto.</p>
+<p>Il risultato mostra che è sufficiente anticipare il mantenimento della velocità conforme di circa 0,60 s rispetto al momento di percezione del pericolo perché un investimento inevitabile secondo l’analisi classica dell’evitabilità temporale divenga evitabile mediante il ritardo nell’arrivo dell’autovettura al punto di conflitto.</p>
+<p>L’evitabilità temporale richiede tuttavia una cautela ulteriore, tanto nell’analisi classica quanto nell’applicazione della SCEₜ. Essa presuppone infatti che il pedone prosegua il proprio movimento secondo la velocità e la traiettoria considerate. In una situazione reale, la percezione del veicolo potrebbe invece indurlo ad arrestarsi, accelerare, arretrare o modificare diversamente il proprio moto.</p>
+<p>L’evitabilità spaziale presenta, sotto questo profilo, una maggiore robustezza controfattuale: una volta dimostrato che il veicolo si sarebbe arrestato prima del punto d’urto, le eventuali variazioni del successivo comportamento del pedone non incidono più sul meccanismo impeditivo considerato.</p>
+<p>La SCEₛ e la SCEₜ non devono pertanto necessariamente coincidere, poiché individuano due diversi meccanismi impeditivi dell’evento. Deve essere sempre precisato quale meccanismo conduce alla soglia individuata e quali ulteriori assunzioni controfattuali esso richiede.</p>
+<h2 class="section-heading numbered">9. Il significato causale della soglia di evitabilità</h2>
+<p>I valori appena calcolati individuano, per i due criteri considerati, due diverse configurazioni spazio-temporali della soglia causale di evitabilità. Tale differenza non costituisce una peculiarità della SCE, ma riflette la distinzione, già propria dell’analisi classica, tra evitabilità spaziale ed evitabilità temporale, fondate su differenti meccanismi impeditivi dell’evento.</p>
+<p>Nell’esempio, secondo il criterio dell’evitabilità spaziale, la soglia si colloca a circa 41,4 m dal punto d’urto e, secondo il criterio dell’evitabilità temporale, a circa 31,6 m. La prima individua la configurazione dalla quale il mantenimento della velocità conforme avrebbe consentito l’arresto prima del punto d’urto, mentre la seconda individua quella dalla quale il ritardo nell’arrivo al punto di conflitto avrebbe consentito al pedone di liberare la fascia d’ingombro del veicolo.</p>
+<p>I due criteri non sono alternativi in senso esclusivo. La loro applicazione dipende dalla sequenza spazio-temporale ricostruita, dal meccanismo impeditivo concretamente ipotizzabile e dai dati disponibili. Quando entrambi risultano tecnicamente applicabili, possono essere sviluppate entrambe le verifiche, precisando per ciascuna il meccanismo impeditivo considerato e le assunzioni controfattuali necessarie.</p>
+<p>Le soglie così individuate, però, non dimostrano ancora che il conducente fosse già tenuto a procedere alla velocità conforme assunta nel calcolo, pari a 50 km/h nello specifico esempio considerato. Tale valore coincide qui, per ipotesi, con il limite numerico vigente, ma nei casi concreti la velocità conforme deve essere determinata autonomamente sulla base delle condizioni conoscibili ex ante e può anche risultare inferiore al limite.</p>
+<p>Le soglie stabiliscono soltanto a partire da quali configurazioni il mantenimento della velocità conforme avrebbe assunto efficacia impeditiva rispetto all’evento.</p>
+<p>La domanda diventa dunque semplice: quando l’autovettura si trovava, rispettivamente, a circa 41,4 m e 31,6 m dal punto d’urto, la velocità conforme assunta nell’esempio, pari a 50 km/h, era già concretamente esigibile ex ante?</p>
+<p>È questa verifica che consente di passare dal mero calcolo cinematico alla valutazione giuridica della rilevanza causale della condotta.</p>
+<h2 class="section-heading numbered">10. Il giudizio di esigibilità ex ante</h2>
+<p>La giurisprudenza penale di legittimità ha più volte evidenziato che, soprattutto nell’applicazione delle regole cautelari elastiche, la condotta dovuta non può essere individuata a posteriori scegliendo semplicemente quella che, alla luce dell’evento ormai verificatosi, avrebbe consentito di evitarlo.</p>
+<p>Cass. pen., Sez. IV, n. 40050/2018 ha affermato la necessità di individuare la velocità adeguata sulla base delle circostanze concretamente esistenti e conoscibili dal conducente, secondo una valutazione ex ante e non muovendo dal risultato conosciuto ex post.</p>
+<p>Il principio assume particolare rilievo in Cass. pen., Sez. IV, n. 16108/2023, che ha censurato la sovrapposizione tra la velocità individuata ex post come idonea a evitare l’evento e quella effettivamente esigibile alla luce delle condizioni preesistenti e conoscibili.</p>
+<p>La SCE non sostituisce questo giudizio con un calcolo cinematico, ma individua il momento della sequenza con riferimento al quale deve essere valutata l’esigibilità ex ante della velocità conforme.</p>
+<p>Il calcolo cinematico stabilisce da quale momento il mantenimento della velocità conforme avrebbe consentito di evitare l’evento.</p>
+<p>Il successivo giudizio giuridico deve invece stabilire se, in quel momento, la velocità conforme fosse già concretamente esigibile ex ante.</p>
+<p>Solo se entrambe le verifiche hanno esito positivo, la velocità non conforme mantenuta nella fase immediatamente antecedente assume rilevanza nel giudizio causale secondo il metodo, ferma restando la valutazione degli ulteriori profili causali rilevanti nel caso concreto.</p>
+<h2 class="section-heading numbered">11. Velocità conforme ed evitabilità nel caso concreto</h2>
+<p>L’applicazione della SCE presuppone l’individuazione della velocità conforme da utilizzare nel giudizio controfattuale. Tale velocità deve essere determinata secondo una valutazione ex ante delle condizioni concrete della circolazione e non può essere scelta a posteriori in funzione della sua capacità di evitare l’incidente.</p>
+<p>Nell’esempio fin qui considerato, per semplicità, la velocità conforme è stata assunta pari a 50 km/h, coincidente con il limite numerico vigente. Lo stesso art. 142, comma 5, c.d.s. stabilisce tuttavia che, anche quando sono fissati limiti di velocità, restano fermi gli obblighi previsti dall’art. 141 c.d.s. Il rispetto del limite numerico non esaurisce quindi il dovere di adeguare la velocità alle condizioni concrete della circolazione e la velocità conforme può risultare inferiore al limite vigente.</p>
+<p>Si consideri ora un diverso esempio, nel quale un’autovettura procede alla velocità effettiva di 50 km/h lungo un tratto di strada soggetto al medesimo limite numerico. Il conducente rispetta quindi il limite massimo previsto per quel tratto.</p>
+<p>Si assuma però, ai soli fini dell’esempio, che una valutazione ex ante delle condizioni concrete, quali guida notturna, pioggia, ridotta visibilità, presenza di veicoli parcheggiati e conseguente limitazione del campo visivo, conduca a ritenere concretamente esigibile una velocità prudenziale di 30 km/h.</p>
+<p>Il valore di 30 km/h deve essere quindi giustificato indipendentemente dal successivo calcolo di evitabilità e non può essere individuato semplicemente perché, a posteriori, risulta idoneo a evitare l’incidente.</p>
+<p>I calcoli del nuovo esempio vengono sviluppati con riferimento alla sola evitabilità spaziale.</p>
+<p>Mantenendo la stessa geometria dell’esempio precedente, il pedone impiega circa 0,67 s dal momento di percezione del pericolo all’urto. Procedendo alla velocità effettiva di 50 km/h, pari a circa 13,89 m/s, nello stesso intervallo l’autovettura percorre circa 9,3 m [13,89 × (1 / 1,5) ≈ 9,3 m].</p>
+<p>La velocità prudenziale ipotizzata di 30 km/h corrisponde a circa 8,33 m/s. Con un tempo di percezione e reazione tₚᵣ pari a 1 s e una decelerazione costante pari a 7 m/s², la distanza complessivamente necessaria all’arresto è di circa 13,3 m [8,33 + 8,33² / (2 × 7) ≈ 13,3 m].</p>
+<p>Applicando il criterio classico dell’evitabilità spaziale, l’investimento risulta inevitabile: nel momento di percezione del pericolo sono disponibili circa 9,3 m, mentre ne occorrono circa 13,3 per arrestare l’autovettura prima del punto d’urto.</p>
+<p>L’analisi classica dell’evitabilità spaziale conduce dunque a escludere l’evitabilità dell’investimento anche sostituendo, nel momento di percezione del pericolo, alla velocità effettiva di 50 km/h la velocità prudenziale di 30 km/h. Anche il criterio classico dell’evitabilità temporale condurrebbe al medesimo risultato, poiché il ritardo prodotto dalla velocità prudenziale di 30 km/h non sarebbe sufficiente a consentire al pedone di liberare completamente la fascia d’ingombro dell’autovettura.</p>
+<p>L’applicazione della soglia causale consente invece di verificare se la stessa conclusione rimanga valida considerando anche la fase immediatamente antecedente.</p>
+<p>La differenza tra la distanza necessaria all’arresto e quella disponibile è di circa 4,0 m (13,3 − 9,3 ≈ 4,0 m), mentre la differenza tra la velocità effettiva di 50 km/h e quella prudenziale di 30 km/h è pari a circa 5,56 m/s.</p>
+<p>Per acquisire il margine spaziale mancante è sufficiente anticipare il mantenimento della velocità prudenziale di circa 0,73 s rispetto al momento di percezione del pericolo, calcolando sui valori non arrotondati.</p>
+<p>Nella sequenza effettiva, caratterizzata dalla velocità costante di 50 km/h nell’intervallo considerato, la soglia causale di evitabilità spaziale si colloca a circa 19,3 m dal punto d’urto (dₛₒ ≈ 19,3 m), corrispondenti a circa 1,39 s prima dell’urto (tₛₒ ≈ 1,39 s).</p>
+<p>Il risultato modifica la prospettiva dell’analisi. Un investimento che, assumendo come riferimento iniziale il momento di percezione del pericolo, risulta inevitabile anche alla velocità prudenziale di 30 km/h diviene evitabile se quella stessa velocità viene mantenuta già da quando l’autovettura si trova a circa 19,3 m dal punto d’urto, invece che soltanto dal momento di percezione del pericolo, quando la distanza disponibile è ormai ridotta a circa 9,3 m.</p>
+<p>La domanda diventa allora decisiva: quando l’autovettura si trovava a circa 19,3 m dal punto d’urto, erano già presenti e concretamente conoscibili le condizioni che rendevano ex ante esigibile la velocità prudenziale di 30 km/h?</p>
+<p>Se la risposta è positiva, l’inevitabilità accertata dall’analisi classica non esclude la rilevanza causale della velocità mantenuta nella fase immediatamente antecedente. Se la risposta è negativa, il fatto che 30 km/h avrebbero matematicamente consentito di evitare l’investimento non è sufficiente ad attribuire rilevanza causale alla condotta precedente.</p>
+<p>È in questo passaggio che emerge una delle principali conseguenze applicative del metodo qui proposto. Se, alla distanza dalla quale il mantenimento della velocità conforme avrebbe consentito di evitare l’incidente, quella velocità era già concretamente esigibile ex ante, l’inevitabilità accertata a partire dal momento di percezione del pericolo non consente più di escludere il ruolo causale della velocità mantenuta nella fase immediatamente antecedente.<br/> <br/>Un incidente considerato inevitabile secondo l’analisi classica può così risultare evitabile alla luce della condotta conforme effettivamente esigibile, imponendo una diversa valutazione causale della condotta del conducente.</p>
+<h2 class="section-heading numbered">12. Aderenza al fatto concreto e minima alterazione controfattuale</h2>
+<p>Una rappresentazione intuitiva del metodo può essere ottenuta immaginando una ripresa zenitale dell’incidente, idealmente realizzata da un drone virtuale. Il filmato riproduce la sequenza effettivamente ricostruita: la traiettoria del veicolo, il suo profilo di velocità, il movimento del pedone, il momento di percezione del pericolo, la successiva reazione del conducente e, infine, l’urto.</p>
+<p>La SCE assume questa sequenza come riferimento e non costruisce liberamente uno scenario alternativo. Il controfattuale interviene sulla sequenza ricostruita modificando esclusivamente la condotta oggetto della verifica causale, che viene sostituita con quella conforme. Tutti gli altri elementi rimangono invariati, salvo le modificazioni che derivano necessariamente dalla diversa condotta introdotta.</p>
+<p>Da questa impostazione derivano due principi metodologici strettamente connessi.<br/>Il principio di aderenza al fatto concreto richiede che la determinazione della soglia causale di evitabilità muova dalla ricostruzione spazio-temporale dell’incidente e dalle concrete modalità con cui l’evento si è verificato. La SCE non prende quindi origine da uno scenario ipotetico costruito a posteriori, ma dal fatto realmente avvenuto.</p>
+<p>Il principio di minima alterazione controfattuale richiede invece che, nel formulare il comportamento alternativo conforme, venga modificata la sola condotta oggetto della verifica causale, evitando di alterare ulteriori elementi della sequenza, salvo quando la loro variazione derivi necessariamente dalla modifica introdotta.</p>
+<p>Sotto il profilo della minima alterazione controfattuale, un riferimento significativo è rinvenibile nella decisione del Bundesgerichtshof del 6 novembre 1984, 4 StR 72/84. Il giudizio controfattuale viene costruito sostituendo alla sola condotta contestata quella conforme e mantenendo ferme, per quanto possibile, le ulteriori circostanze della sequenza. La decisione colloca tuttavia l’inizio della verifica causale nell’ingresso nella concreta situazione critica di traffico ed esclude la rilevanza di precedenti eccessi di velocità quando abbiano soltanto determinato la presenza del veicolo nel luogo dell’incidente in quel determinato momento. Il richiamo presenta quindi affinità con la SCE quanto al criterio di minima alterazione del fatto ricostruito, ma non costituisce un precedente diretto dell’arretramento dell’analisi proposto dal metodo.</p>
+<p>Questo criterio assume particolare importanza nell’applicazione della SCE, perché impedisce che la verifica causale si trasformi nella costruzione di una storia alternativa dell’incidente. Il controfattuale non deve ricostruire come l’incidente avrebbe potuto svolgersi diversamente in ogni suo elemento. Deve modificare soltanto la condotta sottoposta a verifica e seguire, da quel momento, le sole conseguenze necessariamente prodotte dalla modifica introdotta.</p>
+<h2 class="section-heading numbered">13. Velocità antecedente e limiti del controfattuale</h2>
+<p>I calcoli sviluppati nell’esempio assumono, per semplicità espositiva, che la velocità effettiva di 90 km/h sia rimasta costante nel breve intervallo antecedente al momento di percezione del pericolo. Tale assunzione non costituisce tuttavia un presupposto del metodo.</p>
+<p>Nell’applicazione al caso concreto, la determinazione della soglia di evitabilità deve essere condotta utilizzando la migliore ricostruzione disponibile dell’effettivo profilo di velocità del veicolo. Se l’autovettura si trovava in fase di accelerazione, la velocità mantenuta negli istanti precedenti poteva essere inferiore a quella rilevata nella fase terminale; se si trovava invece in fase di decelerazione, poteva essere superiore.</p>
+<p>Quando la soglia di evitabilità si colloca a pochi decimi di secondo dal momento di percezione del pericolo, o comunque all’interno di una fase della sequenza ricostruita con sufficiente precisione, le ordinarie variazioni della velocità possono avere un’incidenza limitata sul risultato. La loro influenza può comunque essere verificata ripetendo il calcolo entro un intervallo ragionevole di valori.</p>
+<p>Quando l’individuazione della soglia di evitabilità richiede di risalire significativamente nel tempo, diviene meno giustificato estendere automaticamente alla fase antecedente la velocità rilevata in prossimità dell’urto. In tali casi, la determinazione di tₛₒ e dₛₒ richiede una ricostruzione più articolata del profilo di velocità, fondata, ove disponibili, su dati EDR o telemetrici, videoriprese, tracce materiali, caratteristiche prestazionali del veicolo e ogni altro elemento tecnicamente utilizzabile.</p>
+<p>L’arretramento temporale necessario per individuare la soglia di evitabilità non costituisce quindi, di per sé, un limite rigido all’applicabilità della SCE, ma incide direttamente sulla robustezza della ricostruzione e sul livello di supporto tecnico e probatorio richiesto. La regressione trova il proprio limite concreto nel punto oltre il quale gli elementi disponibili non consentono più di ricostruire con sufficiente affidabilità la velocità effettivamente mantenuta dal veicolo e le altre condizioni rilevanti della sequenza, secondo lo standard probatorio proprio dell’ambito nel quale il risultato viene utilizzato.</p>
+<p>La necessità di mantenere il controfattuale aderente alla sequenza reale pone inoltre un problema distinto. Una diversa velocità modifica inevitabilmente la sincronizzazione tra gli utenti della strada e può determinare, in astratto, scenari nei quali l’evento non si sarebbe verificato per ragioni meramente temporali. Per esempio, un valore ancora superiore a quello effettivamente mantenuto avrebbe potuto consentire all’autovettura di oltrepassare l’area di conflitto prima dell’ingresso del pedone nella propria traiettoria.</p>
+<p>Una simile ricostruzione può essere cinematicamente corretta, ma è estranea al controfattuale considerato dalla SCE. Il confronto non riguarda infatti qualsiasi diversa velocità capace di evitare l’incidente, ma la velocità conforme alla regola cautelare applicabile.</p>
+<p>Una velocità ancora maggiore, proprio perché ulteriormente difforme dalla condotta dovuta, non rappresenta quindi un termine di confronto pertinente. La circostanza che avrebbe potuto evitare quello specifico evento attraverso una diversa sincronizzazione spazio-temporale non esclude la rilevanza causale della velocità non conforme effettivamente mantenuta.</p>
+<p>Il controfattuale della SCE resta pertanto delimitato dalla condotta conforme. Il parametro oggetto della verifica viene modificato nella direzione imposta dalla regola cautelare, mentre gli altri elementi della sequenza restano invariati, salvo le modificazioni che derivano necessariamente dalla diversa condotta introdotta.</p>
+<h2 class="section-heading numbered">14. Analisi classica e SCE nel giudizio di evitabilità</h2>
+<p>La SCE non sostituisce l’analisi classica dell’evitabilità, ma ne utilizza gli elementi ricostruttivi e i risultati. Nel controfattuale vengono mantenute ferme, per quanto compatibili con la diversa velocità considerata, le condizioni della sequenza reale, compresi il momento di percezione del pericolo, il tempo di percezione e reazione, la capacità frenante del veicolo e, quando rilevante, il movimento dell’altro utente della strada. Restano ammesse le modificazioni che derivano necessariamente dalla diversa condotta introdotta.</p>
+<p>L’analisi classica conserva una funzione essenziale, perché stabilisce se, da quel momento, l’evento fosse ancora evitabile secondo il criterio dell’evitabilità spaziale o temporale.</p>
+<p>La SCE estende invece la verifica alla fase immediatamente antecedente e pone una domanda ulteriore: l’inevitabilità accertata nel momento di percezione del pericolo era indipendente dalla velocità precedentemente mantenuta oppure era già conseguenza della velocità non conforme tenuta prima di quel momento?</p>
+<p>La conclusione secondo cui un incidente era inevitabile deve quindi essere riferita all’ambito della verifica compiuta. L’inevitabilità accertata a partire dal momento di percezione del pericolo dimostra che, raggiunta quella fase della sequenza, non residuavano più margini sufficienti per evitare l’evento secondo il comportamento reattivo considerato.</p>
+<p>L’inevitabilità così accertata non consente, però, di escludere per ciò solo la rilevanza causale della velocità non conforme mantenuta nella fase immediatamente antecedente.</p>
+<h2 class="section-heading numbered">15. Antecedenti tecnici e giuridici</h2>
+<p>La SCE si inserisce in un quadro nel quale diversi elementi del metodo qui proposto sono già presenti, separatamente, nella letteratura tecnico-ricostruttiva e nell’elaborazione giuridica. La sua specificità non consiste quindi nell’introduzione di principi del tutto estranei agli strumenti già utilizzati, ma nel loro coordinamento all’interno di una determinata sequenza di verifica causale.</p>
+<p>La ricostruzione degli incidenti stradali utilizza da tempo strumenti diretti a ricostruire la sequenza del sinistro, valutarne l’evitabilità e confrontare la condotta effettiva con il comportamento alternativo conforme. Nell’ambito italiano, il lavoro di D. Vangi costituisce uno dei riferimenti generali per l’analisi tecnica degli incidenti stradali.</p>
+<p>Gary A. Davis ha affrontato specificamente il rapporto causale tra velocità e collisione mediante ricostruzioni controfattuali applicate, tra l’altro, agli incidenti nelle intersezioni e agli investimenti di pedone, mostrando come una diversa velocità possa modificare la configurazione spazio-temporale che conduce all’evento.</p>
+<p>Una particolare affinità concettuale è rinvenibile nell’erweiterte Vermeidbarkeitsbetrachtung, ossia nell’analisi estesa dell’evitabilità, proposta da Markus Winninghoff, che introduce l’Aufmerkpunkt, collocato anteriormente al normale momento di reazione e riferito a una situazione già riconoscibile come tale da richiedere maggiore attenzione o un adeguamento della condotta. Il punto di partenza è tuttavia diverso da quello della SCE. L’Aufmerkpunkt viene individuato in relazione a una situazione che avrebbe già dovuto determinare una diversa condotta; la SCE ricerca invece, procedendo a ritroso lungo la sequenza ricostruita, la configurazione spazio-temporale più prossima all’urto dalla quale il mantenimento della condotta conforme avrebbe impedito l’evento. Solo dopo avere individuato questa soglia di evitabilità viene verificato se, in quella fase, la condotta conforme fosse già concretamente esigibile ex ante.</p>
+<p>Spitzhüttl e Liers hanno sviluppato il concetto di Point of No Return, individuando mediante simulazione il limite temporale oltre il quale la collisione non risulta più evitabile attraverso le manovre considerate. Anche questo approccio presenta una prossimità cinematica con la SCE, ma risponde a una domanda diversa. Il Point of No Return individua il limite oltre il quale l’evento non è più fisicamente evitabile mediante le manovre considerate; la SCE procede invece in senso retrospettivo e ricerca il punto della sequenza dal quale il comportamento alternativo conforme avrebbe ancora impedito l’evento, sottoponendo poi il risultato alla verifica dell’esigibilità giuridica ex ante.</p>
+<p>La specificità della SCE non risiede quindi nella mera individuazione di un punto antecedente all’urto, ma nella sequenza logica del procedimento: determinazione retrospettiva della soglia di efficacia impeditiva della condotta conforme e successiva, autonoma verifica della sua concreta esigibilità ex ante.</p>
+<p>Sul versante giuridico assume particolare interesse la decisione del Bundesgerichtshof del 25 marzo 2003, VI ZR 161/02. La pronuncia afferma che, quando è stato violato un limite generale di velocità già vigente, il comportamento alternativo conforme non consiste nel cominciare a ridurre la velocità soltanto all’insorgere della situazione critica, ma nel trovarsi già alla velocità consentita all’inizio di quella situazione. La decisione conferma quindi che il giudizio causale sulla velocità non deve essere necessariamente costruito attribuendo la condotta conforme soltanto dal momento nel quale si rende necessaria la reazione terminale.</p>
+<p>Gli antecedenti richiamati mostrano quindi che i singoli elementi sui quali si fonda la SCE trovano già riscontro, sotto profili diversi, nella tecnica ricostruttiva e nell’elaborazione giuridica.</p>
+<p>In sintesi, il metodo qui proposto non assume il momento di percezione del pericolo come limite iniziale del giudizio causale. Procedendo a ritroso lungo la sequenza ricostruita, individua la soglia di evitabilità dalla quale il mantenimento della condotta conforme avrebbe impedito l’evento e verifica successivamente se, in quella fase, la stessa condotta fosse già concretamente e giuridicamente esigibile ex ante. La verifica cinematica e quella giuridica rimangono così distinte, ma vengono ordinate in una successione precisa che caratterizza il metodo della soglia causale di evitabilità.</p>
+<h2 class="section-heading numbered">16. Obiezioni, limiti e condizioni di applicazione</h2>
+<p>La SCE consente di riesaminare sotto un diverso profilo causale incidenti ritenuti inevitabili sulla base dell’analisi della sola fase terminale, verificando se quell’inevitabilità fosse già conseguenza della condotta mantenuta nella fase immediatamente antecedente. Proprio per la rilevanza che questa verifica può assumere nel caso concreto, il metodo deve essere applicato secondo criteri rigorosi e nel rispetto di precisi limiti.</p>
+<p>• Quanto è possibile arretrare nella sequenza? La SCE non stabilisce un limite temporale predeterminato, ma non autorizza neppure una regressione indefinita. La ricerca procede a ritroso fino alla soglia di evitabilità più prossima all’urto dalla quale il mantenimento della condotta conforme avrebbe impedito l’evento. Il limite concreto alla regressione è rappresentato dalla possibilità di ricostruire con sufficiente affidabilità, sulla base degli elementi disponibili, la velocità effettivamente mantenuta dal veicolo e le altre condizioni rilevanti della sequenza, secondo lo standard probatorio proprio dell’ambito nel quale il risultato viene utilizzato.<br/>• È sufficiente che, mantenendo prima una velocità inferiore, il veicolo si sarebbe trovato in una posizione diversa? No. La semplice constatazione che una diversa velocità avrebbe modificato la posizione del veicolo nella sequenza non è sufficiente, da sola, a fondare la rilevanza causale della condotta. Il risultato cinematico deve essere collegato alla regola cautelare concretamente applicabile e al rischio che essa era diretta a prevenire. Anche il Bundesgerichtshof, nella decisione del 6 novembre 1984, ha escluso la rilevanza di un precedente eccesso di velocità quando questo avesse soltanto determinato la presenza del veicolo nel luogo dell’incidente in quel determinato momento. La SCE richiede quindi una verifica ulteriore: nella fase individuata dalla soglia di evitabilità, la velocità conforme doveva essere già concretamente e giuridicamente esigibile e l’evento verificatosi doveva rientrare nel rischio che quella regola cautelare mirava a prevenire.<br/>• Una velocità ancora maggiore, modificando la sincronizzazione tra gli utenti, potrebbe escludere la rilevanza causale della velocità non conforme? Una diversa velocità può certamente modificare la successione temporale degli eventi e determinare scenari nei quali quello specifico incidente non si sarebbe verificato. Il controfattuale rilevante non riguarda però qualsiasi diversa velocità capace di evitare la collisione, ma il comportamento conforme alla regola cautelare applicabile. Una condotta parimenti o maggiormente antidoverosa non costituisce pertanto il termine di confronto pertinente.<br/>• La SCE presuppone che la velocità mantenuta nella fase immediatamente antecedente fosse costante? No. La velocità costante utilizzata negli esempi costituisce soltanto una semplificazione espositiva. Nel caso concreto deve essere utilizzato il profilo di velocità meglio ricostruibile sulla base degli elementi disponibili. Quando l’intervallo considerato è molto breve, si può verificare se le possibili variazioni della velocità incidano in modo significativo sul risultato; quanto più, invece, occorre risalire nel tempo, tanto maggiore diventa l’importanza di ricostruire con precisione l’effettivo andamento della velocità.<br/>• Quanto incidono le incertezze dei dati utilizzati? Velocità, momento di percezione del pericolo, tempo di percezione e reazione tₚᵣ, decelerazione, traiettorie e posizioni degli utenti non sono sempre determinabili con assoluta precisione. La SCE deve quindi tenere conto dei margini di incertezza propri della ricostruzione. Quando tali margini possono incidere sul risultato, occorre verificare come cambiano la distanza e il tempo di soglia assumendo valori ragionevolmente diversi dei dati utilizzati.<br/>• La soglia di evitabilità dipende dal tempo di percezione e reazione? Sì, come avviene nell’ordinaria analisi dell’evitabilità. La SCE non modifica però tₚᵣ allo scopo di rendere evitabile l’incidente. Assume il valore tecnicamente giustificato nella ricostruzione e verifica quanto debba essere anticipato il mantenimento della condotta conforme affinché l’evento possa essere impedito.<br/>• SCEₛ e SCEₜ coincidono necessariamente? No. Già nell’analisi classica l’evitabilità spaziale e quella temporale si fondano su meccanismi impeditivi diversi e conducono quindi a risultati numerici differenti. Ciò non significa che debba essere diversa anche la conclusione finale, che può essere in entrambi i casi di evitabilità oppure di inevitabilità. La diversa natura dei due criteri si riflette anche nell’applicazione della SCE, determinando una soglia di evitabilità spaziale e una temporale collocate in punti diversi della sequenza. La SCEₛ offre, sotto questo profilo, una maggiore robustezza controfattuale perché, una volta dimostrato che il veicolo si sarebbe arrestato prima del punto d’urto, non occorre formulare ulteriori ipotesi sul successivo comportamento dell’altro utente. La SCEₜ dipende invece anche dalla prosecuzione del movimento di quest’ultimo secondo la traiettoria e la velocità considerate.<br/>• Come viene individuata una velocità prudenziale inferiore al limite numerico? Il fondamento della velocità prudenziale inferiore al limite si rinviene anzitutto nell’art. 141 c.d.s., che impone al conducente di adeguare la velocità alle concrete condizioni della circolazione. Il limite numerico costituisce pertanto un limite massimo, ma il suo rispetto non esaurisce necessariamente la regola cautelare quando le caratteristiche della strada, la visibilità, il traffico o altre circostanze concretamente conoscibili impongano una maggiore moderazione della marcia. L’individuazione della velocità conforme deve però precedere logicamente il giudizio di evitabilità ed essere compiuta secondo una valutazione ex ante. Non sarebbe quindi corretto affermare che il conducente avrebbe dovuto procedere, ad esempio, a 30 km/h per il solo fatto che il successivo calcolo dimostri che a quella velocità l’incidente sarebbe stato evitato. In tal modo la condotta dovuta verrebbe ricavata dall’evento già verificatosi, sovrapponendo la velocità che risulta ex post idonea a impedirlo a quella realmente esigibile prima dell’incidente. La giurisprudenza di legittimità ha espressamente censurato questo procedimento, affermando che, in presenza di regole cautelari elastiche, la condotta dovuta deve essere individuata sulla base delle circostanze concrete, preesistenti e conoscibili, e non ricavata a posteriori dall’esito dell’incidente. Solo dopo avere determinato in questo modo la velocità conforme è possibile verificare, mediante la SCE, se il suo mantenimento avrebbe impedito l’evento.<br/>• Cosa accade se, nella fase individuata dalla soglia di evitabilità, la condotta conforme non era ancora esigibile? Il risultato cinematico conserva il proprio significato fisico, ma non consente di attribuire rilevanza causale al mancato mantenimento di una condotta che in quella fase non era ancora dovuta. Ciò accade, ad esempio, se il limite numerico non era ancora applicabile oppure se, in quella fase, non erano ancora presenti o conoscibili le condizioni che avrebbero imposto una velocità prudenziale inferiore.<br/>• La determinazione della SCE dimostra automaticamente la responsabilità del conducente? No. La SCE individua la fase della sequenza dalla quale il comportamento alternativo conforme avrebbe impedito l’evento e consente di verificare se quella condotta fosse già concretamente e giuridicamente esigibile ex ante. Restano distinti gli ulteriori accertamenti necessari per l’attribuzione della responsabilità, tra i quali l’individuazione della regola cautelare applicabile, la verifica che l’evento costituisca la realizzazione del rischio che la regola mirava a prevenire e l’eventuale rilevanza di condotte concorrenti. I risultati dell’intero procedimento devono inoltre essere valutati secondo lo standard probatorio proprio dell’ambito nel quale vengono utilizzati: nel giudizio civile secondo il criterio del più probabile che non; nel processo penale secondo il più rigoroso standard richiesto per l’affermazione della responsabilità oltre ogni ragionevole dubbio. Le medesime incertezze tecniche e ricostruttive possono quindi assumere un diverso rilievo nei due ambiti, pur rimanendo invariato il metodo di analisi.</p>
+<p>La SCE offre quindi uno strumento ulteriore per valutare il ruolo causale della velocità nell’incidente concreto. Consente, in particolare, di verificare se un incidente ritenuto inevitabile considerando soltanto la fase terminale della sequenza fosse invece evitabile mantenendo la velocità conforme già nella fase immediatamente antecedente. Se quella velocità era già giuridicamente esigibile ex ante, il precedente giudizio di inevitabilità può essere rimesso in discussione; se non lo era, il metodo non consente di attribuire rilevanza causale alla condotta precedente sulla sola base del risultato cinematico.</p>
+<h2 class="section-heading numbered">17. Conclusioni</h2>
+<p>L’analisi classica dell’evitabilità considera normalmente come punto di partenza il momento di percezione del pericolo e verifica se, da quel momento, l’incidente si sarebbe comunque verificato sostituendo alla velocità effettivamente mantenuta quella conforme. La velocità conforme coincide con il limite numerico vigente quando le condizioni concrete della circolazione non impongono una maggiore moderazione, oppure con una velocità prudenziale inferiore quando, per le caratteristiche della strada, la visibilità, il traffico, le condizioni meteorologiche o altre circostanze conoscibili ex ante dal conducente, una velocità più contenuta risultava già dovuta.</p>
+<p>Questa verifica è indispensabile per stabilire quali margini di reazione fossero ancora disponibili, ma può non essere sufficiente per valutare il ruolo causale della velocità mantenuta nella fase immediatamente antecedente.</p>
+<p>Può infatti accadere che, quando il conducente percepisce il pericolo, l’incidente sia ormai inevitabile anche alla velocità conforme, proprio perché la velocità mantenuta nella fase immediatamente antecedente ha già portato il veicolo in una situazione nella quale non residuano più spazio e tempo sufficienti per evitare l’urto.</p>
+<p>Il metodo della soglia causale di evitabilità nasce per verificare se l’inevitabilità accertata nel momento di percezione del pericolo sia già conseguenza della velocità mantenuta nella fase immediatamente antecedente. Invece di arrestare l’analisi a quel momento, procede a ritroso lungo la sequenza ricostruita e individua la configurazione spazio-temporale più prossima all’urto a partire dalla quale il mantenimento della velocità conforme avrebbe impedito l’incidente.</p>
+<p>La verifica può essere svolta secondo il criterio dell’evitabilità spaziale, individuando la SCEₛ, oppure secondo quello dell’evitabilità temporale, individuando la SCEₜ. In entrambi i casi, la soglia è descritta da due coordinate riferite all’urto: la distanza del veicolo dal punto d’urto e il corrispondente intervallo temporale che precede l’impatto.</p>
+<p>Il calcolo rappresenta però soltanto una parte del procedimento. Una volta individuata la soglia di evitabilità, occorre verificare se, in quella fase della sequenza, la velocità conforme fosse già concretamente e giuridicamente esigibile ex ante. Non è infatti possibile individuarla a posteriori soltanto perché avrebbe consentito di evitare l’incidente: deve risultare già dovuta sulla base delle condizioni conoscibili dal conducente prima dell’evento.</p>
+<p>Se questa verifica ha esito negativo, il fatto che una determinata velocità avrebbe consentito di evitare l’urto non è sufficiente per attribuire rilevanza causale alla velocità mantenuta nella fase immediatamente antecedente. Se invece la velocità conforme era già esigibile, il giudizio di inevitabilità formulato dall’analisi classica a partire dal momento di percezione del pericolo non basta, da solo, a escludere il ruolo causale della velocità mantenuta nella fase immediatamente antecedente.</p>
+<p>È questo il principale risultato pratico del metodo qui proposto. Un incidente già considerato inevitabile perché esaminato soltanto a partire dal momento di percezione del pericolo può richiedere una diversa valutazione quando l’analisi viene estesa alla fase immediatamente antecedente. Possono così essere riesaminati casi nei quali l’analisi tecnica aveva concluso per l’inevitabilità, verificando se questa fosse davvero indipendente dalla velocità mantenuta nella fase immediatamente antecedente oppure ne rappresentasse già una conseguenza.</p>
+<p>La SCE compie questa verifica senza alterare arbitrariamente la sequenza ricostruita e senza individuare a posteriori una velocità funzionale al risultato desiderato. Parte dal fatto concretamente ricostruito, sostituisce alla velocità effettiva quella conforme e individua quanto occorre risalire nella sequenza perché il suo mantenimento impedisca l’evento. Il risultato viene quindi sottoposto alla verifica dell’esigibilità giuridica ex ante.</p>
+<p>L’affermazione secondo cui un incidente era inevitabile non esaurisce necessariamente l’analisi causale. In alcuni casi descrive soltanto la fase terminale della sequenza, nella quale, al momento di percezione del pericolo, non residuavano più margini sufficienti per evitare l’urto.</p>
+<p>In questi casi, l’inevitabilità accertata nella fase terminale può rappresentare proprio la conseguenza finale della velocità mantenuta nella fase immediatamente antecedente e non un elemento sufficiente, da solo, a escluderne la rilevanza causale.</p>
+<h2 class="section-heading numbered">18. Riferimenti normativi, giurisprudenziali e bibliografici essenziali</h2>
+<h2 class="section-heading subsection">Normativa</h2>
+<p>• <strong>Art. 141 c.d.s. – Velocità</strong>: impone al conducente di regolare la velocità in relazione alle caratteristiche del veicolo, della strada e del traffico e a ogni altra circostanza rilevante, conservando il controllo del mezzo e la possibilità di arrestarsi tempestivamente entro il campo di visibilità e davanti agli ostacoli prevedibili.<br/>• <strong>Art. 142 c.d.s. – Limiti di velocità</strong>: disciplina i limiti massimi di velocità. Il comma 5 stabilisce espressamente che, anche quando sono fissati limiti di velocità, restano fermi gli obblighi previsti dall’art. 141 c.d.s., confermando che il rispetto del limite numerico non esaurisce l’obbligo di adeguare la velocità alle concrete condizioni della circolazione.</p>
+<h2 class="section-heading subsection">Giurisprudenza italiana</h2>
+<p>• <strong>Cass. pen., Sez. IV, 29 marzo 2018, dep. 6 settembre 2018, n. 40050, Lenarduzzi, Rv. 273870-01 e 273871-01</strong>: nelle regole cautelari elastiche la condotta dovuta deve essere individuata attraverso una valutazione concreta ed ex ante delle circostanze del caso e, in materia di velocità, occorre determinare quella adeguata alle condizioni effettivamente esistenti e conoscibili. La decisione richiama inoltre la necessità di verificare che nell’evento si sia concretizzato il rischio che la regola cautelare violata mirava a prevenire.<br/>• <strong>Cass. pen., Sez. IV, 10 novembre 2021, dep. 13 dicembre 2021, n. 45589, Rv. 282596-01</strong>: la violazione di una norma della circolazione non consente di presumere il nesso causale con l’evento. Il rapporto causale deve essere specificamente accertato e va escluso quando sia dimostrato che l’incidente si sarebbe ugualmente verificato anche in assenza della condotta antigiuridica.<br/>• <strong>Cass. pen., Sez. IV, 5 aprile 2023, dep. 17 aprile 2023, n. 16108</strong>: la velocità prudenziale concretamente esigibile deve essere individuata attraverso una valutazione ex ante delle condizioni esistenti e conoscibili e non può essere fatta coincidere con la velocità che, individuata a posteriori, risulta matematicamente idonea a evitare l’evento.<br/>• <strong>Cass. pen., Sez. IV, n. 34383/2024, dep. 12 settembre 2024</strong>: censura dell’hindsight bias nell’individuazione della regola cautelare e riaffermazione della necessità di ricostruire il comportamento dovuto in concreto ed ex ante, senza desumerlo retrospettivamente dalle precauzioni che, alla luce dell’evento ormai verificatosi, avrebbero consentito di impedirlo.</p>
+<h2 class="section-heading subsection">Giurisprudenza tedesca</h2>
+<p>• <strong>Bundesgerichtshof, Beschluss 6 novembre 1984, 4 StR 72/84, BGHSt 33, 61–66</strong>: il rapporto causale tra superamento del limite di velocità e incidente viene verificato assumendo come riferimento l’ingresso nella concreta situazione critica di traffico e sostituendo alla condotta contestata quella conforme, mantenendo ferme, per quanto possibile, le ulteriori circostanze della sequenza. La decisione esclude invece la rilevanza di una precedente violazione di velocità quando questa abbia soltanto determinato la presenza del veicolo nel luogo dell’incidente in quel determinato momento.<br/>• <strong>Bundesgerichtshof, 25 marzo 2003, VI ZR 161/02, VersR 2003, 783–786; NJW 2003, 1929–1931</strong>: la situazione critica di traffico inizia quando le circostanze concretamente riconoscibili forniscono un indizio dell’imminente insorgere di un pericolo. Quando è stato violato un limite di velocità già vigente, il comportamento alternativo conforme non consiste nel cominciare a ridurre la velocità soltanto all’insorgere della situazione critica, ma nel trovarsi già alla velocità consentita all’ingresso in quella situazione.</p>
+<h2 class="section-heading subsection">Letteratura tecnico-scientifica</h2>
+<p>• <strong>D. Vangi</strong>, <em>Ricostruzione della dinamica degli incidenti stradali. Principi e applicazioni</em>, Firenze University Press, 2008, DOI 10.36253/978-88-8453-784-3.<br/>• <strong>G.A. Davis</strong>, <em>A Case Control Study of Speed and Crash Risk. Technical Report 2: Bayesian Reconstruction of Traffic Accidents and the Causal Effect of Speed in Intersection and Pedestrian Accidents</em>, University of Minnesota, 2006, CTS 06–01B.<br/>• <strong>M. Winninghoff</strong>, “<em>Erweiterte Vermeidbarkeitsbetrachtung: Der Aufmerkpunkt</em>”, <em>Verkehrsunfall und Fahrzeugtechnik</em>, vol. 45, n. 9, 2007, pp. 235–238. Il contributo sviluppa un’analisi estesa dell’evitabilità attraverso l’individuazione dell’<em>Aufmerkpunkt</em>, anteriore al normale momento di reazione e collegato a una situazione già riconoscibile come tale da richiedere maggiore attenzione o un adeguamento della condotta.<br/>• <strong>F. Spitzhüttl, H. Liers</strong>, “<em>Calculation of the Point of No Return (PONR) from Real-World Accidents</em>”, <em>26th International Technical Conference on the Enhanced Safety of Vehicles (ESV)</em>, Eindhoven, 2019, paper n. 19-0141. Il lavoro individua mediante simulazione il limite oltre il quale la collisione non risulta più evitabile attraverso le manovre considerate.</p>
+<h2 class="section-heading subsection">Dottrina penalistica</h2>
+<p>• <strong>I. Giugni</strong>, “<em>Causalità della colpa e circolazione stradale tra prassi applicative e dubbi irrisolti</em>”, <em>Diritto Penale Contemporaneo</em>, n. 1/2019, pp. 5–16.<br/>• <strong>P. Veneziani</strong>, “<em>Causalità della colpa e comportamento alternativo lecito</em>”, <em>Cassazione Penale</em>, n. 3/2013, pp. 1224–1244.<br/>• <strong>K. Summerer</strong>, “<em>Il nesso tra colpa ed evento nella giurisprudenza più recente</em>”, <em>La Legislazione Penale</em>, 2022, pp. 131–156.</p>
+    </div>
+  </article>
+</template>
 
+<template class="article-template" data-article-template="documentazione">
+  <article class="site-article" data-article="documentazione">
+    <h1 class="site-article-title">Cosa fare dopo un incidente stradale o un infortunio sul lavoro</h1>
+    <div class="site-article-byline">
+      <div class="site-article-meta">
+        <time datetime="2026-09-06">6 settembre 2026</time>
+        <span class="site-article-meta-sep" aria-hidden="true">·</span>
+        <span>30 minuti di lettura</span>
+      </div>
+    </div>
+    <img class="site-article-hero" src="/articoli/immagini/documentazione.webp" alt="Documentazione fotografica di un incidente stradale e di un infortunio sul lavoro" width="1448" height="1086">
+    <div class="site-article-body">
+<h2 class="section-heading main-section">1. Profili generali</h2>
+<h3 class="section-heading subsection">1.1 Premessa</h3>
+<p>Negli incidenti stradali e negli infortuni sul lavoro, molte delle informazioni più importanti per la successiva ricostruzione dell’evento sono disponibili soltanto nell’immediatezza o nei primi giorni successivi.</p>
+<p>Tracce presenti sulla carreggiata possono infatti essere rapidamente cancellate dal traffico o dalle condizioni atmosferiche, mentre veicoli, macchine e attrezzature vengono spostati, riparati o modificati. Le registrazioni video rischiano di essere sovrascritte, i dati elettronici di andare perduti, la configurazione dei luoghi di cambiare e i testimoni occasionali di diventare difficili da rintracciare.</p>
+<p>Per questa ragione, quando è possibile senza compromettere la sicurezza delle persone e senza interferire con le attività di soccorso o con gli accertamenti svolti dalle autorità, assume particolare importanza documentare tempestivamente lo stato dei luoghi, dei mezzi, delle attrezzature, delle tracce e di ogni altro elemento potenzialmente rilevante.</p>
+<p>Negli incidenti stradali e negli infortuni sul lavoro, ricostruzione tecnica e valutazione giuridica sono strettamente connesse. L’accertamento delle responsabilità e del nesso causale, così come la valutazione dei profili penali o risarcitori, richiede una corretta ricostruzione dell’evento. Allo stesso tempo, la rilevanza degli elementi tecnici raccolti si comprende pienamente soltanto alla luce delle questioni giuridiche poste dal caso concreto.</p>
+<p>Una traccia di frenata, una particolare deformazione del veicolo, la posizione di un riparo di una macchina, un indumento, una registrazione video o un dato elettronico non rappresentano quindi semplici elementi descrittivi, in quanto possono incidere sulla ricostruzione dell’evento, sull’individuazione delle condotte tenute, sulla verifica di eventuali violazioni cautelari, sull’accertamento del nesso causale e, infine, sulla valutazione delle responsabilità.</p>
+<p>La tempestiva conservazione delle fonti di prova assume pertanto una duplice funzione, perché consente di ricostruire nel modo più attendibile possibile ciò che è avvenuto e, allo stesso tempo, di mettere a disposizione gli elementi necessari per la successiva valutazione giuridica dell’evento.</p>
+<p>In termini generali, è quindi importante non documentare soltanto ciò che appare immediatamente rilevante, ma anche ciò che potrebbe diventarlo successivamente nella ricostruzione tecnica e probatoria del caso.</p>
+<h3 class="section-heading subsection">1.2 La priorità della sicurezza e la necessità di non alterare la scena</h3>
+<p>La documentazione dell’evento non deve mai prevalere sulla tutela dell’incolumità delle persone.</p>
+<p>Non è quindi opportuno entrare o permanere in una carreggiata esposta al traffico per realizzare fotografie, avvicinarsi a macchine ancora in movimento, intervenire su impianti elettrici, sostanze pericolose o strutture instabili, né assumere qualsiasi altra condotta capace di creare un nuovo rischio.</p>
+<p>Allo stesso modo, le attività di documentazione non devono interferire con i soccorsi, con le operazioni delle forze dell’ordine, della polizia giudiziaria, degli organi di vigilanza o degli altri soggetti istituzionalmente incaricati degli accertamenti.</p>
+<p>Quando la situazione lo consente, va evitata l’alterazione dello stato dei luoghi. Lo spostamento di un oggetto, di un veicolo o di una sua parte, di un utensile o di un componente di una macchina può modificare una configurazione che, in un momento successivo, potrebbe assumere rilevanza decisiva.</p>
+<p>Ciò non significa naturalmente che nulla può essere spostato. Le esigenze di soccorso, di sicurezza, di eliminazione di un pericolo o di ripristino della circolazione rendono spesso inevitabili determinate modifiche. In questi casi è importante, quando possibile, documentare la situazione prima dell’alterazione oppure, se ciò non è stato possibile, ricostruire successivamente quali elementi sono stati spostati, da chi e per quale ragione.</p>
+<p>La conservazione dello stato dei luoghi non costituisce quindi un fine autonomo, ma serve a preservare i rapporti spaziali e funzionali tra gli elementi della scena, che possono risultare fondamentali per la successiva interpretazione tecnica e giuridica dell’accaduto.</p>
+<h3 class="section-heading subsection">1.3 Come documentare correttamente lo stato dei luoghi</h3>
+<p>Fotografie e video realizzati tempestivamente assumono spesso notevole importanza, ma la loro utilità dipende anche dal modo nel quale vengono realizzati.</p>
+<p>Una fotografia molto ravvicinata rappresenta bene una singola traccia, ma risulta poco utile se non consente di stabilire dove quella traccia si trova rispetto al resto della scena. Al contrario, una sola immagine panoramica colloca correttamente gli elementi nello spazio, ma non sempre rende leggibili i particolari di piccole dimensioni.</p>
+<p>La documentazione va quindi organizzata secondo una progressione logica, iniziando dalla scena nel suo complesso, per passare poi alle singole zone interessate, alle immagini a distanza intermedia che collegano ciascun particolare all’ambiente circostante e, infine, alle fotografie di dettaglio.</p>
+<p>Quando serve una valutazione dimensionale, è utile realizzare anche immagini contenenti riferimenti metrici, senza però alterare la scena. In questi casi è bene disporre anche di fotografie precedenti della stessa zona, realizzate prima dell’introduzione di qualsiasi oggetto utilizzato come riferimento.</p>
+<p>Negli incidenti stradali questo metodo permette, ad esempio, di collocare una traccia o un frammento rispetto alla carreggiata, ai veicoli e al presumibile punto d’urto. Negli infortuni sul lavoro consente invece di comprendere la posizione di un componente, di un comando o di un dispositivo di protezione rispetto alla macchina, alla postazione di lavoro e alla posizione dell’infortunato.</p>
+<p>Vanno documentate anche le zone apparentemente secondarie. Un veicolo parcheggiato, una siepe, un palo, una recinzione, un materiale depositato accanto a una macchina, una macchia sul pavimento o un oggetto apparentemente estraneo sembrano talvolta irrilevanti nell’immediatezza, ma assumono un ruolo determinante quando emerge una specifica ipotesi ricostruttiva.</p>
+<p>Per la stessa ragione, indumenti, caschi, dispositivi di protezione, parti danneggiate, componenti distaccati o altri oggetti coinvolti nell’evento non vanno eliminati o modificati prima di valutarne la possibile rilevanza.</p>
+<h3 class="section-heading subsection">1.4 Conservazione dei file originali e della documentazione digitale</h3>
+<p>Le fotografie e i video vanno conservati, per quanto possibile, nella versione originale prodotta dal dispositivo.</p>
+<p>Ritagli, correzioni, regolazioni della luminosità, annotazioni grafiche o altre elaborazioni vanno effettuati su copie, lasciando inalterato il file originale.</p>
+<p>Gli originali digitali contengono spesso informazioni associate allo scatto, quali data, ora, caratteristiche tecniche dell’immagine e, in alcuni casi, dati relativi alla posizione. Anche quando tali informazioni non sono decisive, la disponibilità del file originale consente una valutazione più completa della provenienza e delle caratteristiche della documentazione.</p>
+<p>È bene evitare di conservare soltanto fotografie o video inoltrati attraverso applicazioni o piattaforme che spesso comprimono i file, li ridimensionano o ne modificano alcune informazioni associate. Se il materiale è stato realizzato da un testimone o da un’altra persona presente sul posto, è quindi opportuno ottenere, quando possibile, i file originali.</p>
+<p>Una volta raccolta la documentazione, è inoltre prudente conservarne almeno una seconda copia su un supporto o sistema distinto, mantenendo un’organizzazione che consenta di riconoscere la provenienza dei singoli file e di distinguere gli originali dalle eventuali copie successivamente elaborate.</p>
+<p>La stessa attenzione va riservata agli altri documenti digitali. Registrazioni, esportazioni di dati, log e file provenienti da sistemi telematici o elettronici vanno preservati nel formato più vicino possibile alla fonte originaria e accompagnati, quando necessario, dalle informazioni utili a comprenderne la provenienza e le modalità di acquisizione.</p>
+<h3 class="section-heading subsection">1.5 Testimoni e memoria dell’evento</h3>
+<p>I recapiti delle persone presenti vanno raccolti tempestivamente.</p>
+<p>Un testimone occasionale rischia infatti di allontanarsi senza lasciare alcuna informazione e di diventare successivamente difficile o impossibile da identificare. Questa eventualità riguarda tanto gli incidenti stradali quanto gli infortuni sul lavoro.</p>
+<p>Oltre al nominativo e ai recapiti, assume rilievo anche la posizione dalla quale il testimone ha osservato l’evento. La possibilità di vedere o percepire una determinata circostanza dipende infatti dal punto di osservazione, dalla distanza, dagli ostacoli presenti e dalle condizioni ambientali.</p>
+<p>È bene evitare di suggerire ai testimoni una ricostruzione già formulata. Il valore dell’informazione aumenta quando il racconto conserva il più possibile la spontaneità di ciò che la persona ricorda di avere effettivamente percepito.</p>
+<p>Analoga attenzione merita la memoria delle persone direttamente coinvolte. Appena le condizioni lo consentono, è utile annotare ciò che si ricorda delle circostanze immediatamente precedenti, concomitanti e successive all’evento, comprese le condizioni dei luoghi, la presenza di altre persone e quanto percepito nell’immediatezza.</p>
+<p>Non si tratta di formulare una versione dei fatti in funzione di esigenze difensive, ma semplicemente di conservare il ricordo prima che il trascorrere del tempo e le informazioni apprese successivamente possano modificarlo.</p>
+<h3 class="section-heading subsection">1.6 Registrazioni video e altre fonti destinate a scomparire</h3>
+<p>La presenza di telecamere e sistemi di videosorveglianza va verificata tempestivamente.</p>
+<p>Negli incidenti stradali assumono rilievo, ad esempio, le telecamere comunali, gli impianti di esercizi commerciali, abitazioni, distributori di carburante, aziende, parcheggi e condomini, nonché le telecamere installate sui mezzi di trasporto pubblico, le dashcam e altri dispositivi di registrazione.</p>
+<p>Negli infortuni sul lavoro vanno invece considerati gli impianti di videosorveglianza aziendale, le telecamere di linea, i sistemi di controllo degli accessi e le altre apparecchiature utilizzate nell’organizzazione produttiva.</p>
+<p>Non basta però accertare l’esistenza di una telecamera, ma occorre individuarne la posizione, l’orientamento, la zona effettivamente inquadrata, l’eventuale presenza di ostacoli e, quando possibile, il soggetto che gestisce le registrazioni.</p>
+<p>Il fattore tempo assume particolare importanza, perché numerosi sistemi cancellano o sovrascrivono automaticamente le immagini.</p>
+<p>La necessità di preservare una registrazione va quindi valutata nell’immediatezza e, nei casi rilevanti, è opportuno attivare tempestivamente gli strumenti necessari a evitarne la perdita e a consentirne la successiva acquisizione da parte dei soggetti legittimati e secondo le procedure applicabili.</p>
+<p>Lo stesso criterio vale per ogni altra fonte destinata a modificarsi o a scomparire rapidamente. L’esigenza fondamentale consiste nell’individuarne tempestivamente l’esistenza e nel preservarne la disponibilità finché risulta ancora possibile esaminarla.</p>
+<h2 class="section-heading main-section">2. Incidenti stradali</h2>
+<h3 class="section-heading subsection">2.1 Documentazione della scena dell’incidente</h3>
+<p>Negli incidenti stradali la scena conserva spesso informazioni difficilmente ricostruibili con la stessa precisione una volta ripristinata la normale circolazione.</p>
+<p>Quando è possibile farlo in sicurezza e senza interferire con i rilievi ufficiali, vanno documentati la posizione finale e l’orientamento dei veicoli coinvolti, i danni, i frammenti e i detriti, le tracce di frenata, di strisciamento o di scarrocciamento, eventuali liquidi o materiali presenti sulla carreggiata e gli oggetti trasportati o dispersi a seguito dell’urto.</p>
+<p>Particolare attenzione va riservata all’ambiente nel quale l’incidente si è verificato. Assumono rilievo la geometria della strada, la larghezza e il numero delle corsie, le curve, i dossi, le variazioni altimetriche, le intersezioni e gli accessi laterali, gli attraversamenti pedonali, la segnaletica verticale e orizzontale, eventuali cantieri e restringimenti, nonché gli elementi apparentemente secondari o temporanei che incidono sulla visuale, come veicoli parcheggiati, cassonetti, vegetazione, insegne o materiali depositati sul margine della strada.</p>
+<p>Le condizioni del fondo meritano grande attenzione. La presenza di acqua, fango, ghiaia, detriti, buche, avvallamenti o altre anomalie assume rilievo sia nella ricostruzione del comportamento del veicolo sia nella valutazione della condotta di guida.</p>
+<p>Vanno inoltre annotate e documentate le condizioni meteorologiche effettivamente presenti nell’immediatezza dell’evento.</p>
+<p>La ragione di questa raccolta non è soltanto descrittiva. La posizione dei diversi elementi assume rilievo nella valutazione del campo di visibilità, della reciproca percepibilità degli utenti, della prevedibilità del pericolo, dei tempi disponibili per reagire e, conseguentemente, delle condotte concretamente esigibili e del loro eventuale rilievo causale.</p>
+<p>Quando il luogo viene fotografato nuovamente nei giorni successivi, è necessario considerare le modifiche intervenute nel frattempo. Tra queste rientrano, ad esempio, lo spostamento o la presenza di eventuali veicoli parcheggiati, il taglio della vegetazione, la rimozione di una segnalazione temporanea, l’asciugatura della pavimentazione o la cancellazione di una traccia.</p>
+<p>Per questo motivo, le immagini realizzate nell’immediatezza hanno un valore documentale che difficilmente un sopralluogo successivo restituisce integralmente.</p>
+<h3 class="section-heading subsection"><strong>2.2 Incidenti avvenuti in orario notturno o in condizioni di ridotta visibilità</strong></h3>
+<p>Negli incidenti avvenuti di notte, al crepuscolo, con nebbia, precipitazioni intense o in altre condizioni di ridotta visibilità, la documentazione dell’ambiente richiede particolare attenzione.</p>
+<p>Se l’evento si verifica in orario notturno, i luoghi vanno documentati sia nelle condizioni di illuminazione esistenti nell’immediatezza, quando ciò è concretamente possibile, sia successivamente in condizioni di luce naturale.</p>
+<p>Le due serie di immagini svolgono funzioni differenti: le fotografie notturne documentano l’ambiente luminoso nel quale si è verificato l’evento, mentre quelle diurne rendono più facilmente riconoscibili elementi difficili da individuare al buio.</p>
+<p>Quando la percepibilità assume rilievo centrale, è utile anche un successivo sopralluogo notturno svolto, per quanto possibile, in condizioni confrontabili con quelle esistenti al momento dell’evento.</p>
+<p>Vanno osservati e documentati la posizione e la tipologia dei punti luce, i lampioni funzionanti e quelli eventualmente danneggiati o spenti, le zone illuminate e quelle in ombra, le insegne luminose, l’illuminazione proveniente dagli edifici, la presenza di vegetazione o strutture che schermano la luce e le eventuali sorgenti di abbagliamento.</p>
+<p>Particolare attenzione va riservata alla presenza, nell’immediatezza dell’incidente, di veicoli provenienti in senso opposto. I relativi proiettori possono determinare fenomeni di abbagliamento o ridurre sensibilmente il contrasto con il quale un pedone, un ciclista o un altro ostacolo viene percepito.</p>
+<p>In determinate configurazioni, soprattutto su strade scarsamente illuminate, l’incrocio con un veicolo proveniente in senso opposto rende estremamente difficoltoso l’avvistamento di un pedone o di un ciclista che attraversa la carreggiata.</p>
+<p>Va quindi verificato, per quanto possibile, se al momento dell’evento era in corso l’incrocio con un altro veicolo e vanno raccolti gli elementi utili a ricostruirne la direzione di marcia, la posizione e il momento del passaggio rispetto all’investimento.</p>
+<p>Quando disponibili, assumono rilievo anche la tipologia e le caratteristiche dei proiettori dei veicoli, distinguendo, ad esempio, tra sistemi alogeni, allo xeno e a LED, il loro stato di funzionamento e di regolazione, lo stato di pulizia e l’eventuale opacizzazione o deterioramento delle superfici trasparenti, l’utilizzo degli anabbaglianti o degli abbaglianti, l’eventuale presenza di sistemi automatici o adattivi e le ulteriori sorgenti luminose presenti nella scena.</p>
+<p>Le condizioni della pavimentazione assumono particolare rilievo nella valutazione della visibilità. Un fondo bagnato riflette la luce dei fari, dei lampioni e delle altre sorgenti presenti, creando zone di maggiore luminosità, riflessi e possibili fenomeni di abbagliamento che rendono più difficile distinguere un pedone, un ciclista o un altro ostacolo rispetto allo sfondo. A ciò può aggiungersi la nebulizzazione dell’acqua sollevata dagli pneumatici dei veicoli, che diffonde la luce nell’ambiente e riduce ulteriormente la nitidezza e il contrasto della scena.</p>
+<p>Le normali fotografie notturne non vanno però interpretate come una riproduzione fedele della percezione visiva umana. Smartphone e fotocamere regolano spesso automaticamente esposizione, sensibilità, contrasto, tempi di scatto e altri parametri. Un’immagine apparentemente molto luminosa non corrisponde quindi necessariamente a ciò che una persona era concretamente in grado di vedere al momento dell’evento.</p>
+<p>Quando la visibilità rappresenta uno degli elementi decisivi del caso, la documentazione fotografica costituisce pertanto un importante punto di partenza, ma la sua valutazione richiede generalmente un successivo esame tecnico che tenga conto anche delle caratteristiche e dell’effettiva funzionalità dei proiettori del veicolo, della configurazione dell’ambiente, delle sorgenti luminose, nonché delle caratteristiche e della posizione dell’ostacolo o dell’utente della strada da percepire.</p>
+<p>Tali circostanze assumono rilievo diretto nella ricostruzione della distanza di avvistamento e del tempo concretamente disponibile per reagire e, conseguentemente, nella valutazione della velocità prudenziale e della condotta esigibile dal conducente, nonché dell’evitabilità dell’evento.</p>
+<h3 class="section-heading subsection">2.3 Investimento di pedoni</h3>
+<p>Negli investimenti di pedoni, soprattutto quando avvenuti di notte o in condizioni di ridotta visibilità, l’abbigliamento indossato assume grande rilevanza tecnica e giuridica.</p>
+<p>Quando gli indumenti sono disponibili e presentano interesse ai fini ricostruttivi, vanno conservati e documentati fotograficamente prima di essere lavati, riparati o modificati.</p>
+<p>Assumono particolare importanza il colore degli abiti, l’estensione delle superfici chiare o scure, la presenza di inserti retroriflettenti, di giubbotti o di altri elementi ad alta visibilità, nonché le scarpe, le borse, gli zaini e gli ulteriori oggetti indossati o trasportati.</p>
+<p>La documentazione non va limitata al particolare apparentemente più significativo. È bene fotografare gli indumenti nel loro complesso, anteriormente, posteriormente e lateralmente. Quando necessario, inoltre, è utile realizzare immagini di dettaglio relative a eventuali materiali riflettenti, lacerazioni, abrasioni o altre tracce.</p>
+<p>Nel caso di persona deceduta, il corpo, gli indumenti e gli oggetti sottoposti agli accertamenti dell’autorità non vanno toccati, spostati o comunque alterati. La loro eventuale rilevanza va considerata anche successivamente, quando tali beni vengono restituiti ai familiari, poiché la conservazione può risultare importante anche a distanza di tempo.</p>
+<p>Va inoltre documentata, quando ancora ricostruibile, la zona dalla quale il pedone proveniva, insieme all’eventuale presenza di veicoli, vegetazione, manufatti o altri elementi che ne limitavano la visibilità, nonché al percorso presumibilmente seguito.</p>
+<p>La posizione del pedone rispetto alle fonti luminose e allo sfondo assume particolare rilievo, soprattutto negli investimenti notturni.</p>
+<p>Tali informazioni sono fondamentali per ricostruire le concrete condizioni di percepibilità del pedone. L’abbigliamento, l’illuminazione, lo sfondo, la presenza di ostacoli alla visuale e la posizione reciproca dei diversi elementi consentono di valutare la distanza dalla quale il pedone era effettivamente avvistabile, il momento nel quale la sua presenza diventava percepibile e il tempo materialmente disponibile per reagire. Da questi elementi dipende anche la possibilità di stabilire se una frenata, una deviazione della traiettoria o una diversa velocità avrebbero consentito di evitare l’urto.</p>
+<p>Il passaggio dalla ricostruzione tecnica alla valutazione giuridica è quindi diretto. Stabilire quando e a quale distanza il pedone era concretamente percepibile consente di valutare se la velocità tenuta fosse adeguata alle condizioni di visibilità e alle caratteristiche della strada, se una diversa condotta fosse concretamente esigibile dal conducente e se l’eventuale inosservanza di una regola cautelare abbia assunto effettivo rilievo causale nella produzione dell’evento. Gli stessi elementi assumono rilievo anche nella valutazione del comportamento del pedone e dell’eventuale concorso causale delle rispettive condotte.</p>
+<h3 class="section-heading subsection">2.4 Investimento di ciclisti</h3>
+<p>Nell’investimento di un ciclista, la bicicletta costituisce una delle principali fonti materiali di informazione e va pertanto documentata con particolare attenzione, insieme alla sua posizione finale, ai danni, alle deformazioni e agli eventuali componenti distaccati.</p>
+<p>Assumono particolare rilievo i dispositivi destinati alla visibilità del mezzo e del ciclista. Vanno quindi documentati la luce anteriore e quella posteriore, i dispositivi catadiottrici, gli elementi riflettenti applicati alle ruote o ai pedali e, più in generale, ogni componente destinato a rendere percepibile la bicicletta nelle condizioni esistenti al momento dell’evento.</p>
+<p>La situazione riscontrata dopo l’urto non coincide necessariamente con quella precedente alla collisione. Lampade, dispositivi catadiottrici, supporti e altri componenti possono infatti rompersi o distaccarsi a seguito dell’impatto e finire non soltanto sulla carreggiata, ma anche sui margini stradali, sui cigli erbosi, nelle scarpate o nei fossati adiacenti, talvolta anche a una certa distanza dalla posizione finale della bicicletta. Per questa ragione, soprattutto quando sorgono dubbi sulla presenza di dispositivi luminosi o riflettenti al momento dell’incidente, è importante verificare tempestivamente l’area e ricercare eventuali frammenti o componenti ancora presenti sul posto, prima che il traffico, la pulizia della strada o altre circostanze ne determinino la dispersione o la rimozione.</p>
+<p>L’assenza sulla bicicletta, dopo l’incidente, di una lampada o di un dispositivo riflettente non dimostra quindi che quel componente mancasse anche prima dell’urto. Analogamente, l’assenza di una dinamo, di cablaggi elettrici o di altri elementi di un impianto tradizionale non consente di concludere che la bicicletta fosse priva di illuminazione, poiché molti dispositivi moderni utilizzano batterie autonome e vengono fissati direttamente al telaio, al manubrio, al reggisella o ad altre parti del mezzo.</p>
+<p>Quando sono ancora presenti, assumono rilievo anche le batterie, i relativi alloggiamenti, i sistemi di fissaggio, gli eventuali cablaggi e la posizione degli interruttori o dei comandi. Prima di accendere una luce, ricaricare una batteria, sostituire una pila o azionare un interruttore, è bene valutare l’opportunità di conservare lo stato del dispositivo per un successivo accertamento, evitando di modificare proprio la condizione che dovrà essere ricostruita.</p>
+<p>Particolare attenzione va riservata anche alle tracce presenti sulla pavimentazione: incisioni, scalfiture, graffi, abrasioni o trasferimenti di materiale lasciati dalla bicicletta, dal veicolo o da componenti distaccati possono fornire indicazioni preziose per localizzare il punto effettivo di collisione e ricostruire le successive traiettorie. Tali tracce vanno documentate nel loro rapporto con la carreggiata, con la posizione finale dei mezzi e con gli altri elementi della scena, prima che risultino alterate o cancellate dal traffico.</p>
+<p>Quanto osservato in relazione all’abbigliamento del pedone vale, con i necessari adattamenti, anche per il ciclista. Il colore degli indumenti, le superfici chiare o scure e gli elementi<strong> </strong>retroriflettenti incidono sulla concreta percepibilità della persona e vanno quindi conservati e documentati quando assumono interesse ricostruttivo. In determinate condizioni l’utilizzo di dispositivi ad alta visibilità assume inoltre specifico rilievo normativo: fuori dai centri abitati, da mezz’ora dopo il tramonto fino a mezz’ora prima del sorgere del sole, nonché nelle gallerie, il ciclista ha infatti l’obbligo di indossare il giubbotto o le bretelle retroriflettenti ad alta visibilità. In tali casi va pertanto documentata con particolare attenzione la presenza o l’assenza di questi dispositivi e, quando disponibili, il loro stato e le loro caratteristiche. Analoga attenzione va riservata all’eventuale casco e agli altri oggetti indossati o trasportati.</p>
+<p>Negli eventi notturni o in condizioni di ridotta visibilità valgono inoltre le considerazioni già svolte in materia di illuminazione ambientale, sfondo, sorgenti luminose, pavimentazione bagnata ed eventuale incrocio con altri veicoli. La presenza di dispositivi luminosi o riflettenti sulla bicicletta e di elementi ad alta visibilità indossati dal ciclista non esaurisce infatti la valutazione della sua percepibilità, che dipende dalla concreta configurazione della scena, dalle condizioni ambientali e dalla posizione reciproca dei soggetti coinvolti.</p>
+<p>La presenza, l’assenza o lo stato di uno specifico dispositivo non determinano automaticamente la responsabilità. Ogni elemento va inserito nella concreta sequenza dell’evento, verificandone l’effettiva incidenza sulla percepibilità del ciclista, sulla distanza di avvistamento, sul tempo materialmente disponibile per reagire e, infine, sull’evitabilità dell’investimento e sulla valutazione delle relative condotte.</p>
+<h3 class="section-heading subsection">2.5 Esame e documentazione del veicolo</h3>
+<p>Dopo un incidente stradale, è importante fotografare accuratamente il veicolo prima che venga riparato, demolito o comunque modificato. Non è sufficiente fotografare soltanto la zona apparentemente interessata dall’urto, ma è opportuno riprendere il veicolo nel suo complesso, documentandone il fronte, il retro, entrambe le fiancate e le viste oblique, così da collocare correttamente le singole deformazioni rispetto all’intera struttura.</p>
+<p>Vanno quindi documentate con maggiore dettaglio le singole deformazioni e le parti del veicolo interessate dall’urto o comunque rilevanti a fini ricostruttivi, tra cui i gruppi ottici, i cristalli, gli specchi, gli pneumatici, i cerchi, le sospensioni, le parti distaccate e, se rilevanti, le zone inferiori accessibili in sicurezza.</p>
+<p>L’esame non va limitato alla parte esterna. Anche l’abitacolo conserva informazioni utili, tra le quali lo stato del quadro strumenti e delle eventuali spie, la posizione dei sedili e dei comandi, gli eventuali danni o spostamenti degli elementi interni e gli altri particolari interessati dall’evento. Particolare attenzione va riservata anche allo stato delle cinture di sicurezza e degli airbag, che va documentato prima di qualsiasi manipolazione, poiché può assumere rilievo nella ricostruzione dell’incidente e nella valutazione delle conseguenze riportate dagli occupanti.</p>
+<p>La posizione, l’entità e la forma delle deformazioni consentono di ricostruire le modalità dell’urto, individuando le zone di contatto, verificando la compatibilità tra i danni e le altre tracce disponibili e ricavando indicazioni sulla posizione reciproca dei soggetti coinvolti e sulle rispettive direzioni di movimento al momento della collisione.</p>
+<p>Particolare cautela va adottata quando si intende verificare lo stato di luci, comandi o altri dispositivi. Prima di azionare interruttori, attivare il quadro strumenti, scollegare componenti o effettuare interventi sul veicolo, è bene valutare se tali operazioni rischiano di alterare elementi tecnicamente rilevanti e di modificare lo stato che dovrà essere successivamente esaminato.</p>
+<p>La conservazione del veicolo va valutata anche dopo un eventuale dissequestro. Il venir meno del vincolo imposto dall’autorità non significa infatti che il mezzo abbia esaurito il proprio rilievo probatorio. Una successiva consulenza può richiedere misurazioni non effettuate in precedenza, l’esame di una particolare deformazione, l’ispezione di un componente o la verifica della compatibilità con una determinata ipotesi ricostruttiva. Prima di procedere alla riparazione, alla demolizione o ad altre modifiche irreversibili è quindi opportuno considerare l’eventualità di successivi approfondimenti.</p>
+<h3 class="section-heading subsection">2.6 Accertamenti sul corretto utilizzo del casco</h3>
+<p>Negli incidenti che coinvolgono utenti tenuti all’impiego del casco assume particolare rilievo accertare se il dispositivo fosse correttamente utilizzato e verificare l’eventuale incidenza delle effettive modalità di impiego sulle conseguenze lesive.</p>
+<p>Il casco va attentamente esaminato e fotografato prima di essere pulito, riparato o comunque modificato. La documentazione deve riguardare la calotta esterna, la visiera, l’imbottitura interna, il cinturino sottogola e il relativo sistema di chiusura, nonché eventuali abrasioni, deformazioni, rotture o altre tracce riconducibili all’incidente. Va inoltre fotografata l’etichetta di omologazione, quando presente.</p>
+<p>Può accadere che, dopo l’incidente, il casco venga rinvenuto dagli accertatori separato dal soggetto coinvolto. Questa circostanza può far sorgere il dubbio che il dispositivo non fosse correttamente indossato al momento dell’urto, ma non consente da sola di trarre una conclusione in tal senso. Il casco può infatti essersi sfilato durante l’impatto o nelle fasi successive dell’evento, oppure essere stato rimosso durante le operazioni di soccorso. Assume quindi rilievo l’esame complessivo delle condizioni del casco, della posizione nella quale è stato rinvenuto, dello stato del cinturino e del sistema di chiusura, nonché delle eventuali tracce di contatto presenti sulla calotta esterna e di sangue o altre tracce biologiche presenti al suo interno.</p>
+<p>Qualora si accertasse che il casco era indossato ma non correttamente allacciato, va verificato se si trovava ancora in posizione sul capo al momento dell’impatto e se abbia comunque esplicato la sua azione protettiva.</p>
+<p>Accertare che il casco non fosse indossato o non fosse correttamente allacciato non esaurisce però la valutazione. Occorre stabilire, sul piano medico-legale, se e in quale misura tale circostanza abbia inciso sulle lesioni riportate, distinguendo quelle che si sarebbero comunque verificate da quelle che un corretto impiego del casco avrebbe verosimilmente evitato o attenuato.</p>
+<p>Solo dopo tale verifica è possibile valutare le conseguenze giuridiche dell’eventuale mancato o scorretto impiego del casco. A fini risarcitori, infatti, non è sufficiente accertare la violazione dell’obbligo, ma occorre verificarne la concreta incidenza causale sulla produzione o sull’aggravamento delle lesioni.</p>
+<h3 class="section-heading subsection">2.7 Dati elettronici e sistemi di bordo</h3>
+<p>La ricostruzione degli incidenti stradali non si basa più soltanto su tracce materiali, deformazioni e testimonianze. Nei veicoli moderni assumono sempre maggiore rilievo anche le informazioni registrate dai sistemi elettronici e dai dispositivi di bordo.</p>
+<p>Tra i sistemi da verificare rientrano, a seconda del veicolo e della relativa configurazione, gli <em>Event Data Recorder</em> (EDR), le centraline elettroniche che memorizzano dati utili alla ricostruzione, i sistemi telematici e di localizzazione satellitare, le scatole nere assicurative, i cronotachigrafi, le dashcam e altri dispositivi di bordo.</p>
+<p>Occorre anzitutto individuare quali sistemi sono effettivamente presenti e quali informazioni registrano e conservano. Il contenuto disponibile varia infatti in funzione del veicolo, dell’anno di costruzione, dell’allestimento e delle caratteristiche del singolo dispositivo.</p>
+<p>Anche le modalità di conservazione e di acquisizione dei dati variano sensibilmente. Alcuni sistemi mantengono le informazioni per periodi limitati, altri le sovrascrivono o le rendono accessibili soltanto attraverso apparecchiature e procedure specifiche.</p>
+<p>Per questa ragione, quando esiste il rischio che i dati vengano cancellati, sovrascritti o alterati da successivi interventi sul veicolo, è importante attivarsi tempestivamente per evitarne la perdita e conservarne la disponibilità ai fini di una successiva acquisizione.</p>
+<p>L’acquisizione va effettuata con strumenti tecnicamente adeguati e nel rispetto delle procedure applicabili, soprattutto quando le informazioni sono custodite da compagnie assicurative, aziende o altri soggetti terzi.</p>
+<p>I dati elettronici, una volta acquisiti, non vanno interpretati isolatamente. Il loro significato dipende dalle caratteristiche del sistema che li ha prodotti, dalle modalità con le quali sono stati registrati e dal confronto con le altre fonti disponibili, quali rilievi, tracce, deformazioni, testimonianze e restante documentazione.</p>
+<p>La valutazione complessiva di questi elementi consente di attribuire ai dati elettronici il corretto significato ricostruttivo e di verificarne l’eventuale rilievo ai fini dell’accertamento causale e delle responsabilità.</p>
+<h2 class="section-heading main-section">3. Infortuni sul lavoro</h2>
+<h3 class="section-heading subsection">3.1 Documentazione della scena dell’infortunio</h3>
+<p>Negli infortuni sul lavoro, la situazione presente al momento dell’evento cambia spesso in tempi molto brevi.</p>
+<p>Dopo l’infortunio è infatti spesso necessario mettere in sicurezza macchine e impianti, rimuovere materiali, pulire superfici o spostare utensili e attrezzature. A queste modifiche si aggiunge, in seguito, la ripresa dell’attività produttiva. Si tratta di interventi spesso inevitabili, che possono però cancellare o alterare elementi utili alla successiva ricostruzione dell’accaduto.</p>
+<p>Compatibilmente con le esigenze di sicurezza e senza interferire con le attività degli organi competenti, vanno quindi documentati lo stato dei luoghi, la posizione delle macchine e delle attrezzature, gli utensili, i prodotti o i materiali in lavorazione, le postazioni di lavoro, le superfici, la pavimentazione e ogni altro elemento collegato all’evento.</p>
+<p>Particolare importanza assume, quando ancora ricostruibile, la posizione occupata dall’infortunato al momento dell’evento rispetto alla macchina, all’attrezzatura, alla zona pericolosa e agli altri elementi presenti. Il rapporto spaziale tra la persona e l’ambiente di lavoro assume infatti rilievo nella ricostruzione della sequenza che ha condotto alla lesione.</p>
+<p>Se l’infortunio deriva da una caduta dall’alto, vanno documentati, a seconda del caso, scale, ponteggi, parapetti, aperture, piani di lavoro, sistemi anticaduta, punti di ancoraggio, accessi, differenze di quota e ogni altro elemento rilevante rispetto al rischio di caduta.</p>
+<p>Negli scivolamenti e nelle cadute sullo stesso piano, l’attenzione va rivolta soprattutto alle condizioni della pavimentazione, all’eventuale presenza di liquidi o altre sostanze, a irregolarità e dislivelli, agli ostacoli o agli ingombri e alle condizioni di illuminazione della zona interessata.</p>
+<p>Quando l’evento riguarda la movimentazione di materiali o la loro caduta sull’infortunato, vanno esaminati il carico e la sua disposizione, i sistemi di sollevamento e gli accessori utilizzati, gli spazi interessati dalle operazioni e la posizione della persona rispetto all’area nella quale queste si svolgevano.</p>
+<p>Più in generale, la documentazione deve restituire nel modo più completo possibile le condizioni concretamente esistenti al momento dell’infortunio, senza limitarsi agli elementi che appaiono immediatamente collegati all’evento. Anche caratteristiche dell’ambiente apparentemente secondarie possono infatti acquistare rilievo nel corso della successiva ricostruzione.</p>
+<p>Lo scopo non è soltanto ricostruire come si è materialmente verificato l’infortunio, ma anche confrontare la situazione concretamente esistente con le misure di prevenzione e protezione previste per quella specifica attività.</p>
+<p>Da questo confronto si ricavano gli elementi necessari per valutare le condotte concretamente tenute, la presenza e l’effettiva funzionalità delle misure di sicurezza, l’eventuale violazione di regole cautelari e il relativo rapporto causale con l’infortunio.</p>
+<h3 class="section-heading subsection"><strong>3.2 Macchine, impianti e attrezzature</strong></h3>
+<p>Quando l’infortunio coinvolge una macchina, un impianto o un’attrezzatura, assume particolare importanza ricostruirne la configurazione effettivamente esistente al momento dell’evento.</p>
+<p>Vanno innanzitutto rilevati gli elementi identificativi disponibili, quali marca, modello, matricola, targhe e ogni altro dato utile a individuare con precisione la macchina, l’impianto o l’attrezzatura interessata.</p>
+<p>Particolare attenzione va riservata alla posizione dei comandi e dei selettori, ai pulsanti di arresto e di emergenza, ai ripari, ai carter, alle barriere, ai sensori, agli interblocchi e agli altri dispositivi destinati alla sicurezza dell’operatore.</p>
+<p>Assumono rilievo anche l’utensile eventualmente installato, il materiale in lavorazione, i componenti danneggiati, rimossi o sostituiti e, più in generale, ogni elemento che caratterizzava la concreta configurazione esistente al momento dell’infortunio.</p>
+<p>L’esame deve riguardare lo stato effettivamente riscontrato e non soltanto quello previsto dal progetto, dal manuale di uso e manutenzione o dalle procedure aziendali. La presenza sulla carta di una determinata misura di sicurezza non dimostra infatti che essa fosse realmente presente, funzionante ed efficace al momento dell’evento.</p>
+<p>Un riparo mancante o aperto, un sensore non funzionante, un interblocco neutralizzato, un comando modificato o qualsiasi altra alterazione dei sistemi di sicurezza assumono particolare rilievo quando risultano inseriti nella sequenza causale che ha condotto all’infortunio.</p>
+<p>Allo stesso modo, la semplice presenza di un dispositivo di sicurezza non dimostra che esso fosse concretamente idoneo a impedire quello specifico evento. Occorre comprenderne il funzionamento e verificare quale effetto avrebbe avuto nella sequenza effettivamente verificatasi.</p>
+<p>Quando la posizione di un comando, di un selettore o di un elemento mobile assume rilievo ricostruttivo, va documentata prima di qualsiasi modifica, compatibilmente con le imprescindibili esigenze di sicurezza. La stessa attenzione va riservata alle schermate dei sistemi di controllo, ai codici di errore, agli allarmi e alle altre indicazioni ancora visibili dopo l’evento.</p>
+<p>Se la macchina, l’impianto o l’attrezzatura conserva rilievo ai fini degli accertamenti, è opportuno evitare riparazioni, modifiche o rimessa in servizio fino a quando non siano state considerate le eventuali esigenze di approfondimento, ferma restando la priorità degli interventi necessari a eliminare situazioni di pericolo.</p>
+<p>Le modifiche effettuate dopo l’infortunio vanno comunque documentate con precisione, in modo da distinguere la configurazione esistente al momento dell’evento da quella risultante dagli interventi successivi.</p>
+<h3 class="section-heading subsection">3.3 Dispositivi di protezione individuale</h3>
+<p>Lo stato dei dispositivi di protezione individuale (DPI) assume spesso rilievo nella ricostruzione dell’infortunio e nella valutazione dell’effettiva efficacia delle misure di protezione adottate.</p>
+<p>Caschi, guanti, calzature, imbracature, dispositivi anticaduta, occhiali, maschere e indumenti protettivi vanno quindi conservati nello stato in cui sono stati rinvenuti e, quando rilevanti, accuratamente esaminati e fotografati.</p>
+<p>È bene acquisire immagini complessive del dispositivo e fotografie di dettaglio relative a eventuali rotture, abrasioni, tagli, deformazioni, contaminazioni o altre tracce riferibili all’evento. Nei DPI costituiti da più elementi assumono particolare importanza anche i sistemi di chiusura, le fibbie, gli agganci, i collegamenti e gli eventuali punti di ancoraggio.</p>
+<p>La verifica non riguarda soltanto la presenza o l’assenza del DPI. Vanno considerate anche la sua tipologia, l’idoneità rispetto allo specifico rischio, lo stato di conservazione e le concrete modalità di impiego. Quando rilevanti, assumono inoltre interesse le informazioni relative alla consegna del dispositivo, alla formazione e all’addestramento ricevuti dal lavoratore.</p>
+<p>Anche in questo ambito, l’accertamento tecnico si collega direttamente alla valutazione giuridica. La semplice constatazione che un determinato DPI non fosse utilizzato, oppure fosse impiegato in modo non corretto, non consente infatti di definire automaticamente le responsabilità.</p>
+<p>Occorre verificare quale misura di protezione era concretamente richiesta in relazione alla specifica attività, se il dispositivo fornito era idoneo e correttamente mantenuto, quali obblighi gravavano sui diversi soggetti coinvolti e quale incidenza causale l’assenza o il non corretto utilizzo del DPI ha effettivamente avuto sulla produzione o sulla gravità delle conseguenze dell’infortunio.</p>
+<h3 class="section-heading subsection">3.4 Documentazione aziendale e dati elettronici</h3>
+<p>Negli infortuni sul lavoro, la ricostruzione materiale dell’evento va spesso confrontata con la documentazione relativa all’organizzazione della sicurezza e alle concrete modalità di svolgimento dell’attività lavorativa.</p>
+<p>Tra i documenti da esaminare rientrano, a seconda del caso, il documento di valutazione dei rischi (DVR), le procedure operative, le istruzioni di lavoro, i manuali delle macchine, la documentazione tecnica, i registri di manutenzione, le verifiche periodiche, la documentazione relativa alla formazione e all’addestramento, alla consegna dei dispositivi di protezione individuale, ai turni e agli orari di lavoro, agli ordini di servizio e agli interventi eseguiti prima dell’infortunio.</p>
+<p>La rilevanza di questi documenti non dipende però dalla loro semplice esistenza. Una procedura formalmente corretta acquista significato soltanto se viene confrontata con l’effettiva organizzazione del lavoro e con ciò che concretamente avveniva nella postazione interessata.</p>
+<p>Lo stesso vale per la manutenzione. Non basta che un intervento fosse previsto, ma occorre verificare quando è stato effettivamente eseguito, su quali componenti, con quali modalità e con quale esito.</p>
+<p>In molti casi, macchine e impianti moderni registrano anche informazioni elettroniche relative al loro funzionamento, quali log, allarmi, arresti, anomalie, accessi degli operatori, cicli macchina, dati di produzione e altre informazioni memorizzate dai sistemi di controllo.</p>
+<p>Vanno considerati anche i sistemi di videosorveglianza e di controllo degli accessi quando forniscono elementi utili a ricostruire aspetti temporali o spaziali collegati all’evento.</p>
+<p>L’esistenza di queste fonti va verificata tempestivamente, soprattutto quando i sistemi prevedono la cancellazione o la sovrascrittura automatica dei dati. L’acquisizione della documentazione aziendale e dei dati elettronici va effettuata nel rispetto delle procedure applicabili e attraverso i soggetti legittimati, attivandosi per evitare che documenti e dati vadano perduti prima di poterne valutare compiutamente il rilievo.</p>
+<p>Il confronto tra quanto materialmente accaduto e l’organizzazione formalmente prevista rappresenta spesso un passaggio fondamentale per individuare le condotte rilevanti, le eventuali violazioni delle regole di sicurezza, i soggetti titolari dei relativi obblighi e il rapporto causale tra tali violazioni e l’infortunio.</p>
+<h2 class="section-heading main-section">4. Aspetti comuni successivi all’evento</h2>
+<h3 class="section-heading subsection">4.1 Spese e documentazione</h3>
+<p>Oltre agli elementi utili alla ricostruzione dell’evento e all’accertamento delle responsabilità, va conservata ordinatamente anche la documentazione relativa alle conseguenze che ne sono derivate.</p>
+<p>Rientrano in questa categoria, a seconda del caso, la documentazione sanitaria, le ricevute, le fatture, gli scontrini, le spese di trasporto e di assistenza, i preventivi, la documentazione relativa a riparazioni o sostituzioni, i documenti assicurativi e gli elementi riguardanti l’assenza dal lavoro o altre conseguenze economicamente valutabili.</p>
+<p>È bene non affidarsi soltanto al ricordo delle spese sostenute, perché la loro successiva dimostrazione richiede un adeguato riscontro documentale. Anche importi singolarmente modesti assumono rilievo quando vengono considerati nel loro complesso.</p>
+<p>Una raccolta ordinata fin dall’inizio facilita quindi non soltanto la quantificazione delle conseguenze economiche, ma anche la prova delle singole spese e la verifica della loro riconducibilità all’evento.</p>
+<h3 class="section-heading subsection">4.2 Social network e comunicazioni pubbliche</h3>
+<p>Nelle ore immediatamente successive a un incidente o a un infortunio è frequente che le persone coinvolte pubblichino sui social network fotografie, video, commenti o prime interpretazioni dell’accaduto.</p>
+<p>È invece prudente evitare comunicazioni pubbliche, perlomeno fino a quando non si dispone di una conoscenza sufficientemente completa dei fatti.</p>
+<p>Una frase scritta nell’immediatezza risente spesso di informazioni incomplete, impressioni personali o ricordi ancora confusi. Una volta pubblicata, rischia inoltre di essere estrapolata dal contesto e interpretata in modo diverso rispetto alle intenzioni di chi l’ha scritta.</p>
+<p>La stessa cautela riguarda fotografie e video. Un’immagine mostra inevitabilmente soltanto una parte della scena e, se considerata isolatamente, rischia di suggerire conclusioni non confermate da una ricostruzione più completa dell’evento.</p>
+<p>Va inoltre considerato che una comunicazione pubblicata online può continuare a circolare anche dopo la sua successiva rimozione, ad esempio attraverso copie, condivisioni o schermate salvate da altri utenti.</p>
+<p>La prudenza nelle comunicazioni pubbliche evita quindi di diffondere nell’immediatezza versioni incomplete o inesatte di una vicenda che richiede ancora di essere ricostruita e valutata sotto il profilo tecnico e giuridico.</p>
+<h3 class="section-heading subsection">4.3 Il coinvolgimento di un professionista del settore</h3>
+<p>Nei casi che presentano profili tecnici o giuridici di particolare rilievo, coinvolgere quanto prima un professionista del settore incide spesso sulla qualità degli accertamenti successivi.</p>
+<p>Un sopralluogo eseguito nelle prime fasi consente di individuare elementi destinati a scomparire o a modificarsi. Allo stesso modo, un intervento svolto nell’immediatezza permette di riconoscere l’importanza di una registrazione video, di un veicolo, di un macchinario, di un dispositivo elettronico, di un indumento o di una particolare documentazione prima che tali fonti vengano disperse, alterate o rese non più disponibili.</p>
+<p>Un’attenta valutazione iniziale serve soprattutto a individuare le questioni decisive e, di conseguenza, gli approfondimenti realmente necessari. Non ogni incidente richiede l’acquisizione dei dati elettronici di un veicolo, così come non ogni infortunio impone una complessa analisi del macchinario. L’obiettivo è concentrare fin dall’inizio l’attenzione sugli elementi pertinenti, evitando accertamenti inutili e, al tempo stesso, il rischio che fonti rilevanti vengano alterate o vadano perdute.</p>
+<p>Quando una fonte è destinata a modificarsi o a scomparire, va valutata senza ritardo l’opportunità di ricorrere agli strumenti tecnici e giuridici disponibili per documentarla e preservarla.</p>
+<p>Nei casi che presentano contemporaneamente problematiche tecniche e giuridiche, i due piani vanno considerati in modo coordinato. Una traccia assume significato in relazione alla questione alla quale è riferita e, allo stesso tempo, una determinata ipotesi giuridica deve trovare riscontro negli elementi materiali ricostruiti.</p>
+<p>L’accertamento tecnico non costituisce infatti un’attività separata dalla successiva valutazione giuridica, ma ne rappresenta spesso un fondamentale presupposto fattuale.</p>
+<h2 class="section-heading main-section">5. Conclusioni</h2>
+<p>La ricostruzione di un incidente stradale o di un infortunio sul lavoro dipende in larga misura dalla qualità e dalla completezza delle informazioni disponibili.</p>
+<p>Molte di queste informazioni sono destinate a modificarsi o a scomparire rapidamente: una traccia rilevante viene cancellata, un veicolo viene riparato, un macchinario modificato, una registrazione sovrascritta, un dato elettronico perduto e un testimone diventa difficile da rintracciare.</p>
+<p>Ciò che viene perduto nelle prime ore o nei primi giorni non sempre è recuperabile attraverso accertamenti successivi, anche quando questi risultano particolarmente approfonditi.</p>
+<p>Per questa ragione assumono particolare importanza la documentazione della scena nell’immediatezza dell’evento, la conservazione dello stato dei veicoli, dei macchinari e degli altri elementi rilevanti, l’individuazione delle fonti digitali, la raccolta dei recapiti dei testimoni e l’ordinata conservazione della documentazione disponibile.</p>
+<p>Lo scopo non è trasformare le persone coinvolte in investigatori né sostituirsi agli organi istituzionalmente competenti, ma evitare che informazioni potenzialmente decisive vadano perdute prima che ne venga compreso il reale significato.</p>
+<p>Negli incidenti stradali e negli infortuni sul lavoro, la realtà materiale dell’evento costituisce infatti il punto di partenza della successiva valutazione giuridica. Prima di stabilire se una condotta era o meno conforme alle regole cautelari, se ha assunto rilievo causale e quali responsabilità ne derivano, occorre ricostruire con la maggiore attendibilità possibile ciò che è realmente accaduto.</p>
+<p>La corretta raccolta e conservazione delle fonti di prova rappresentano quindi il necessario collegamento tra la ricostruzione tecnica dell’evento e la sua valutazione giuridica.</p>
+<h2 class="section-heading main-section">6. Riferimenti normativi e istituzionali essenziali</h2>
+<p>I riferimenti che seguono hanno carattere essenziale e non esaustivo e riguardano le principali disposizioni richiamate dai temi affrontati nell’articolo.</p>
+<h3 class="section-heading subsection"><strong>Profili probatori e conservazione delle fonti di prova</strong></h3>
+<p>• <strong>Art. 354 c.p.p. – Accertamenti urgenti sui luoghi, sulle cose e sulle persone. Sequestro</strong>: disciplina, tra l’altro, la conservazione delle tracce e delle cose pertinenti al reato e gli accertamenti urgenti quando vi sia il pericolo che luoghi, cose o tracce si alterino, si disperdano o comunque si modifichino.<br/>• <strong>Art. 360 c.p.p. – Accertamenti tecnici non ripetibili</strong>: disciplina gli accertamenti tecnici relativi a persone, cose o luoghi il cui stato è soggetto a modificazione.<br/>• <strong>Art. 2697 c.c. – Onere della prova</strong>: contiene la regola generale sulla ripartizione dell’onere probatorio tra le parti.<br/>• <strong>Art. 2712 c.c. – Riproduzioni meccaniche</strong>: riguarda il valore probatorio delle riproduzioni fotografiche, informatiche e delle altre rappresentazioni meccaniche di fatti e cose.<br/><strong>• Art. 1227 c.c. – Concorso del fatto colposo del creditore</strong>: disciplina gli effetti del concorso colposo del danneggiato sulla misura del risarcimento e l’esclusione dei danni evitabili con l’ordinaria diligenza.<br/><strong>• Art. 2056 c.c. – Valutazione dei danni</strong>: richiama, nella determinazione del risarcimento derivante da fatto illecito, anche i criteri previsti dall’art. 1227 c.c.<br/>• <strong>Art. 696 c.p.c. – Accertamento tecnico e ispezione giudiziale</strong>: consente, nei presupposti previsti dalla norma, di procedere in via preventiva ad accertamenti tecnici o ispezioni su persone, cose o luoghi.<br/>• <strong>Art. 696-bis c.p.c. – Consulenza tecnica preventiva ai fini della composizione della lite</strong>: disciplina la consulenza tecnica preventiva finalizzata anche alla composizione della controversia.</p>
+<h3 class="section-heading subsection"><strong>Normativa sulla circolazione stradale</strong></h3>
+<p>• <strong>Art. 68 c.d.s. – Caratteristiche costruttive e funzionali e dispositivi di equipaggiamento dei velocipedi</strong>: disciplina, tra l’altro, i dispositivi di segnalazione visiva dei velocipedi, comprese le luci anteriori e posteriori e i dispositivi catadiottrici.<br/>• <strong>Art. 141 c.d.s. – Velocità</strong>: contiene i criteri generali di adeguamento della velocità alle caratteristiche della strada, del veicolo, del traffico e alle condizioni ambientali, assumendo particolare rilievo nelle valutazioni relative alla percepibilità del pericolo, ai tempi di reazione e all’evitabilità dell’evento.<br/>• <strong>Art. 171 c.d.s. – Uso del casco protettivo per gli utenti di veicoli a due ruote</strong>: disciplina l’obbligo di indossare e tenere regolarmente allacciato il casco protettivo per conducenti e passeggeri di ciclomotori e motoveicoli, salve le eccezioni previste dalla norma.<br/>• <strong>Art. 1, comma 75-novies, l. 27 dicembre 2019, n. 160</strong>: prevede l’obbligo del casco protettivo per i conducenti dei monopattini a propulsione prevalentemente elettrica.<br/>• <strong>Art. 172 c.d.s. – Uso delle cinture di sicurezza e dei sistemi di ritenuta e sicurezza per bambini</strong>: disciplina l’obbligo di utilizzo delle cinture di sicurezza e dei sistemi destinati alla protezione dei bambini.<br/>• <strong>Art. 182 c.d.s. – Circolazione dei velocipedi</strong>: disciplina il comportamento dei ciclisti e prevede, fuori dai centri abitati nelle ore indicate dalla norma e nelle gallerie, l’obbligo di indossare giubbotto o bretelle retroriflettenti ad alta visibilità.<br/>• <strong>Art. 189 c.d.s. – Comportamento in caso di incidente</strong>: oltre agli obblighi di fermarsi e prestare assistenza, prevede che le persone coinvolte salvaguardino la sicurezza della circolazione e, compatibilmente con tale esigenza, si adoperino affinché lo stato dei luoghi non venga modificato e le tracce utili all’accertamento delle responsabilità non vengano disperse.<br/>• <strong>Art. 190 c.d.s. – Comportamento dei pedoni</strong>: disciplina le modalità di circolazione e attraversamento dei pedoni e assume rilievo nella valutazione delle rispettive condotte negli eventi che li coinvolgono.</p>
+<h3 class="section-heading subsection"><strong>Sicurezza sul lavoro</strong></h3>
+<p>• <strong>Art. 15 d.lgs. 9 aprile 2008, n. 81 – Misure generali di tutela</strong>: individua i principi fondamentali sui quali si basa l’organizzazione della prevenzione e della sicurezza nei luoghi di lavoro.<br/>• <strong>Art. 18 d.lgs. 9 aprile 2008, n. 81 – Obblighi del datore di lavoro e del dirigente</strong>: disciplina i principali obblighi organizzativi e prevenzionistici riferibili al datore di lavoro e al dirigente.<br/>• <strong>Art. 28 d.lgs. 9 aprile 2008, n. 81 – Oggetto della valutazione dei rischi</strong>: costituisce il principale riferimento per l’esame del documento di valutazione dei rischi (DVR) e delle misure individuate in relazione alla concreta attività lavorativa.<br/>• <strong>Art. 37 d.lgs. 9 aprile 2008, n. 81 – Formazione dei lavoratori e dei loro rappresentanti</strong>: disciplina gli obblighi di formazione e, nei casi previsti, di addestramento dei lavoratori.<br/>• <strong>Artt. 70 e 71 d.lgs. 9 aprile 2008, n. 81 – Requisiti di sicurezza delle attrezzature di lavoro e obblighi del datore di lavoro</strong>: riguardano la conformità, l’idoneità, l’installazione, l’impiego, la manutenzione e i controlli delle attrezzature di lavoro.<br/>• <strong>Art. 73 d.lgs. 9 aprile 2008, n. 81 – Informazione, formazione e addestramento</strong>: disciplina gli obblighi riferiti ai lavoratori incaricati dell’uso delle attrezzature di lavoro.<br/>• <strong>Artt. 74, 75 e 77 d.lgs. 9 aprile 2008, n. 81</strong>: riguardano la definizione dei dispositivi di protezione individuale (DPI), il relativo obbligo di impiego e gli obblighi del datore di lavoro connessi alla loro scelta, fornitura, manutenzione e utilizzazione.<br/>• <strong>Art. 111 d.lgs. 9 aprile 2008, n. 81 – Obblighi del datore di lavoro nell’uso di attrezzature per lavori in quota</strong>: contiene le principali prescrizioni relative alla scelta e all’impiego delle attrezzature nei lavori in quota.<br/>• <strong>Art. 115 d.lgs. 9 aprile 2008, n. 81 – Sistemi di protezione contro le cadute dall’alto</strong>: disciplina i sistemi di protezione contro il rischio di caduta dall’alto.</p>
+<h3 class="section-heading subsection"><strong>Dati elettronici dei veicoli</strong></h3>
+<p>• <strong>Regolamento (UE) 2019/2144</strong>: disciplina, nell’ambito dei requisiti generali di sicurezza dei veicoli, anche gli <em>Event Data Recorder</em> (EDR) e le principali categorie di dati riferibili al periodo immediatamente precedente, contemporaneo e successivo alla collisione.<br/>• <strong>Regolamento delegato (UE) 2022/545 della Commissione</strong>: integra il regolamento (UE) 2019/2144 stabilendo specifiche procedure di prova e requisiti tecnici relativi agli EDR.</p>
+<h3 class="section-heading subsection"><strong>Videosorveglianza e protezione dei dati</strong></h3>
+<p>• <strong>Regolamento (UE) 2016/679 (GDPR)</strong>: costituisce il riferimento generale in materia di trattamento dei dati personali e trova applicazione anche alle immagini e alle registrazioni video quando contengono dati personali.<br/>• <strong>Art. 4 l. 20 maggio 1970, n. 300 – Impianti audiovisivi e altri strumenti di controllo</strong>: assume specifico rilievo nell’ambito dei sistemi di videosorveglianza installati nei luoghi di lavoro.<br/>• <strong>European Data Protection Board,</strong> <strong><em>Linee guida 3/2019 sul trattamento dei dati personali attraverso dispositivi video</em></strong>: forniscono indicazioni sull’applicazione della disciplina sulla protezione dei dati ai sistemi di videosorveglianza.<br/>• <strong>Garante per la protezione dei dati personali, FAQ sulla videosorveglianza</strong>: contiene indicazioni applicative anche in materia di conservazione delle immagini e trattamento delle registrazioni.</p>
+<h3 class="section-heading subsection"><strong>Fonti istituzionali in materia di infortuni sul lavoro</strong></h3>
+<p>• <strong>INAIL – Sistema di sorveglianza nazionale degli infortuni mortali e gravi Infor.MO</strong>: sistema di sorveglianza dedicato all’analisi degli infortuni mortali e gravi e dei relativi fattori causali, con documentazione metodologica e dati utilizzabili anche a fini di studio e prevenzione.<br/>• <strong>Ispettorato Nazionale del Lavoro</strong>: costituisce una fonte istituzionale di riferimento per normativa, circolari e documentazione in materia di salute e sicurezza nei luoghi di lavoro.</p>
+    </div>
+  </article>
+</template>
               </div>
             </div>
           </div>
@@ -705,32 +1150,85 @@
   <script>
     const mobileLayoutMedia = window.matchMedia("(max-width: 800px)");
 
-    /* 0268: modalità di lettura chiara temporanea per il solo riquadro aperto.
-       La preferenza non viene memorizzata e viene sempre azzerata alla chiusura. */
+    /* 0449: modalità di lettura chiara/scura esclusivamente globale.
+       Il comando nell'header applica lo stesso stato a tutti i riquadri;
+       i comandi sole/luna individuali sono stati eliminati. */
     const readingThemeCards = Array.from(document.querySelectorAll(".editorial-section"));
+    const globalReadingThemeToggle = document.getElementById("globalReadingThemeToggle");
+    let globalReadingThemeShowsMoon = false;
 
-    function updateReadingThemeControl(card) {
-      const toggle = card?.querySelector(".reading-theme-toggle");
-      if (!toggle) return;
+    function updateGlobalReadingThemeControl() {
+      if (!globalReadingThemeToggle) return;
 
-      const isLight = card.classList.contains("is-reading-light");
-      const label = isLight
-        ? "Passa alla modalità di lettura scura"
-        : "Passa alla modalità di lettura chiara";
+      const label = globalReadingThemeShowsMoon
+        ? "Rendi scuri tutti i riquadri"
+        : "Rendi chiari tutti i riquadri";
 
-      toggle.setAttribute("aria-label", label);
-      toggle.setAttribute("title", label);
-      toggle.setAttribute("aria-pressed", String(isLight));
+      globalReadingThemeToggle.classList.toggle(
+        "shows-moon",
+        globalReadingThemeShowsMoon
+      );
+      globalReadingThemeToggle.setAttribute("aria-label", label);
+      globalReadingThemeToggle.setAttribute("title", label);
+      globalReadingThemeToggle.setAttribute(
+        "aria-pressed",
+        String(globalReadingThemeShowsMoon)
+      );
+
+      /* 0450: la modalita' chiara e' ora uno stato generale anche per
+         il menu e per la palette desktop. */
+      document.body.classList.toggle(
+        "is-global-reading-light",
+        globalReadingThemeShowsMoon
+      );
     }
 
-    function setReadingTheme(card, isLight) {
+    function syncGlobalReadingThemeControl() {
+      if (!readingThemeCards.length) {
+        updateGlobalReadingThemeControl();
+        return;
+      }
+
+      const lightCount = readingThemeCards.reduce(
+        (count, card) => count + (card.classList.contains("is-reading-light") ? 1 : 0),
+        0
+      );
+
+      if (lightCount === readingThemeCards.length) {
+        globalReadingThemeShowsMoon = true;
+      } else if (lightCount === 0) {
+        globalReadingThemeShowsMoon = false;
+      }
+
+      /* Nello stato misto il comando conserva l'ultima icona mostrata. */
+      updateGlobalReadingThemeControl();
+    }
+
+    function setReadingTheme(card, isLight, { syncGlobal = true } = {}) {
       if (!card) return;
       card.classList.toggle("is-reading-light", Boolean(isLight));
-      updateReadingThemeControl(card);
+      if (syncGlobal) syncGlobalReadingThemeControl();
     }
 
-    function resetReadingTheme(card) {
-      setReadingTheme(card, false);
+    function resetReadingTheme(card, { syncGlobal = true } = {}) {
+      setReadingTheme(card, false, { syncGlobal });
+    }
+
+    if (globalReadingThemeToggle) {
+      globalReadingThemeToggle.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const targetLight = !globalReadingThemeShowsMoon;
+        readingThemeCards.forEach(card => {
+          setReadingTheme(card, targetLight, { syncGlobal: false });
+        });
+
+        globalReadingThemeShowsMoon = targetLight;
+        updateGlobalReadingThemeControl();
+      });
+
+      updateGlobalReadingThemeControl();
     }
 
     /* 0284: rifinitura della chiusura desktop dalla modalità chiara.
@@ -842,34 +1340,6 @@
         surface.setAttribute("aria-hidden", "true");
         card.prepend(surface);
       }
-
-      if (card.querySelector(".reading-theme-toggle")) return;
-
-      const toggle = document.createElement("button");
-      toggle.className = "reading-theme-toggle";
-      toggle.type = "button";
-      toggle.innerHTML = `
-        <span class="reading-theme-icon reading-theme-icon-sun" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <circle cx="12" cy="12" r="3.1"></circle>
-            <path d="M12 3.4v1.8M12 18.8v1.8M3.4 12h1.8M18.8 12h1.8M6 6l1.25 1.25M16.75 16.75L18 18M18 6l-1.25 1.25M7.25 16.75L6 18"></path>
-          </svg>
-        </span>
-        <span class="reading-theme-icon reading-theme-icon-moon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path class="reading-moon-path-mobile" d="M18.55 14.8A7.85 7.85 0 0 1 9.2 5.45a7.95 7.95 0 1 0 9.35 9.35Z"></path>
-            <path class="reading-moon-path-desktop" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
-          </svg>
-        </span>`;
-
-      toggle.addEventListener("click", event => {
-        event.preventDefault();
-        event.stopPropagation();
-        setReadingTheme(card, !card.classList.contains("is-reading-light"));
-      });
-
-      card.appendChild(toggle);
-      updateReadingThemeControl(card);
     });
 
     mobileLayoutMedia.addEventListener("change", () => {
@@ -1363,6 +1833,12 @@
         }
       }
 
+      /* 0483: distanza visiva unica fra l'ultima riga di testo e il bordo
+         inferiore dei riquadri mobile, sia chiusi sia aperti. Il valore e'
+         misurato in CSS px sulla geometria realmente composta dal browser,
+         così il criterio resta identico su Android, iPhone e altre larghezze. */
+      const MOBILE_CARD_TEXT_BOTTOM_GAP = 16;
+
       function getBaseClosedContentHeight(card) {
         const trigger = card.querySelector(".section-trigger");
         if (!trigger) return 0;
@@ -1394,10 +1870,7 @@
            superiore al padding già previsto. La riga mostrata resta quella
            determinata dal 17:10 originario: nessun elemento interno viene
            spostato o ridimensionato. */
-        if (
-          window.matchMedia("(min-width: 801px)").matches
-          || isFirefoxNarrowMobileContent()
-        ) {
+        if (window.matchMedia("(min-width: 801px)").matches) {
           return baseClosedContentHeight;
         }
 
@@ -1468,17 +1941,18 @@
 
         if (lastVisibleBottom === null) return baseClosedContentHeight;
 
-        const currentBottomGap =
-          (contentRect.top + baseClosedContentHeight) - lastVisibleBottom;
+        /* 0475: il 17:10 resta soltanto il riferimento per determinare
+           quali righe appartengono all'anteprima. L'altezza finale del
+           riquadro chiuso viene invece ricavata dalla posizione reale
+           dell'ultima riga visibile sul dispositivo, imponendo 16 CSS px
+           esatti fra il fondo di quella riga e il fondo del contenitore.
+           L'interlinea e la posizione delle righe non vengono modificate. */
+        const adaptiveHeight =
+          (lastVisibleBottom - contentRect.top) + MOBILE_CARD_TEXT_BOTTOM_GAP;
 
-        /* Mezzo pixel di tolleranza evita micro-variazioni dovute agli
-           arrotondamenti sub-pixel quando il margine è già adeguato. */
-        if (currentBottomGap >= minimumBottomGap - .5) {
-          return baseClosedContentHeight;
-        }
-
-        const missingBottomGap = minimumBottomGap - currentBottomGap;
-        return Math.round(baseClosedContentHeight + Math.ceil(missingBottomGap));
+        /* Manteniamo i sub-pixel: il browser puo' cosi' centrare il target
+           di 16 CSS px con la massima precisione consentita dal dispositivo. */
+        return Math.max(92, Number(adaptiveHeight.toFixed(3)));
       }
 
       function hideMobileEllipsis(card) {
@@ -1608,11 +2082,88 @@
         ellipsis.classList.add("is-visible");
       }
 
+      function getMobileLastRenderedTextBottom(root) {
+        if (!root) return null;
+
+        let lastBottom = null;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+
+          for (const rect of range.getClientRects()) {
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            lastBottom = lastBottom === null
+              ? rect.bottom
+              : Math.max(lastBottom, rect.bottom);
+          }
+
+          node = walker.nextNode();
+        }
+
+        return lastBottom;
+      }
+
+      function calibrateMobileOpenBottomGap(card, inner) {
+        if (!card || !inner) return;
+
+        const richtext = card.querySelector(".section-richtext");
+        if (!richtext) return;
+
+        /* Ogni calibrazione riparte dal padding previsto dal CSS per quello
+           specifico dispositivo: nessuna correzione viene accumulata fra
+           aperture, resize o cambi di orientamento. */
+        richtext.style.removeProperty("padding-bottom");
+        void inner.offsetHeight;
+
+        for (let pass = 0; pass < 2; pass += 1) {
+          const lastTextBottom = getMobileLastRenderedTextBottom(richtext);
+          if (lastTextBottom === null) return;
+
+          const richtextRect = richtext.getBoundingClientRect();
+          const richtextStyle = window.getComputedStyle(richtext);
+          const currentPaddingBottom =
+            parseFloat(richtextStyle.paddingBottom) || 0;
+          const currentGap = richtextRect.bottom - lastTextBottom;
+          const correction =
+            MOBILE_CARD_TEXT_BOTTOM_GAP - currentGap;
+          const adjustedPadding = Math.max(
+            0,
+            currentPaddingBottom + correction
+          );
+
+          richtext.style.paddingBottom =
+            `${Number(adjustedPadding.toFixed(3))}px`;
+          void inner.offsetHeight;
+
+          if (Math.abs(correction) <= .25) break;
+        }
+      }
+
       function measureMobileOpenContentHeight(card, inner) {
         if (!card || !inner) return 0;
 
         card.classList.add("is-mobile-open-measuring");
+
+        /* 0483: l'altezza aperta viene misurata soltanto dopo avere portato
+           la distanza fra ultima riga realmente renderizzata e fondo del
+           riquadro allo stesso target di 16 CSS px già usato da chiuso.
+           Testo, interlinea e spaziatura fra capoversi restano invariati. */
+        calibrateMobileOpenBottomGap(card, inner);
         const measuredHeight = inner.scrollHeight;
+
         card.classList.remove("is-mobile-open-measuring");
 
         /* 0220 - reset tecnico dello spazio tra i capoversi.
@@ -1743,10 +2294,6 @@
         const inner = card.querySelector(".section-content-inner");
         if (!content || !inner) return;
 
-        if (!isOpen) {
-          resetReadingTheme(card);
-        }
-
         hideMobileEllipsis(card);
 
         /* 0230: durante la sola apertura mobile viene ripristinato
@@ -1832,6 +2379,8 @@
           card.classList.remove("is-mobile-opening", "is-mobile-closing");
 
           if (!card.classList.contains("is-open")) {
+            card.querySelector(".section-richtext")
+              ?.style.removeProperty("padding-bottom");
             updateMobileEllipsis(card);
           }
 
@@ -1862,8 +2411,100 @@
       }
 
       async function scrollCardBelowHeaderAndWait(card) {
-        scrollCardBelowHeader(card, "smooth");
-        await waitForScrollToSettle();
+        /* 0481: il riferimento visivo torna alla morbidezza osservata sulla
+           0479 nello ZenFone 6 dell'utente. Non deleghiamo più lo scroll al
+           browser (che differisce fra Android e Safari), ma usiamo per tutti
+           i dispositivi lo stesso profilo progressivo già collaudato nelle
+           animazioni mobili del sito: durata crescente con la distanza e
+           smoothstep quintico, con partenza e arrivo molto morbidi. */
+        const headerHeight = siteHeader.getBoundingClientRect().height || 76;
+        const startY = Math.max(0, window.scrollY);
+        const targetY = Math.max(
+          0,
+          startY + card.getBoundingClientRect().top - headerHeight - 11
+        );
+        const delta = targetY - startY;
+        const distance = Math.abs(delta);
+
+        if (distance <= 1) {
+          window.scrollTo(0, targetY);
+          return;
+        }
+
+        const viewportHeight = Math.max(1, getMobileViewportHeight());
+        const travelInViewports = distance / viewportHeight;
+
+        /* Più lento della 0480 e volutamente progressivo: per uno spostamento
+           di circa una viewport siamo attorno a 840 ms; per distanze maggiori
+           la durata cresce senza trasformare lo scroll in una corsa. */
+        const duration = Math.round(
+          Math.max(680, Math.min(1600, 520 + (travelInViewports * 320)))
+        );
+
+        const rootStyle = document.documentElement.style;
+        const bodyStyle = document.body.style;
+        const previousRootBehavior = rootStyle.getPropertyValue("scroll-behavior");
+        const previousRootPriority = rootStyle.getPropertyPriority("scroll-behavior");
+        const previousBodyBehavior = bodyStyle.getPropertyValue("scroll-behavior");
+        const previousBodyPriority = bodyStyle.getPropertyPriority("scroll-behavior");
+
+        rootStyle.setProperty("scroll-behavior", "auto", "important");
+        bodyStyle.setProperty("scroll-behavior", "auto", "important");
+
+        try {
+          await new Promise(resolve => {
+            let startedAt = null;
+
+            const step = now => {
+              /* Il primo frame mantiene esattamente la posizione corrente:
+                 evita qualunque piccolo salto iniziale fra motori diversi. */
+              if (startedAt === null) {
+                startedAt = now;
+                window.scrollTo(0, startY);
+                window.requestAnimationFrame(step);
+                return;
+              }
+
+              const progress = Math.min(
+                1,
+                Math.max(0, (now - startedAt) / duration)
+              );
+              const eased = mobileCloseVisualEase(progress);
+
+              window.scrollTo(0, startY + (delta * eased));
+
+              if (progress < 1) {
+                window.requestAnimationFrame(step);
+                return;
+              }
+
+              window.scrollTo(0, targetY);
+              resolve();
+            };
+
+            window.requestAnimationFrame(step);
+          });
+        } finally {
+          if (previousRootBehavior) {
+            rootStyle.setProperty(
+              "scroll-behavior",
+              previousRootBehavior,
+              previousRootPriority
+            );
+          } else {
+            rootStyle.removeProperty("scroll-behavior");
+          }
+
+          if (previousBodyBehavior) {
+            bodyStyle.setProperty(
+              "scroll-behavior",
+              previousBodyBehavior,
+              previousBodyPriority
+            );
+          } else {
+            bodyStyle.removeProperty("scroll-behavior");
+          }
+        }
       }
 
       function openOnly(card, { animate = true, scroll = true } = {}) {
@@ -1903,7 +2544,10 @@
       function showHome({ updateHistory = true } = {}) {
         window.SiteDiscoverWidth?.applyCached?.();
         closeMobileMenu();
-        sectionCards.forEach(resetReadingTheme);
+        /* 0478: tornando alla Home conserviamo la scelta chiaro/scuro
+           effettuata nei Contenuti, così al successivo ingresso viene
+           riproposta esattamente la stessa modalità di lettura. */
+        syncGlobalReadingThemeControl();
         clearMobileCloseScrollCompensation();
         contentSection?.classList.remove("mobile-technical-end-space");
         syncMenuWithOpenCards();
@@ -1962,6 +2606,12 @@
         targetId = null,
         { updateHistory = true, historyMode = "replace" } = {}
       ) {
+        /* 0482: nei Contenuti le icone non devono mai dipendere dal buffer
+           del video o dal particolare hash con cui la pagina e' stata
+           ricaricata. Appena i Contenuti vengono mostrati, richiediamo
+           immediatamente tutte le icone differite. */
+        window.loadDeferredCardIcons?.();
+
         pauseVideo();
         document.body.classList.add("mobile-intro-complete");
 
@@ -2057,11 +2707,25 @@
       function refreshMobileHeights() {
         sectionCards.forEach(card => {
           const content = card.querySelector(".section-content");
+          const inner = card.querySelector(".section-content-inner");
           if (!content) return;
+
           content.style.transition = "none";
-          content.style.height = card.classList.contains("is-open")
-            ? "auto"
-            : `${getClosedContentHeight(card)}px`;
+
+          if (card.classList.contains("is-open")) {
+            /* 0483: vale anche per reload diretto, resize e orientamento.
+               La distanza inferiore viene ricalcolata sulla composizione
+               effettiva del testo del dispositivo corrente. */
+            if (inner) {
+              calibrateMobileOpenBottomGap(card, inner);
+            }
+            content.style.height = "auto";
+          } else {
+            card.querySelector(".section-richtext")
+              ?.style.removeProperty("padding-bottom");
+            content.style.height = `${getClosedContentHeight(card)}px`;
+          }
+
           content.style.removeProperty("transition");
           hideMobileEllipsis(card);
         });
@@ -2072,6 +2736,12 @@
           }
         });
       }
+
+      /* 0484: API tecnica minima usata soltanto dal lettore Articoli per
+         ripristinare, al ritorno all'elenco, la calibrazione mobile 0483. */
+      window.SiteMobileCardGeometry = Object.freeze({
+        refresh: refreshMobileHeights
+      });
 
       discoverButton.classList.add("is-ready");
       discoverButton.addEventListener("click", () => {
@@ -2269,84 +2939,16 @@
           const destination = link.getAttribute("href");
 
           if (destination === "#intro") {
-            /* 0395: Home mobile diventa contestuale, senza cambiare le animazioni
-               già approvate. Se la panoramica Contenuti NON è nello stato iniziale,
-               il primo tap fa soltanto questo: chiude il menu, torna dolcemente
-               a Formazione lasciando invariati i riquadri durante lo scroll e,
-               una volta arrivato in alto, chiude tutti i riquadri. La vista resta
-               quindi nella panoramica iniziale. Solo un successivo tap su Home,
-               quando siamo già in alto e con tutti i riquadri chiusi, avvia la
-               transizione incrociata verso la vera Home con il video in movimento. */
+            /* 0478: Home torna ad avere un solo significato anche su mobile.
+               Da qualunque posizione dei Contenuti porta direttamente alla vera
+               Home del sito, senza prima normalizzare scroll o riquadri. La
+               logica del tasto Indietro resta separata e invariata. */
             menuNavigationBusy = true;
             menuToggle.disabled = true;
 
             try {
-              const navState = window.SiteNavHistory.current();
-              const hasOpenCards = sectionCards.some(card =>
-                card.classList.contains("is-open")
-              );
-              const overviewNeedsNormalization =
-                document.body.classList.contains("mobile-content")
-                && navState.siteView !== "article"
-                && (
-                  window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
-                  || hasOpenCards
-                );
-
               closeMobileMenu();
               await wait(260);
-
-              if (overviewNeedsNormalization) {
-                /* Prima muoviamo esclusivamente il viewport. Manteniamo intatta
-                   anche l'eventuale riserva tecnica finché lo scroll non è finito,
-                   così la geometria della pagina non può provocare scatti o clamp. */
-                if (window.scrollY > 2) {
-                  await scrollMobileOverviewToTopSmoothly();
-                  await wait(90);
-                }
-
-                /* Soltanto quando Formazione è già in alto chiudiamo tutti i
-                   riquadri: il primo Home termina qui, nella panoramica iniziale. */
-                contentSection?.classList.remove("mobile-technical-end-space");
-                const { closedCount, maxDuration } = closeAllCards({ animate: true });
-                if (closedCount > 0) {
-                  await wait(maxDuration + 60);
-                  refreshMobileHeights();
-                }
-                mobileOverviewStartReadyForHome = false;
-
-                /* Se il riquadro aperto aveva creato la normale voce "card"
-                   nella cronologia SPA, allineiamo anche la cronologia alla
-                   panoramica che l'utente sta effettivamente vedendo. Il relativo
-                   popstate viene marcato come tecnico e non deve riattivare il
-                   reset globale del vero tasto Indietro. */
-                if (navState.siteView === "card") {
-                  if (navState.siteNavChain) {
-                    mobileHomeMenuOverviewBackPending = true;
-                    await new Promise(resolve => {
-                      let settled = false;
-                      const finish = () => {
-                        if (settled) return;
-                        settled = true;
-                        window.clearTimeout(timeoutId);
-                        resolve();
-                      };
-                      const timeoutId = window.setTimeout(() => {
-                        mobileHomeMenuOverviewBackPending = false;
-                        finish();
-                      }, 320);
-                      window.addEventListener("popstate", finish, { once: true });
-                      history.back();
-                    });
-                  } else {
-                    window.SiteNavHistory.replace("overview", "#contenuti", {
-                      siteNavChain: navState.siteNavChain
-                    });
-                  }
-                }
-                return;
-              }
-
               await transitionMobileOverviewToHome();
             } finally {
               menuToggle.disabled = false;
@@ -2628,37 +3230,34 @@
         }
 
         if (route.siteView === "home") {
-          const overviewNeedsReset =
-            document.body.classList.contains("mobile-content")
-            && (
-              window.scrollY > MOBILE_OVERVIEW_START_SCROLL_THRESHOLD
-              || sectionCards.some(card => card.classList.contains("is-open"))
-            );
-
-          if (mobileOverviewStartReadyForHome) {
-            mobileOverviewStartReadyForHome = false;
-            transitionMobileOverviewToHome({ updateHistory: false });
-            return;
-          }
-
-          if (overviewNeedsReset) {
-            restoreMobileOverviewStartFromBack();
-            return;
-          }
-
+          /* 0479: sul mobile il Back che raggiunge la Home non normalizza più
+             preventivamente la panoramica Contenuti. Anche con pagina scorsa
+             o riquadri aperti usa direttamente la transizione morbida già
+             approvata Contenuti -> Home. */
+          mobileOverviewStartReadyForHome = false;
           transitionMobileOverviewToHome({ updateHistory: false });
           return;
         }
 
         if (route.siteView === "overview") {
-          /* 0389: tornando dallo stato card alla panoramica Contenuti, il Back
-             non chiude più un solo riquadro lasciando l'utente nella posizione
-             corrente. Chiude tutti i riquadri e riporta dolcemente la pagina
-             all'inizio. Il Back successivo userà la stessa transizione verso
-             la Home adottata dal comando Home del menu hamburger. */
-          if (document.body.classList.contains("mobile-content")) {
+          /* 0479: se il Back del browser proviene da un normale riquadro
+             aperto, lo stato overview intermedio resta soltanto tecnico:
+             non viene mostrato e retrocediamo subito alla Home. La chiusura
+             manuale tramite freccia è già intercettata sopra da
+             mobileManualCardCloseBackPending e continua a restare nei
+             Contenuti. Il primo Back da un articolo aperto resta invece
+             invariato perché conduce allo stato card Articoli. */
+          const hasOpenCard = sectionCards.some(card =>
+            card.classList.contains("is-open")
+          );
+
+          if (
+            document.body.classList.contains("mobile-content")
+            && hasOpenCard
+            && route.siteNavChain
+          ) {
             mobileOverviewStartReadyForHome = false;
-            resetMobileOverviewToStartFromBack();
+            history.back();
             return;
           }
 
@@ -3484,6 +4083,7 @@
           "width",
           "height",
           "transition",
+          "box-shadow",
           "z-index",
           "visibility"
         ].forEach(property => {
@@ -4242,18 +4842,10 @@
 
         const card = desktopSelectedCard;
         const sourceRect = desktopFocusSourceRect;
-        const closeFromReadingLight = card.classList.contains("is-reading-light");
 
         if (!sourceRect) {
-          resetReadingTheme(card);
           finishDesktopFocusClose(card);
           return Promise.resolve(true);
-        }
-
-        if (closeFromReadingLight) {
-          fadeReadingSurfaceDuringDesktopClose(card);
-        } else {
-          resetReadingTheme(card);
         }
 
         clearPointerCard(false);
@@ -4265,6 +4857,21 @@
         desktopFocusPhase = "closing";
         editorialShell.classList.remove("is-grid-focus-settled");
         editorialShell.classList.add("is-grid-transitioning");
+
+        /* 0473 — desktop, modalita' chiara:
+           l'ombra del riquadro deve sparire nello stesso istante in cui
+           parte la chiusura. Disattiviamo temporaneamente ogni transition
+           prima di azzerare il box-shadow, forziamo il commit grafico e
+           solo dopo riattiviamo le transition geometriche. */
+        const clearLightFocusShadowImmediately =
+          document.body.classList.contains("desktop-grid-layout")
+          && card.classList.contains("is-reading-light");
+
+        if (clearLightFocusShadowImmediately) {
+          card.style.transition = "none";
+          card.style.boxShadow = "none";
+          void card.offsetHeight;
+        }
 
         if (scroll) {
           scrollDesktopGridToAnchor("smooth");
@@ -4309,15 +4916,20 @@
           }, Math.max(0, duration - previewSwapDuration));
         }
 
-        card.style.transition = [
+        const closingTransitions = [
           `left ${duration}ms ${easing}`,
           `top ${duration}ms ${easing}`,
           `width ${duration}ms ${easing}`,
           `height ${duration}ms ${easing}`,
           `background ${Math.min(duration, 700)}ms ${easing}`,
-          `border-color ${Math.min(duration, 700)}ms ${easing}`,
-          `box-shadow ${Math.min(duration, 700)}ms ${easing}`
-        ].join(", ");
+          `border-color ${Math.min(duration, 700)}ms ${easing}`
+        ];
+
+        if (!clearLightFocusShadowImmediately) {
+          closingTransitions.push(`box-shadow ${Math.min(duration, 700)}ms ${easing}`);
+        }
+
+        card.style.transition = closingTransitions.join(", ");
         editorialShell.style.transition = `height ${duration}ms ${easing}`;
 
         void editorialShell.offsetHeight;
@@ -4456,8 +5068,8 @@
         clearPointerCard(true);
 
         sectionCards.forEach(card => {
-          resetReadingTheme(card);
-
+          /* 0478: il ritorno alla Home non azzera più la modalità chiaro/scuro.
+             La scelta resta associata ai Contenuti e viene ritrovata al rientro. */
           const animationState = sectionAnimationStates.get(card);
 
           if (animationState) {
@@ -4500,6 +5112,8 @@
           }
         });
 
+        syncGlobalReadingThemeControl();
+
         if (document.body.classList.contains("desktop-grid-layout")) {
           resetDesktopGridSelection();
           return;
@@ -4514,6 +5128,11 @@
 
       function enterContent({ updateHistory = true, historyMode = "replace" } = {}) {
         if (enteringContent || returningHome || pageMode === "content") return;
+
+        /* 0482: stessa garanzia del mobile. Se i Contenuti stanno entrando
+           a schermo, le icone vengono richieste subito e non aspettano piu'
+           l'eventuale evento "playing" del video della Home. */
+        window.loadDeferredCardIcons?.();
 
         pauseVideo();
         enteringContent = true;
@@ -5154,20 +5773,9 @@
           if (destination === "#intro") {
             event.preventDefault();
 
-            /* 0395: anche su desktop Home è contestuale. Se un riquadro è
-               ingrandito, il primo click richiude soltanto il focus e ripristina
-               la griglia iniziale. Dalla griglia già ripristinata, il click
-               successivo mantiene la logica esistente e torna alla vera Home. */
-            if (
-              desktopSelectedCard
-              && editorialShell?.classList.contains("is-grid-focus-mode")
-              && window.SiteNavHistory.current().siteView !== "article"
-            ) {
-              hideMenu({ guardPointer: false, clearSelection: false });
-              requestDesktopFocusClose();
-              return;
-            }
-
+            /* 0478: anche su desktop Home porta sempre direttamente alla vera
+               Home del sito. La chiusura contestuale del riquadro resta affidata
+               ai relativi comandi e la logica del tasto Indietro non cambia. */
             requestHomeNavigation();
             return;
           }
@@ -5280,10 +5888,175 @@
       let pendingResetTimer = null;
       let articleGeometryFrame = 0;
 
+      /* 0484: stesso target geometrico della 0483 per il fondo dei singoli
+         articoli mobile. La misura avviene sulla riga realmente renderizzata. */
+      const MOBILE_ARTICLE_TEXT_BOTTOM_GAP = 16;
+      let articleBottomGapState = null;
+
       function clearPendingReset() {
         if (pendingResetTimer === null) return;
         window.clearTimeout(pendingResetTimer);
         pendingResetTimer = null;
+      }
+
+      function getLastArticleTextBottom(root) {
+        if (!root) return null;
+
+        let lastBottom = null;
+        let lastTextNode = null;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode(node) {
+              return /\S/.test(node.data)
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP;
+            }
+          }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+
+          for (const rect of range.getClientRects()) {
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            if (lastBottom === null || rect.bottom > lastBottom) {
+              lastBottom = rect.bottom;
+              lastTextNode = node;
+            }
+          }
+
+          node = walker.nextNode();
+        }
+
+        return lastBottom === null
+          ? null
+          : { bottom: lastBottom, node: lastTextNode };
+      }
+
+      function restoreMobileArticleBottomGap() {
+        if (!articleBottomGapState) return;
+
+        const {
+          richtext,
+          richtextPaddingValue,
+          richtextPaddingPriority,
+          adjustedMargins
+        } = articleBottomGapState;
+
+        if (richtext) {
+          if (richtextPaddingValue) {
+            richtext.style.setProperty(
+              "padding-bottom",
+              richtextPaddingValue,
+              richtextPaddingPriority
+            );
+          } else {
+            richtext.style.removeProperty("padding-bottom");
+          }
+        }
+
+        adjustedMargins.forEach(({ element, value, priority }) => {
+          if (!element?.isConnected) return;
+          if (value) {
+            element.style.setProperty("margin-bottom", value, priority);
+          } else {
+            element.style.removeProperty("margin-bottom");
+          }
+        });
+
+        articleBottomGapState = null;
+      }
+
+      function calibrateMobileArticleBottomGap() {
+        if (!mobileQuery.matches || !activeArticleId || reader?.hidden) return;
+
+        const richtext = articlesCard.querySelector(".section-richtext");
+        const body = reader?.querySelector(".site-article-body");
+        if (!richtext || !body) return;
+
+        if (!articleBottomGapState) {
+          articleBottomGapState = {
+            richtext,
+            richtextPaddingValue:
+              richtext.style.getPropertyValue("padding-bottom"),
+            richtextPaddingPriority:
+              richtext.style.getPropertyPriority("padding-bottom"),
+            adjustedMargins: []
+          };
+        }
+
+        /* Riparte sempre dallo stato tipografico originale dell'articolo. */
+        articleBottomGapState.adjustedMargins.forEach(
+          ({ element, value, priority }) => {
+            if (!element?.isConnected) return;
+            if (value) {
+              element.style.setProperty("margin-bottom", value, priority);
+            } else {
+              element.style.removeProperty("margin-bottom");
+            }
+          }
+        );
+        articleBottomGapState.adjustedMargins = [];
+
+        const initialLast = getLastArticleTextBottom(body);
+        if (!initialLast?.node) return;
+
+        /* L'ultimo paragrafo degli articoli porta un margine inferiore
+           tipografico (1.32em), che nello stato finale diventa spazio vuoto
+           sotto l'ultima riga. Lo azzeriamo soltanto lungo la catena finale:
+           nessuna distanza FRA paragrafi viene modificata. */
+        let element = initialLast.node.parentElement;
+        while (element && element !== body) {
+          const computed = window.getComputedStyle(element);
+          const marginBottom = parseFloat(computed.marginBottom) || 0;
+
+          if (marginBottom > 0) {
+            articleBottomGapState.adjustedMargins.push({
+              element,
+              value: element.style.getPropertyValue("margin-bottom"),
+              priority: element.style.getPropertyPriority("margin-bottom")
+            });
+            element.style.setProperty("margin-bottom", "0px", "important");
+          }
+
+          element = element.parentElement;
+        }
+
+        /* Dopo aver eliminato il solo margine terminale, il fondo viene
+           calibrato con la stessa misura reale della 0483: 16 CSS px fra
+           ultima riga renderizzata e bordo inferiore. */
+        richtext.style.setProperty("padding-bottom", "0px", "important");
+        void reader.offsetHeight;
+
+        for (let pass = 0; pass < 2; pass += 1) {
+          const last = getLastArticleTextBottom(body);
+          if (!last) return;
+
+          const richtextRect = richtext.getBoundingClientRect();
+          const currentStyle = window.getComputedStyle(richtext);
+          const currentPadding =
+            parseFloat(currentStyle.paddingBottom) || 0;
+          const currentGap = richtextRect.bottom - last.bottom;
+          const correction =
+            MOBILE_ARTICLE_TEXT_BOTTOM_GAP - currentGap;
+          const adjustedPadding = Math.max(
+            0,
+            currentPadding + correction
+          );
+
+          richtext.style.setProperty(
+            "padding-bottom",
+            `${Number(adjustedPadding.toFixed(3))}px`,
+            "important"
+          );
+          void reader.offsetHeight;
+
+          if (Math.abs(correction) <= .25) break;
+        }
       }
 
       function currentArticleStateIsOwned() {
@@ -5302,6 +6075,10 @@
             const content = articlesCard.querySelector(".section-content");
             if (content && articlesCard.classList.contains("is-open")) {
               content.style.height = "auto";
+            }
+
+            if (activeArticleId) {
+              calibrateMobileArticleBottomGap();
             }
 
             if (scrollToTop) {
@@ -5372,11 +6149,8 @@
             ? "Torna all’elenco degli articoli"
             : "Apri o chiudi la sezione Articoli";
           mobileTrigger.setAttribute("aria-label", label);
-          if (inArticle) {
-            mobileTrigger.setAttribute("title", label);
-          } else {
-            mobileTrigger.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sulla testata Articoli. */
+          mobileTrigger.removeAttribute("title");
         }
 
         if (desktopClose) {
@@ -5384,11 +6158,8 @@
             ? "Torna all’elenco degli articoli"
             : "Chiudi la sezione aperta";
           desktopClose.setAttribute("aria-label", label);
-          if (inArticle) {
-            desktopClose.setAttribute("title", label);
-          } else {
-            desktopClose.removeAttribute("title");
-          }
+          /* 0419: nessun tooltip nativo sul controllo di ritorno. */
+          desktopClose.removeAttribute("title");
         }
       }
 
@@ -5784,6 +6555,93 @@
         return layer;
       }
 
+      function createDesktopArticleHeaderOverlay() {
+        const icon = articlesCard.querySelector(".section-trigger > .card-icon");
+        const headCopy = articlesCard.querySelector(".section-trigger > .section-head-copy");
+        if (!icon || !headCopy) return null;
+
+        /* 0420: icona e titolo NON vengono clonati. Durante i soli 920 ms del
+           ritorno all'indice spostiamo gli elementi REALI in un layer fisso,
+           esattamente nelle coordinate che avevano un istante prima. Due
+           segnaposto invisibili mantengono intatta la griglia della testata.
+           In questo modo non esiste alcun passaggio clone -> DOM reale e non
+           può verificarsi il micro-scattino di 1 px visto nella 0419. */
+        const overlay = document.createElement("div");
+        overlay.className = "article-header-live-overlay";
+        overlay.setAttribute("aria-hidden", "true");
+        Object.assign(overlay.style, {
+          position: "fixed",
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          overflow: "visible",
+          pointerEvents: "none",
+          zIndex: "2147483000"
+        });
+        document.body.append(overlay);
+
+        const records = [icon, headCopy].map(source => {
+          const rect = source.getBoundingClientRect();
+          const parent = source.parentNode;
+          const placeholder = source.cloneNode(true);
+          placeholder.setAttribute("aria-hidden", "true");
+          placeholder.style.setProperty("visibility", "hidden", "important");
+          placeholder.style.setProperty("pointer-events", "none", "important");
+          parent.insertBefore(placeholder, source);
+
+          const sourceNodes = [source, ...source.querySelectorAll("*")];
+          const originalStyles = sourceNodes.map(node => node.getAttribute("style"));
+          const frozenStyles = sourceNodes.map(node => {
+            const computed = window.getComputedStyle(node);
+            return Array.from(computed).map(property => [
+              property,
+              computed.getPropertyValue(property),
+              computed.getPropertyPriority(property)
+            ]);
+          });
+
+          overlay.append(source);
+          sourceNodes.forEach((node, index) => {
+            frozenStyles[index].forEach(([property, value, priority]) => {
+              node.style.setProperty(property, value, priority);
+            });
+          });
+
+          source.style.setProperty("position", "fixed", "important");
+          source.style.setProperty("left", `${rect.left}px`, "important");
+          source.style.setProperty("top", `${rect.top}px`, "important");
+          source.style.setProperty("width", `${rect.width}px`, "important");
+          source.style.setProperty("height", `${rect.height}px`, "important");
+          source.style.setProperty("margin", "0", "important");
+          source.style.setProperty("transform", "none", "important");
+          source.style.setProperty("visibility", "visible", "important");
+          source.style.setProperty("pointer-events", "none", "important");
+          source.style.setProperty("z-index", "1", "important");
+
+          return { source, placeholder, sourceNodes, originalStyles };
+        });
+
+        let restored = false;
+        return {
+          host: overlay,
+          restore() {
+            if (restored) return;
+            restored = true;
+
+            records.forEach(({ source, placeholder, sourceNodes, originalStyles }) => {
+              placeholder.parentNode?.insertBefore(source, placeholder);
+              placeholder.remove();
+              sourceNodes.forEach((node, index) => {
+                const original = originalStyles[index];
+                if (original === null) node.removeAttribute("style");
+                else node.setAttribute("style", original);
+              });
+            });
+            overlay.remove();
+          }
+        };
+      }
+
       function createDesktopArticleCardSnapshot(role) {
         if (!editorialShell) return null;
 
@@ -6006,7 +6864,9 @@
            scrollato, preserviamo soltanto il range di scroll con spazio
            tecnico invisibile sotto il contenuto. Non si anima mai height. */
         const outgoingCard = createDesktopArticleCardSnapshot("outgoing");
+        const headerOverlay = outgoingCard ? createDesktopArticleHeaderOverlay() : null;
         if (!outgoingCard || typeof outgoingCard.host.animate !== "function") {
+          headerOverlay?.restore();
           activeArticleId = null;
           articlesCard.classList.remove("is-article-reading");
           delete articlesCard.dataset.activeArticle;
@@ -6071,6 +6931,7 @@
 
         desktopArticleReturnCleanup = () => {
           document.querySelectorAll(".article-card-crossfade-host").forEach(node => node.remove());
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
         };
 
@@ -6121,6 +6982,7 @@
         });
         if (sequenceId !== articleOpenSequence) {
           outgoingCard.host.remove();
+          headerOverlay?.restore();
           restoreDesktopScrollTechnicalState();
           desktopArticleReturnCleanup = null;
           return;
@@ -6154,6 +7016,7 @@
 
         if (reader) reader.replaceChildren();
         outgoingCard.host.remove();
+        headerOverlay?.restore();
         desktopArticleReturnCleanup = null;
         desktopArticleCrossfadeAnimations = [];
 
@@ -6178,12 +7041,228 @@
       }
 
 
-      function restoreArticleOverview({ updateHistory = false, scrollToTop = true } = {}) {
+      function createMobileArticleCardSnapshot() {
+        const cardRect = articlesCard.getBoundingClientRect();
+        if (!cardRect.width || !cardRect.height) return null;
+
+        /* 0460: sul ritorno mobile articolo -> elenco non si contrae più
+           visivamente la card grande. Ne conserviamo per 440 ms una copia
+           esattamente nella posizione occupata sullo schermo, mentre il DOM
+           reale passa subito alla geometria finale dell'elenco sottostante.
+           La copia viene poi dissolta: il bordo inferiore vecchio scompare
+           progressivamente invece di saltare verso l'alto. */
+        const host = document.createElement("div");
+        host.className = "editorial-shell article-card-crossfade-host";
+        host.dataset.articleCardSnapshot = "mobile-outgoing";
+        host.setAttribute("aria-hidden", "true");
+        Object.assign(host.style, {
+          position: "fixed",
+          left: `${cardRect.left}px`,
+          top: `${cardRect.top}px`,
+          width: `${cardRect.width}px`,
+          height: `${cardRect.height}px`,
+          margin: "0",
+          padding: "0",
+          border: "0",
+          borderRadius: "0",
+          background: "transparent",
+          boxShadow: "none",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          display: "block",
+          overflow: "visible",
+          opacity: "1",
+          pointerEvents: "none",
+          zIndex: "2147482500"
+        });
+
+        const snapshot = articlesCard.cloneNode(true);
+        snapshot.dataset.articleCardSnapshotInner = "mobile-outgoing";
+        snapshot.setAttribute("aria-hidden", "true");
+        snapshot.querySelectorAll("template").forEach(node => node.remove());
+        snapshot.querySelectorAll("button, a, input, select, textarea").forEach(node => {
+          node.setAttribute("tabindex", "-1");
+        });
+
+        snapshot.style.setProperty("position", "absolute", "important");
+        snapshot.style.setProperty("left", "0", "important");
+        snapshot.style.setProperty("top", "0", "important");
+        snapshot.style.setProperty("width", "100%", "important");
+        snapshot.style.setProperty("height", "100%", "important");
+        snapshot.style.setProperty("margin", "0", "important");
+        snapshot.style.setProperty("transform", "none", "important");
+        snapshot.style.setProperty("transition", "none", "important");
+        snapshot.style.setProperty("visibility", "visible", "important");
+        snapshot.style.setProperty("pointer-events", "none", "important");
+
+        host.append(snapshot);
+        document.body.append(host);
+        return { host, card: snapshot };
+      }
+
+      async function restoreArticleOverviewMobileCrossfade({ updateHistory = false } = {}) {
         clearPendingReset();
 
-        /* 0333: solo il ritorno esplicito all'elenco su desktop usa il
-           crossfade inverso. I reset tecnici (scrollToTop:false) e tutto
-           il comportamento mobile restano identici alla 0332. */
+        const sequenceId = ++articleOpenSequence;
+        cancelArticleOpenScroll();
+        clearArticleCrossfade();
+
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const crossfadeMs = reduceMotion ? 0 : 440;
+        const content = articlesCard.querySelector(".section-content");
+        const outgoingCard = createMobileArticleCardSnapshot();
+
+        const previousContentHeight = content?.style.height || "";
+        const previousContentTransition = content?.style.transition || "";
+        const previousPointerEvents = articlesCard.style.pointerEvents || "";
+
+        const restoreMobileTechnicalState = () => {
+          if (content) {
+            if (previousContentTransition) {
+              content.style.transition = previousContentTransition;
+            } else {
+              content.style.removeProperty("transition");
+            }
+
+            if (previousContentHeight) {
+              content.style.height = previousContentHeight;
+            } else {
+              content.style.removeProperty("height");
+            }
+          }
+
+          if (previousPointerEvents) {
+            articlesCard.style.pointerEvents = previousPointerEvents;
+          } else {
+            articlesCard.style.removeProperty("pointer-events");
+          }
+        };
+
+        desktopArticleReturnCleanup = () => {
+          outgoingCard?.host.remove();
+          restoreMobileTechnicalState();
+        };
+
+        /* Il DOM reale assume immediatamente lo stato elenco, ma resta sotto
+           la copia dell'articolo uscente. Non viene quindi mostrata alcuna
+           contrazione del bordo: il riquadro finale è già pronto dietro. */
+        if (content) {
+          content.style.transition = "none";
+          content.style.height = "auto";
+        }
+        articlesCard.style.pointerEvents = "none";
+
+        activeArticleId = null;
+        articlesCard.classList.remove("is-article-reading");
+        delete articlesCard.dataset.activeArticle;
+
+        restoreMobileArticleBottomGap();
+        window.SiteMobileCardGeometry?.refresh?.();
+
+        if (intro) {
+          intro.hidden = false;
+          intro.style.removeProperty("opacity");
+        }
+        if (articlesList) {
+          articlesList.hidden = false;
+          articlesList.style.removeProperty("opacity");
+        }
+        if (reader) {
+          reader.hidden = true;
+        }
+
+        updateArticleControlLabels();
+
+        if (updateHistory && currentArticleStateIsOwned()) {
+          window.SiteNavHistory.replace(
+            "card",
+            `${window.location.pathname}${window.location.search}#articoli`,
+            {
+              siteSection: "articoli",
+              siteNavChain: window.SiteNavHistory.isManagedChain()
+            }
+          );
+        }
+
+        /* Forza la geometria finale prima che inizi la dissolvenza; la copia
+           fissa mantiene invece immobile sullo schermo la geometria grande. */
+        void articlesCard.offsetHeight;
+
+        if (
+          !outgoingCard
+          || crossfadeMs === 0
+          || typeof outgoingCard.host.animate !== "function"
+        ) {
+          if (reader) reader.replaceChildren();
+          outgoingCard?.host.remove();
+          desktopArticleReturnCleanup = null;
+          restoreMobileTechnicalState();
+          syncArticleGeometry({ scrollToTop: false });
+          updateEndScrollSpace();
+          return;
+        }
+
+        await new Promise(resolve => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+          });
+        });
+
+        if (sequenceId !== articleOpenSequence) {
+          if (desktopArticleReturnCleanup) {
+            const cleanup = desktopArticleReturnCleanup;
+            desktopArticleReturnCleanup = null;
+            cleanup();
+          }
+          return;
+        }
+
+        const outgoingAnimation = outgoingCard.host.animate(
+          [
+            { opacity: 1, offset: 0 },
+            { opacity: .92, offset: .16 },
+            { opacity: 0, offset: 1 }
+          ],
+          {
+            duration: crossfadeMs,
+            easing: "cubic-bezier(.4, 0, .2, 1)",
+            fill: "forwards"
+          }
+        );
+
+        desktopArticleCrossfadeAnimations = [outgoingAnimation];
+        await Promise.allSettled([outgoingAnimation.finished]);
+
+        if (sequenceId !== articleOpenSequence) {
+          if (desktopArticleReturnCleanup) {
+            const cleanup = desktopArticleReturnCleanup;
+            desktopArticleReturnCleanup = null;
+            cleanup();
+          }
+          return;
+        }
+
+        if (reader) reader.replaceChildren();
+        outgoingCard.host.remove();
+        desktopArticleCrossfadeAnimations = [];
+        desktopArticleReturnCleanup = null;
+        restoreMobileTechnicalState();
+        syncArticleGeometry({ scrollToTop: false });
+        updateEndScrollSpace();
+      }
+
+      function restoreArticleOverview({ updateHistory = false, scrollToTop = true, animateReturn = false } = {}) {
+        clearPendingReset();
+
+        /* 0443: anche il ritorno esplicito mobile articolo -> elenco usa
+           ora una dissolvenza inversa, con gli stessi 440 ms e lo stesso
+           easing dell'andata. I reset tecnici restano invece immediati. */
+        if (mobileQuery.matches && animateReturn && activeArticleId) {
+          return restoreArticleOverviewMobileCrossfade({ updateHistory });
+        }
+
+        /* Il ritorno esplicito all'elenco su desktop conserva la dissolvenza
+           inversa gia' approvata nelle versioni precedenti. */
         if (!mobileQuery.matches && scrollToTop && activeArticleId) {
           restoreArticleOverviewDesktopCrossfade({ updateHistory, scrollToTop });
           return;
@@ -6196,6 +7275,9 @@
         activeArticleId = null;
         articlesCard.classList.remove("is-article-reading");
         delete articlesCard.dataset.activeArticle;
+
+        restoreMobileArticleBottomGap();
+        window.SiteMobileCardGeometry?.refresh?.();
 
         if (reader) {
           reader.hidden = true;
@@ -6230,7 +7312,11 @@
         if (!activeArticleId) return;
 
         if (window.__DIRECT_ARTICLE_ID__) {
-          restoreArticleOverview({ updateHistory: false, scrollToTop: true });
+          restoreArticleOverview({
+            updateHistory: false,
+            scrollToTop: true,
+            animateReturn: true
+          });
           window.__DIRECT_ARTICLE_ID__ = null;
           window.SiteNavHistory.replace("card", "/#articoli", {
             siteSection: "articoli",
@@ -6244,7 +7330,11 @@
           return;
         }
 
-        restoreArticleOverview({ updateHistory: false, scrollToTop: true });
+        restoreArticleOverview({
+          updateHistory: false,
+          scrollToTop: true,
+          animateReturn: true
+        });
       }
 
       function scheduleInternalResetAfterCardLeaves() {
@@ -6272,43 +7362,21 @@
         });
       });
 
-      /* 0409 desktop: durante la lettura di un articolo il click con mouse
-         su icona o titolo "Articoli" conserva soltanto la funzione di ritorno
-         all'indice e non trasferisce il focus visivo al bottone sottostante.
-         Il cursore resta a manina, ma icona e titolo non subiscono alcun
-         artefatto grafico; la navigazione da tastiera resta invariata. */
-      document.addEventListener("mousedown", event => {
-        if (!activeArticleId || mobileQuery.matches || event.button !== 0) return;
-
-        const headerReturnTarget = event.target.closest?.(
-          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
-        );
-
-        if (headerReturnTarget) {
-          event.preventDefault();
-        }
-      }, true);
-
       document.addEventListener("click", event => {
         if (!activeArticleId) return;
 
         const target = event.target;
         const clickedArticleTrigger = target.closest?.("#articoli .section-trigger");
-        const clickedArticleHeaderReturn = target.closest?.(
-          "#articoli .section-trigger > .card-icon, #articoli .section-trigger > .section-head-copy"
-        );
         const clickedArticleChevron = target.closest?.("#articoli .section-trigger > .section-chevron");
         const clickedDesktopControl = target.closest?.("#articoli .desktop-focus-close");
         const keyboardTriggerActivation = Boolean(clickedArticleTrigger && event.detail === 0);
 
-        /* 0407: quando un articolo è aperto, soltanto icona e titolo
-           "Articoli" acquistano temporaneamente la funzione di ritorno
-           all'indice, insieme ai controlli di ritorno già esistenti
-           (freccia mobile e freccia desktop). Il resto della fascia
-           superiore rimane neutro anche durante la lettura. */
+        /* 0434: durante la lettura di un articolo, icona e titolo
+           "Articoli" restano sempre neutri. Il ritorno all'elenco è
+           affidato soltanto ai controlli dedicati già esistenti
+           (freccia mobile, controllo desktop e attivazione da tastiera). */
         if (
-          clickedArticleHeaderReturn
-          || clickedArticleChevron
+          clickedArticleChevron
           || clickedDesktopControl
           || keyboardTriggerActivation
         ) {
@@ -6337,7 +7405,7 @@
         }
       }, true);
 
-      window.addEventListener("popstate", event => {
+      window.addEventListener("popstate", async event => {
         const state = event.state;
         const requestedArticle = state?.siteView === "article"
           ? state.siteArticle
@@ -6354,9 +7422,10 @@
 
         const preservedMobileScrollY = mobileQuery.matches ? window.scrollY : null;
 
-        restoreArticleOverview({
+        await restoreArticleOverview({
           updateHistory: false,
-          scrollToTop: !mobileQuery.matches
+          scrollToTop: !mobileQuery.matches,
+          animateReturn: true
         });
 
         if (preservedMobileScrollY !== null) {
@@ -6507,6 +7576,42 @@
 
       scheduleDiscoverWidthSync();
       window.addEventListener("load", scheduleDiscoverWidthSync, { once: true });
+    })();
+  </script>
+
+  <script>
+    (() => {
+      const desktopHoverQuery = window.matchMedia(
+        "(min-width: 801px) and (hover: hover) and (pointer: fine)"
+      );
+      const menuLinks = Array.from(document.querySelectorAll("#glassMenu a"));
+
+      if (!menuLinks.length) return;
+
+      const resetMenuLabels = () => {
+        menuLinks.forEach((link) => {
+          const label = link.querySelector(".menu-label");
+          if (label) label.style.transform = "translateY(0)";
+        });
+      };
+
+      menuLinks.forEach((link) => {
+        const label = link.querySelector(".menu-label");
+        if (!label) return;
+
+        link.addEventListener("pointerenter", () => {
+          if (!desktopHoverQuery.matches) return;
+          label.style.transform = "translateY(-2px)";
+        });
+
+        link.addEventListener("pointerleave", () => {
+          if (!desktopHoverQuery.matches) return;
+          label.style.transform = "translateY(0)";
+        });
+      });
+
+      desktopHoverQuery.addEventListener?.("change", resetMenuLabels);
+      document.getElementById("glassMenu")?.addEventListener("pointerleave", resetMenuLabels);
     })();
   </script>
 
