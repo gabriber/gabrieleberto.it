@@ -221,6 +221,28 @@
           return Promise.resolve(false);
         }
 
+        /* 0488: un articolo raggiunto direttamente da Google o da un URL
+           esterno non possiede, nella cronologia del browser, una precedente
+           voce interna "Articoli". In quel caso history.back() uscirebbe dal
+           sito tornando alla pagina esterna. Ricreiamo quindi localmente lo
+           stesso passaggio article -> card che avviene nella navigazione
+           interna, senza arretrare nella cronologia del browser. */
+        if (window.__DIRECT_ARTICLE_ID__ && !from.siteNavChain) {
+          const state = write("replace", "card", "/#articoli", {
+            siteSection: "articoli",
+            siteNavChain: false
+          });
+
+          window.__DIRECT_ARTICLE_ID__ = null;
+
+          const popEvent = typeof PopStateEvent === "function"
+            ? new PopStateEvent("popstate", { state })
+            : new Event("popstate");
+
+          window.dispatchEvent(popEvent);
+          return Promise.resolve(true);
+        }
+
         return new Promise(resolve => {
           window.addEventListener("popstate", () => resolve(true), { once: true });
           history.back();
