@@ -7502,11 +7502,46 @@
         });
 
         const cleanUrl = window.SiteArticleRoutes?.[articleId] || window.location.pathname;
-        window.SiteNavHistory.replace("article", cleanUrl, {
-          siteSection: "articoli",
-          siteArticle: articleId,
-          siteNavChain: false
-        });
+
+        if (mobileQuery.matches) {
+          /* 0489: dopo il bootstrap invisibile, un articolo raggiunto da un
+             link esterno deve diventare indistinguibile da un articolo aperto
+             navigando normalmente nel sito. Ricostruiamo quindi la stessa
+             catena Home -> panoramica -> Articoli -> articolo, mantenendo
+             l'URL finale dell'articolo. In questo modo:
+             - primo Back: elenco Articoli;
+             - secondo Back: Home (l'overview tecnico viene saltato dalla
+               logica mobile già approvata);
+             - menu hamburger: usa esattamente collapseArticleToCard() e le
+               animazioni ordinarie della navigazione interna. */
+          window.SiteNavHistory.replace("home", "/#intro", {
+            siteNavChain: true
+          });
+          window.SiteNavHistory.push("overview", "/#contenuti", {
+            siteNavChain: true
+          });
+          window.SiteNavHistory.push("card", "/#articoli", {
+            siteSection: "articoli",
+            siteNavChain: true
+          });
+          window.SiteNavHistory.push("article", cleanUrl, {
+            siteSection: "articoli",
+            siteArticle: articleId,
+            siteNavChain: true
+          });
+
+          /* Da questo istante non esiste più uno stato speciale "direct":
+             il sito prosegue come se l'articolo fosse stato aperto
+             dall'elenco interno. */
+          window.__DIRECT_ARTICLE_ID__ = null;
+        } else {
+          /* Desktop invariato rispetto alla 0488. */
+          window.SiteNavHistory.replace("article", cleanUrl, {
+            siteSection: "articoli",
+            siteArticle: articleId,
+            siteNavChain: false
+          });
+        }
 
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => {
